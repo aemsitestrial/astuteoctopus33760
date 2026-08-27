@@ -174,7 +174,7 @@ const alloyLoadedPromise = initWebSDK('./alloy.js', {
 
 const ALLOWED_TARGET_HOSTS = [
   'www.accenture.com',
-  'main--hastyfalcon60506--aemsitestrial.aem.live'
+  'main--hastyfalcon60506--aemsitestrial.aem.live',
   // add other approved production/staging hostnames here
 ];
 
