@@ -144,10 +144,10 @@ async function getAndApplyRenderDecisions() {
   // so we can hook up into the AEM EDS page load sequence
   const response = await window.alloy('sendEvent', {
     renderDecisions: true,
-    data: {
-      __adobe: {
+    xdm: {
+      _experience: {
         target: {
-          at_property: '7a4abb00-3faa-2295-981b-ad9e07673135',
+          propertyToken: '7a4abb00-3faa-2295-981b-ad9e07673135',
         },
       },
     },
