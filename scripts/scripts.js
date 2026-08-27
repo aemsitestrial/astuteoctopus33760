@@ -142,7 +142,16 @@ async function getElementForProposition(proposition) {
 async function getAndApplyRenderDecisions() {
   // Get the decisions, but don't render them automatically
   // so we can hook up into the AEM EDS page load sequence
-  const response = await window.alloy('sendEvent', { renderDecisions: true });
+  const response = await window.alloy('sendEvent', {
+    renderDecisions: true,
+    data: {
+      __adobe: {
+        target: {
+          at_property: '7a4abb00-3faa-2295-981b-ad9e07673135',
+        },
+      },
+    },
+  });
   const { propositions } = response;
   onDecoratedElement(async () => {
     await window.alloy('applyPropositions', { propositions });
