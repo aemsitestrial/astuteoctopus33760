@@ -172,7 +172,16 @@ const alloyLoadedPromise = initWebSDK('./alloy.js', {
   orgId: '0CEB60F754C7E06B0A4C98A2@AdobeOrg',
 });
 
-if (getMetadata('target')) {
+const ALLOWED_TARGET_HOSTS = [
+  'www.accenture.com',
+  'main--hastyfalcon60506--aemsitestrial.aem.live'
+  // add other approved production/staging hostnames here
+];
+
+const isTargetHost = ALLOWED_TARGET_HOSTS.some((h) => window.location.hostname === h)
+  || window.location.hostname === 'localhost';
+
+if (getMetadata('target') && isTargetHost) {
   alloyLoadedPromise.then(() => getAndApplyRenderDecisions());
 }
 
