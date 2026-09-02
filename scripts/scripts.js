@@ -144,7 +144,7 @@ async function getAndApplyRenderDecisions() {
     renderDecisions: false,
     personalization: {
       decisionScopes: ['hero'],
-    }
+    },
   });
   const { propositions } = response;
 
