@@ -146,13 +146,13 @@ async function getAndApplyRenderDecisions() {
   const response = await window.alloy('sendEvent', {
     renderDecisions: true,
     personalization: {
-      decisionScopes: ['hero'],
+      decisionScopes: ['target-global-mbox'],
     },
   });
   const { propositions } = response;
 
   // Pre-compute the manual JSON offer for the "hero" scope (not renderable by alloy)
-  const heroProposition = propositions.find((p) => p.scope === 'hero');
+  const heroProposition = propositions.find((p) => p.scope === 'target-global-mbox');
   const heroJsonItem = heroProposition?.items.find((i) => i.schema === JSON_CONTENT_SCHEMA);
   const heroContent = heroJsonItem?.data?.content;
   let heroApplied = false;
