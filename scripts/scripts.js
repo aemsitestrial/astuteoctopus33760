@@ -107,16 +107,11 @@ function initWebSDK(path, config) {
 }
 
 function onDecoratedElement(fn) {
-  // Apply propositions to all already decorated blocks/sections
-  if (document.querySelector('[data-block-status="loaded"],[data-section-status="loaded"]')) {
-    fn();
-  }
-
   const observer = new MutationObserver((mutations) => {
     if (mutations.some((m) => m.target.tagName === 'BODY'
       || m.target.dataset.sectionStatus === 'loaded'
       || m.target.dataset.blockStatus === 'loaded')) {
-      fn();
+      fn(() => observer.disconnect());
     }
   });
   // Watch sections and blocks being decorated async
@@ -127,17 +122,25 @@ function onDecoratedElement(fn) {
   });
   // Watch anything else added to the body
   observer.observe(document.querySelector('body'), { childList: true });
+
+  // Apply propositions to all already decorated blocks/sections
+  if (document.querySelector('[data-block-status="loaded"],[data-section-status="loaded"]')) {
+    fn(() => observer.disconnect());
+  }
 }
 
 function toCssSelector(selector) {
   return selector.replace(/(\.\S+)?:eq\((\d+)\)/g, (_, clss, i) => `:nth-child(${Number(i) + 1}${clss ? ` of ${clss})` : ''}`);
 }
 
-async function getElementForProposition(proposition) {
+function getElementForProposition(proposition) {
   const selector = proposition.data.prehidingSelector
     || toCssSelector(proposition.data.selector);
   return document.querySelector(selector);
 }
+
+const DOM_ACTION_SCHEMA = 'https://ns.adobe.com/personalization/dom-action';
+const JSON_CONTENT_SCHEMA = 'https://ns.adobe.com/personalization/json-content-item';
 
 async function getAndApplyRenderDecisions() {
   const response = await window.alloy('sendEvent', {
@@ -148,30 +151,45 @@ async function getAndApplyRenderDecisions() {
   });
   const { propositions } = response;
 
-  // Existing dom-action handling (VEC-style) stays as-is
-  onDecoratedElement(async () => {
-    await window.alloy('applyPropositions', { propositions });
-    propositions.forEach((p) => {
-      p.items = p.items.filter((i) => i.schema !== 'https://ns.adobe.com/personalization/dom-action' || !getElementForProposition(i));
-    });
-  });
-
-  // New: handle the JSON offer for "hero" manually
+  // Pre-compute the manual JSON offer for the "hero" scope (not renderable by alloy)
   const heroProposition = propositions.find((p) => p.scope === 'hero');
-  if (heroProposition) {
-    const jsonItem = heroProposition.items.find(
-      (i) => i.schema === 'https://ns.adobe.com/personalization/json-content-item',
-    );
-    const content = jsonItem?.data?.content;
-    if (content) {
-      onDecoratedElement(() => {
-        const heading = document.querySelector('.hero h1, .hero h2'); // adjust selector
-        if (heading && content.heading) {
-          heading.textContent = content.heading;
-        }
+  const heroJsonItem = heroProposition?.items.find((i) => i.schema === JSON_CONTENT_SCHEMA);
+  const heroContent = heroJsonItem?.data?.content;
+  let heroApplied = false;
+
+  onDecoratedElement((disconnect) => {
+    // Only hand DOM-action propositions to alloy; JSON offers are applied manually below.
+    const domPropositions = propositions
+      .map((p) => ({ ...p, items: (p.items || []).filter((i) => i.schema === DOM_ACTION_SCHEMA) }))
+      .filter((p) => p.items.length);
+    if (domPropositions.length) {
+      window.alloy('applyPropositions', { propositions: domPropositions });
+      // Drop DOM actions that have now been applied so we don't re-apply them.
+      propositions.forEach((p) => {
+        p.items = (p.items || []).filter(
+          (i) => i.schema !== DOM_ACTION_SCHEMA || !getElementForProposition(i),
+        );
       });
     }
-  }
+
+    // Manually apply the "hero" JSON offer once.
+    if (!heroApplied && heroContent?.heading) {
+      const heading = document.querySelector('.hero h1, .hero h2'); // adjust selector
+      if (heading) {
+        heading.textContent = heroContent.heading;
+        heroApplied = true;
+      }
+    }
+
+    // Stop observing once all pending work is complete.
+    const domPending = propositions.some(
+      (p) => (p.items || []).some((i) => i.schema === DOM_ACTION_SCHEMA),
+    );
+    const heroPending = !!heroContent?.heading && !heroApplied;
+    if (!domPending && !heroPending) {
+      disconnect();
+    }
+  });
 
   window.setTimeout(() => {
     window.alloy('sendEvent', {
