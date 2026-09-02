@@ -140,40 +140,44 @@ async function getElementForProposition(proposition) {
 }
 
 async function getAndApplyRenderDecisions() {
-  // Get the decisions, but don't render them automatically
-  // so we can hook up into the AEM EDS page load sequence
   const response = await window.alloy('sendEvent', {
     renderDecisions: false,
     personalization: {
-      decisionScopes: ['hero'], // add your form-based scope(s) here
+      decisionScopes: ['hero'],
     },
   });
   const { propositions } = response;
+
+  // Existing dom-action handling (VEC-style) stays as-is
   onDecoratedElement(async () => {
-    await window.alloy('applyPropositions', {
-      propositions,
-      metadata: {
-        hero: {
-          selector: '.hero', // wherever this block renders in your DOM
-          actionType: 'setHtml',
-        },
-      },
-    });
-    // keep track of propositions that were applied
+    await window.alloy('applyPropositions', { propositions });
     propositions.forEach((p) => {
       p.items = p.items.filter((i) => i.schema !== 'https://ns.adobe.com/personalization/dom-action' || !getElementForProposition(i));
     });
   });
 
-  // Reporting is deferred to avoid long tasks
+  // New: handle the JSON offer for "hero" manually
+  const heroProposition = propositions.find((p) => p.scope === 'hero');
+  if (heroProposition) {
+    const jsonItem = heroProposition.items.find(
+      (i) => i.schema === 'https://ns.adobe.com/personalization/json-content-item',
+    );
+    const content = jsonItem?.data?.content;
+    if (content) {
+      onDecoratedElement(() => {
+        const heading = document.querySelector('.hero h1, .hero h2'); // adjust selector
+        if (heading && content.heading) {
+          heading.textContent = content.heading;
+        }
+      });
+    }
+  }
+
   window.setTimeout(() => {
-    // Report shown decisions
     window.alloy('sendEvent', {
       xdm: {
         eventType: 'decisioning.propositionDisplay',
-        _experience: {
-          decisioning: { propositions },
-        },
+        _experience: { decisioning: { propositions } },
       },
     });
   });
