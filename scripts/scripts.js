@@ -144,10 +144,19 @@ async function getAndApplyRenderDecisions() {
   // so we can hook up into the AEM EDS page load sequence
   const response = await window.alloy('sendEvent', {
     renderDecisions: false,
+    personalization: {
+      decisionScopes: ['hero'], // add your form-based scope(s) here
+    }
   });
   const { propositions } = response;
   onDecoratedElement(async () => {
-    await window.alloy('applyPropositions', { propositions });
+    await window.alloy('applyPropositions', { propositions, metadata: {
+        'hero': {
+          selector: '.hero', // wherever this block renders in your DOM
+          actionType: 'setHtml',
+        },
+      },
+    });
     // keep track of propositions that were applied
     propositions.forEach((p) => {
       p.items = p.items.filter((i) => i.schema !== 'https://ns.adobe.com/personalization/dom-action' || !getElementForProposition(i));
