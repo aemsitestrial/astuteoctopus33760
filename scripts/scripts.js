@@ -146,12 +146,14 @@ async function getAndApplyRenderDecisions() {
     renderDecisions: false,
     personalization: {
       decisionScopes: ['hero'], // add your form-based scope(s) here
-    }
+    },
   });
   const { propositions } = response;
   onDecoratedElement(async () => {
-    await window.alloy('applyPropositions', { propositions, metadata: {
-        'hero': {
+    await window.alloy('applyPropositions', {
+      propositions,
+      metadata: {
+        hero: {
           selector: '.hero', // wherever this block renders in your DOM
           actionType: 'setHtml',
         },
