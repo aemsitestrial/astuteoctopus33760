@@ -133,7 +133,7 @@ function toCssSelector(selector) {
   return selector.replace(/(\.\S+)?:eq\((\d+)\)/g, (_, clss, i) => `:nth-child(${Number(i) + 1}${clss ? ` of ${clss})` : ''}`);
 }
 
-async function getElementForProposition(proposition) {
+function getElementForProposition(proposition) {
   const selector = proposition.data.prehidingSelector
     || toCssSelector(proposition.data.selector);
   return document.querySelector(selector);
