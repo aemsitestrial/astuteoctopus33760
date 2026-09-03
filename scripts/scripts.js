@@ -107,11 +107,16 @@ function initWebSDK(path, config) {
 }
 
 function onDecoratedElement(fn) {
+  // Apply propositions to all already decorated blocks/sections
+  if (document.querySelector('[data-block-status="loaded"],[data-section-status="loaded"]')) {
+    fn();
+  }
+
   const observer = new MutationObserver((mutations) => {
     if (mutations.some((m) => m.target.tagName === 'BODY'
       || m.target.dataset.sectionStatus === 'loaded'
       || m.target.dataset.blockStatus === 'loaded')) {
-      fn(() => observer.disconnect());
+      fn();
     }
   });
   // Watch sections and blocks being decorated async
@@ -122,98 +127,51 @@ function onDecoratedElement(fn) {
   });
   // Watch anything else added to the body
   observer.observe(document.querySelector('body'), { childList: true });
-
-  // Apply propositions to all already decorated blocks/sections
-  if (document.querySelector('[data-block-status="loaded"],[data-section-status="loaded"]')) {
-    fn(() => observer.disconnect());
-  }
 }
 
 function toCssSelector(selector) {
   return selector.replace(/(\.\S+)?:eq\((\d+)\)/g, (_, clss, i) => `:nth-child(${Number(i) + 1}${clss ? ` of ${clss})` : ''}`);
 }
 
-function getElementForProposition(proposition) {
+async function getElementForProposition(proposition) {
   const selector = proposition.data.prehidingSelector
     || toCssSelector(proposition.data.selector);
   return document.querySelector(selector);
 }
 
-const DOM_ACTION_SCHEMA = 'https://ns.adobe.com/personalization/dom-action';
-const JSON_CONTENT_SCHEMA = 'https://ns.adobe.com/personalization/json-content-item';
-
 async function getAndApplyRenderDecisions() {
-  const response = await window.alloy('sendEvent', {
-    renderDecisions: false,
-  });
+  // Get the decisions, but don't render them automatically
+  // so we can hook up into the AEM EDS page load sequence
+  const response = await window.alloy('sendEvent', { renderDecisions: false });
   const { propositions } = response;
-
-  // Pre-compute the manual JSON offer for the "hero" scope (not renderable by alloy)
-  const heroProposition = propositions.find((p) => p.scope === 'hero');
-  const heroJsonItem = heroProposition?.items.find((i) => i.schema === JSON_CONTENT_SCHEMA);
-  const heroContent = heroJsonItem?.data?.content;
-  let heroApplied = false;
-
-  onDecoratedElement((disconnect) => {
-    // Only hand DOM-action propositions to alloy; JSON offers are applied manually below.
-    const domPropositions = propositions
-      .map((p) => ({ ...p, items: (p.items || []).filter((i) => i.schema === DOM_ACTION_SCHEMA) }))
-      .filter((p) => p.items.length);
-    if (domPropositions.length) {
-      window.alloy('applyPropositions', { propositions: domPropositions });
-      // Drop DOM actions that have now been applied so we don't re-apply them.
-      propositions.forEach((p) => {
-        p.items = (p.items || []).filter(
-          (i) => i.schema !== DOM_ACTION_SCHEMA || !getElementForProposition(i),
-        );
-      });
-    }
-
-    // Manually apply the "hero" JSON offer once.
-    if (!heroApplied && heroContent?.heading) {
-      const heading = document.querySelector('.hero h1, .hero h2'); // adjust selector
-      if (heading) {
-        heading.textContent = heroContent.heading;
-        heroApplied = true;
-      }
-    }
-
-    // Stop observing once all pending work is complete.
-    const domPending = propositions.some(
-      (p) => (p.items || []).some((i) => i.schema === DOM_ACTION_SCHEMA),
-    );
-    const heroPending = !!heroContent?.heading && !heroApplied;
-    if (!domPending && !heroPending) {
-      disconnect();
-    }
+  onDecoratedElement(async () => {
+    await window.alloy('applyPropositions', { propositions });
+    // keep track of propositions that were applied
+    propositions.forEach((p) => {
+      p.items = p.items.filter((i) => i.schema !== 'https://ns.adobe.com/personalization/dom-action' || !getElementForProposition(i));
+    });
   });
 
+  // Reporting is deferred to avoid long tasks
   window.setTimeout(() => {
+    // Report shown decisions
     window.alloy('sendEvent', {
       xdm: {
         eventType: 'decisioning.propositionDisplay',
-        _experience: { decisioning: { propositions } },
+        _experience: {
+          decisioning: { propositions },
+        },
       },
     });
   });
 }
 
-// Initialise immediately — promise is awaited in loadEager
 const alloyLoadedPromise = initWebSDK('./alloy.js', {
   datastreamId: 'd7e718aa-3cf8-429f-bc60-9921cdbed6cc',
   orgId: '0CEB60F754C7E06B0A4C98A2@AdobeOrg',
 });
 
-const ALLOWED_TARGET_HOSTS = [
-  'www.accenture.com',
-  'main--hastyfalcon60506--aemsitestrial.aem.live',
-  // add other approved production/staging hostnames here
-];
-
-const isTargetHost = ALLOWED_TARGET_HOSTS.some((h) => window.location.hostname === h)
-  || window.location.hostname === 'localhost';
-
-if (getMetadata('target') && isTargetHost) {
+if (getMetadata('target')) {
   alloyLoadedPromise.then(() => getAndApplyRenderDecisions());
 }
 
