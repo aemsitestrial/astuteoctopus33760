@@ -144,7 +144,7 @@ const JSON_CONTENT_SCHEMA = 'https://ns.adobe.com/personalization/json-content-i
 
 async function getAndApplyRenderDecisions() {
   const response = await window.alloy('sendEvent', {
-    renderDecisions: false
+    renderDecisions: false,
   });
   const { propositions } = response;
 
