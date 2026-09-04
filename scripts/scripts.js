@@ -139,16 +139,93 @@ function getElementForProposition(proposition) {
   return document.querySelector(selector);
 }
 
+const JSON_CONTENT_ITEM_SCHEMA = 'https://ns.adobe.com/personalization/json-content-item';
+
+/**
+ * Decision scopes requested for Form-Based (JSON offer) experiences.
+ * Each scope maps to an mbox/decision scope configured in the Adobe Target activity.
+ * Keep this in sync with FORM_BASED_HANDLERS below.
+ */
+const FORM_BASED_SCOPES = ['hero', 'metrics', 'feature-cards'];
+
+/**
+ * Applies a JSON offer's content to the page for a given scope.
+ *
+ * Unlike VEC (dom-action) offers, Form-Based offers carry no selector — this code
+ * owns *where* the content goes. Anchor to stable elements (ids, block classes),
+ * never to positional :nth-child paths, which break after EDS block decoration.
+ *
+ * The JSON offer authored in Target is available as `content` (an object), e.g.
+ *   { "heading": "Energy that works as hard as you do - Testing EXP A" }
+ *
+ * Each handler returns true when it successfully applied (so we can stop retrying).
+ */
+const FORM_BASED_HANDLERS = {
+  // Hero heading — anchored to the EDS-generated heading id (stable across decoration).
+  hero: (content) => {
+    const heading = document.querySelector('.hero h1, .hero h2');
+    if (heading && content.heading) {
+      heading.textContent = content.heading;
+      return true;
+    }
+    return false;
+  },
+  // "Why Xcel" section heading in the feature-cards block.
+  'feature-cards': (content) => {
+    const heading = document.querySelector('.feature-cards-container h2, .feature-cards h2');
+    if (heading && content.heading) {
+      heading.textContent = content.heading;
+      return true;
+    }
+    return false;
+  },
+  // A labelled metric inside the metrics block (matched by its current label text,
+  // so it does not depend on the block's positional structure).
+  metrics: (content) => {
+    if (!content.label || !content.newLabel) return false;
+    const cells = [...document.querySelectorAll('.metrics .metrics-item > div')];
+    const target = cells.find((c) => c.textContent.trim() === content.label);
+    if (target) {
+      target.textContent = content.newLabel;
+      return true;
+    }
+    return false;
+  },
+};
+
 async function getAndApplyRenderDecisions() {
   // Get the decisions, but don't render them automatically
-  // so we can hook up into the AEM EDS page load sequence
-  const response = await window.alloy('sendEvent', { renderDecisions: false });
+  // so we can hook up into the AEM EDS page load sequence.
+  // decisionScopes requests the Form-Based (JSON offer) experiences in addition
+  // to the default __view__ scope used by VEC (dom-action) experiences.
+  const response = await window.alloy('sendEvent', {
+    renderDecisions: false,
+    personalization: {
+      decisionScopes: FORM_BASED_SCOPES,
+    },
+  });
   const { propositions } = response;
+
+  // Track which Form-Based scopes have already been applied so a handler runs once.
+  const appliedScopes = new Set();
+
   onDecoratedElement(async () => {
+    // 1) VEC / dom-action offers: let alloy render them against their selectors.
     await window.alloy('applyPropositions', { propositions });
     // keep track of propositions that were applied
     propositions.forEach((p) => {
       p.items = p.items.filter((i) => i.schema !== 'https://ns.adobe.com/personalization/dom-action' || !getElementForProposition(i));
+    });
+
+    // 2) Form-Based / JSON offers: apply manually to stable anchors.
+    propositions.forEach((p) => {
+      const handler = FORM_BASED_HANDLERS[p.scope];
+      if (!handler || appliedScopes.has(p.scope)) return;
+      const jsonItem = (p.items || []).find((i) => i.schema === JSON_CONTENT_ITEM_SCHEMA);
+      const content = jsonItem?.data?.content;
+      if (content && handler(content)) {
+        appliedScopes.add(p.scope);
+      }
     });
   });
 
