@@ -83,6 +83,20 @@
     }
   },
 
+  "default-content": {
+    "_note": "Default content — loose paragraphs/headings not inside a block (EDS wraps them in .default-content-wrapper). Matched by current text within <main>. `match.wrapper` (zero-based index) is optional, for disambiguating repeated text.",
+    "items": [
+      {
+        "match": { "text": "This is a sample text block" },
+        "set": { "text": "Personalized intro — Experience A" }
+      },
+      {
+        "match": { "text": "Second text block example" },
+        "set": { "text": "Switching is quick, free, and takes about 5 minutes — Experience A" }
+      }
+    ]
+  },
+
   "page": {
     "_note": "Composite offer — one scope drives several blocks at once. `blocks` maps each block/scope name to that block's normal offer shape. Use this instead of separate hero/metrics/feature-cards offers when a single experience spans multiple blocks.",
     "blocks": {

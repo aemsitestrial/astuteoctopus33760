@@ -179,6 +179,42 @@ function itemHandler(blockClass, itemSelector, labelSelector, fieldMap) {
   ));
 }
 
+/**
+ * Handler for "default content" — loose paragraphs, headings and lists authored
+ * directly in a section (EDS wraps them in `.default-content-wrapper`), NOT inside
+ * a block. These carry no block class, labels or ids, so we anchor by the element's
+ * current text, optionally scoped to a wrapper.
+ *
+ * Each instruction:
+ *   match.text     → element (p, h1-6, li) whose trimmed text equals this — required
+ *   match.wrapper  → zero-based index of the main `.default-content-wrapper` to
+ *                    search (omit to search all default-content in <main>)
+ *   set.text       → the replacement text
+ *
+ *   { "items": [ { "match": { "text": "This is a sample text block" },
+ *                  "set":   { "text": "Personalized intro — Experience A" } } ] }
+ *
+ * Scoped to <main> so header/footer default content is never matched.
+ */
+function defaultContentElements(wrapperIndex) {
+  const main = document.querySelector('main');
+  if (!main) return [];
+  const wrappers = [...main.querySelectorAll('.default-content-wrapper')];
+  const scope = typeof wrapperIndex === 'number' ? [wrappers[wrapperIndex]] : wrappers;
+  return scope
+    .filter(Boolean)
+    .flatMap((w) => [...w.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li')]);
+}
+
+function defaultContentHandler() {
+  return (content) => applyInstructions(content, (match, set) => {
+    if (!match.text || typeof set.text !== 'string') return false;
+    const el = defaultContentElements(match.wrapper)
+      .find((e) => e.textContent.trim() === match.text);
+    return setText(el, set.text);
+  });
+}
+
 // Scope names that resolve to a composite handler — skipped when a composite
 // dispatches, so one composite can never recurse into another (or itself).
 const COMPOSITE_SCOPES = new Set();
@@ -303,6 +339,9 @@ const FORM_BASED_HANDLERS = {
     title: '.job-title',
     description: '.job-desc',
   }),
+
+  // --- Default content (loose paragraphs/headings/lists, not in a block) ---
+  'default-content': defaultContentHandler(),
 
   // --- Composite: one offer that drives several blocks at once (see compositeHandler) ---
   page: compositeHandler(),
