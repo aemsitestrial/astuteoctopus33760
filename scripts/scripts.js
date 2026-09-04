@@ -155,42 +155,89 @@ const FORM_BASED_SCOPES = ['hero', 'metrics', 'feature-cards'];
  * owns *where* the content goes. Anchor to stable elements (ids, block classes),
  * never to positional :nth-child paths, which break after EDS block decoration.
  *
- * The JSON offer authored in Target is available as `content` (an object), e.g.
- *   { "heading": "Energy that works as hard as you do - Testing EXP A" }
+ * MULTI-INSTANCE: when a page has more than one instance of the same block, the
+ * offer uses an `items` array; each entry carries a `match` (which instance) and
+ * a `set` (what to change), e.g.
+ *   {
+ *     "items": [
+ *       { "match": { "key": "kpis" }, "set": { "heading": "..." } },
+ *       { "match": { "instance": 1 }, "set": { "heading": "..." } }
+ *     ]
+ *   }
+ * A single-instance offer may omit `items` and pass a flat object, e.g.
+ *   { "set": { "heading": "..." } }  or just  { "heading": "..." }
  *
- * Each handler returns true when it successfully applied (so we can stop retrying).
+ * Each handler returns true only when ALL its instructions applied (so the
+ * scope stops retrying on later decoration passes).
  */
+
+// Returns all instances of a block on the page (e.g. getBlocks('metrics')).
+function getBlocks(blockClass) {
+  return [...document.querySelectorAll(`.${blockClass}`)];
+}
+
+/**
+ * Picks a single block instance from a list using a match descriptor:
+ *  - match.key      → the block whose `data-target-key` attribute equals key
+ *                     (author this in UE as a stable, position-independent id)
+ *  - match.instance → zero-based index into the list
+ *  - default        → the first instance
+ */
+function pickBlock(blocks, match = {}) {
+  if (match.key) return blocks.find((b) => b.dataset.targetKey === match.key) || null;
+  if (typeof match.instance === 'number') return blocks[match.instance] || null;
+  return blocks[0] || null;
+}
+
+/**
+ * Normalises a JSON offer to a list of { match, set } instructions and applies
+ * each via applyOne. Returns true only when every instruction applied.
+ */
+function applyInstructions(content, applyOne) {
+  const items = Array.isArray(content.items)
+    ? content.items
+    // flat single-instance offer: `set` object, or the content itself
+    : [{ match: content.match || {}, set: content.set || content }];
+  if (!items.length) return false;
+  const applied = items.filter((it) => applyOne(it.match || {}, it.set || {})).length;
+  return applied === items.length;
+}
+
 const FORM_BASED_HANDLERS = {
-  // Hero heading — anchored to the EDS-generated heading id (stable across decoration).
-  hero: (content) => {
-    const heading = document.querySelector('.hero h1, .hero h2');
-    if (heading && content.heading) {
-      heading.textContent = content.heading;
+  // Hero heading — anchored to the block's heading (stable across decoration).
+  hero: (content) => applyInstructions(content, (match, set) => {
+    const block = pickBlock(getBlocks('hero'), match);
+    const heading = block?.querySelector('h1, h2');
+    if (heading && set.heading) {
+      heading.textContent = set.heading;
       return true;
     }
     return false;
-  },
-  // "Why Xcel" section heading in the feature-cards block.
-  'feature-cards': (content) => {
-    const heading = document.querySelector('.feature-cards-container h2, .feature-cards h2');
-    if (heading && content.heading) {
-      heading.textContent = content.heading;
+  }),
+  // Feature-cards section heading.
+  'feature-cards': (content) => applyInstructions(content, (match, set) => {
+    const block = pickBlock(getBlocks('feature-cards'), match);
+    const heading = block?.querySelector('h2');
+    if (heading && set.heading) {
+      heading.textContent = set.heading;
       return true;
     }
     return false;
-  },
-  // A labelled metric inside the metrics block (matched by its current label text,
-  // so it does not depend on the block's positional structure).
-  metrics: (content) => {
-    if (!content.label || !content.newLabel) return false;
-    const cells = [...document.querySelectorAll('.metrics .metrics-item > div')];
-    const target = cells.find((c) => c.textContent.trim() === content.label);
-    if (target) {
-      target.textContent = content.newLabel;
+  }),
+  // A labelled metric inside a metrics block. `match.label` locates the cell by its
+  // current text (position-independent); `match.key`/`match.instance` disambiguate
+  // which metrics block when several are present.
+  metrics: (content) => applyInstructions(content, (match, set) => {
+    const block = pickBlock(getBlocks('metrics'), match);
+    if (!block || !match.label || !set.label) return false;
+    const cell = [...block.querySelectorAll('.metrics-item > div')]
+      .find((c) => c.textContent.trim() === match.label);
+    if (cell) {
+      cell.textContent = set.label;
       return true;
     }
     return false;
-  },
+  }),
 };
 
 async function getAndApplyRenderDecisions() {
