@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hero V2 — Variant Sample Draft</title>
+
+  <!-- The real, shipped block stylesheet. Nothing in this demo re-implements it. -->
+  <link rel="stylesheet" href="../../blocks/hero-v2/hero-v2.css">
+
+  <style>
+    /* Demo chrome only — never part of the block. */
+    :root { color-scheme: light dark; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: #f4f5f7;
+      color: #1b1b1b;
+    }
+
+    .demo-header {
+      padding: 2rem 1.5rem 1rem;
+      max-width: 60rem;
+      margin-inline: auto;
+    }
+
+    .demo-header h1 { margin: 0 0 0.5rem; font-size: 1.75rem; }
+    .demo-header p { margin: 0; color: #555; max-width: 44rem; line-height: 1.5; }
+
+    .demo-variant {
+      max-width: 72rem;
+      margin: 2.5rem auto;
+      padding-inline: 1rem;
+    }
+
+    .demo-variant__label {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
+      align-items: baseline;
+      margin: 0 0 0.75rem;
+    }
+
+    .demo-variant__label h2 { margin: 0; font-size: 1.15rem; }
+
+    .demo-variant__label code {
+      font-size: 0.8rem;
+      background: #e6e8eb;
+      padding: 0.15rem 0.5rem;
+      border-radius: 0.25rem;
+      color: #333;
+    }
+
+    /* Give each hero a rounded frame so the sample reads as a gallery. */
+    .demo-variant .hero-v2 {
+      border-radius: 0.75rem;
+      box-shadow: 0 6px 24px rgb(0 0 0 / 12%);
+    }
+
+    /* Fallback background so heroes still look intentional even before the
+       optimized <picture> src resolves through the media pipeline. */
+    .demo-variant .hero-v2 .hero-media {
+      background: linear-gradient(135deg, #0b6e4f 0%, #094f39 60%, #052e22 100%);
+    }
+  </style>
+</head>
+<body>
+  <header class="demo-header">
+    <h1>Hero V2 — Variant Sample Draft</h1>
+    <p>
+      Every hero below is built from the same block-table markup an author produces, then
+      decorated by the real <code>blocks/hero-v2/hero-v2.js</code> and styled by
+      <code>blocks/hero-v2/hero-v2.css</code>. The base variant is author-controlled; the six
+      named variants lock height, alignment, and image position.
+    </p>
+  </header>
+
+  <main id="variants"></main>
+
+  <script type="module">
+    import decorate from '../../blocks/hero-v2/hero-v2.js';
+
+    const IMG = './assets/hero-sample.svg';
+
+    // The seven configurations from the spec (1 base + 6 locked variants).
+    // `variantClass` is the class the authoring "Variant" select appends; an
+    // empty string is the base, author-controlled hero.
+    const VARIANTS = [
+      {
+        variantClass: '',
+        label: 'Base — All Fields',
+        note: 'author-controlled (defaults: responsive · center · center)',
+        title: 'Energy that works as hard as you do',
+        subtitle: 'Transparent pricing, renewable-first supply, and real-time usage insights.',
+        actions: [['Check your area', '#area'], ['View plans', '#plans']],
+      },
+      {
+        variantClass: 'tall-center-with-action',
+        label: 'Tall Center with Action',
+        note: 'tall · center · image center',
+        title: 'Power your home the greener way',
+        subtitle: 'A single, primary call to action on a tall, centered canvas.',
+        actions: [['Get started', '#start']],
+      },
+      {
+        variantClass: 'tall-left-with-actions',
+        label: 'Tall Left with Actions',
+        note: 'tall · left · image center',
+        title: 'Built for homes and businesses across the UK',
+        subtitle: 'Left-aligned content with two positional actions.',
+        actions: [['Switch today', '#switch'], ['Compare tariffs', '#compare']],
+      },
+      {
+        variantClass: 'standard-center-with-actions',
+        label: 'Standard Center with Actions',
+        note: 'standard · center · image position hidden',
+        title: 'Real-time insight into every kilowatt',
+        subtitle: 'Standard height, centered, two actions.',
+        actions: [['See your dashboard', '#dashboard'], ['Learn more', '#learn']],
+      },
+      {
+        variantClass: 'standard-left-with-actions',
+        label: 'Standard Left with Actions',
+        note: 'standard · left · image position hidden',
+        title: 'Renewable-first supply, transparent pricing',
+        subtitle: 'Standard height, left-aligned, two actions.',
+        actions: [['Join now', '#join'], ['How it works', '#how']],
+      },
+      {
+        variantClass: 'compact-center-with-actions',
+        label: 'Compact Center with Actions',
+        note: 'compact · center · image position hidden',
+        title: 'Lower rates, less fuss',
+        subtitle: 'A short, centered hero for dense pages.',
+        actions: [['Check availability', '#avail'], ['Talk to us', '#talk']],
+      },
+      {
+        variantClass: 'compact-left-with-actions',
+        label: 'Compact Left with Actions',
+        note: 'compact · left · image position hidden',
+        title: 'Your energy, on your terms',
+        subtitle: 'A short, left-aligned hero for dense pages.',
+        actions: [['Get a quote', '#quote'], ['Read the guide', '#guide']],
+      },
+    ];
+
+    // Build one block exactly as EDS delivers it: a `.hero-v2 [.variant]` div
+    // whose children are the authored rows (image, heading, subtitle, actions).
+    function buildHeroBlock(v) {
+      const block = document.createElement('div');
+      block.className = v.variantClass ? `hero-v2 ${v.variantClass}` : 'hero-v2';
+
+      const row = (buildInner) => {
+        const r = document.createElement('div');
+        const cell = document.createElement('div');
+        buildInner(cell);
+        r.append(cell);
+        block.append(r);
+      };
+
+      // Image row
+      row((cell) => {
+        const img = document.createElement('img');
+        img.src = IMG;
+        img.setAttribute('alt', 'Rolling green hills at dusk with a setting sun');
+        cell.append(img);
+      });
+
+      // Heading row
+      row((cell) => {
+        const h = document.createElement('h1');
+        h.textContent = v.title;
+        cell.append(h);
+      });
+
+      // Subtitle row
+      row((cell) => {
+        const p = document.createElement('p');
+        p.textContent = v.subtitle;
+        cell.append(p);
+      });
+
+      // Actions row (one <p><a></p> per action, EDS button convention)
+      row((cell) => {
+        v.actions.forEach(([text, href]) => {
+          const p = document.createElement('p');
+          const a = document.createElement('a');
+          a.href = href;
+          a.textContent = text;
+          p.append(a);
+          cell.append(p);
+        });
+      });
+
+      return block;
+    }
+
+    const root = document.getElementById('variants');
+
+    VARIANTS.forEach((v) => {
+      const section = document.createElement('section');
+      section.className = 'demo-variant';
+
+      const label = document.createElement('div');
+      label.className = 'demo-variant__label';
+      const h2 = document.createElement('h2');
+      h2.textContent = v.label;
+      const code = document.createElement('code');
+      code.textContent = v.variantClass ? `.hero-v2.${v.variantClass}` : '.hero-v2 (base)';
+      const note = document.createElement('code');
+      note.textContent = v.note;
+      label.append(h2, code, note);
+
+      const block = buildHeroBlock(v);
+      section.append(label, block);
+      root.append(section);
+
+      // Run the real decoration on each block.
+      decorate(block);
+    });
+  </script>
+</body>
+</html>
