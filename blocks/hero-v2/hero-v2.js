@@ -7,19 +7,34 @@
  * This is an additive, versioned sibling of blocks/hero/ — the original hero
  * block is intentionally left untouched. Authors pick "Hero V2" to opt in.
  *
+ * Two content sources are supported, both funneling into the same renderer:
+ *   1. Inline authoring — image/title/subtitle/actions authored in the block.
+ *   2. Content Fragment — the block contains only a CF path; the hero data is
+ *      fetched from a persisted GraphQL query and rendered client-side.
+ *
  * Scope: vanilla JS only, no globals, no unsafe HTML injection, defensive
- * against missing/invalid authored content.
+ * against missing/invalid authored or fetched content.
  */
 
 // createOptimizedPicture is the standard EDS boilerplate helper (scripts/aem.js)
 // used across Franklin/EDS projects to generate responsive <picture> markup.
 import { createOptimizedPicture } from '../../scripts/aem.js';
+// getSiteConfig reads environment-specific values from /config.json so nothing
+// environment-specific is hardcoded (used here for the hero's query name).
+import { getSiteConfig } from '../../scripts/scripts.js';
+// Shared Content Fragment GraphQL service — endpoint resolution, persisted
+// query fetching, and asset-URL resolution, reusable across CF-backed blocks.
+import { fetchFragmentByPath, getCfImageUrl } from '../../scripts/cf-graphql.js';
+
+// Persisted query name is read from config with this documented fallback.
+const DEFAULT_HERO_QUERY = 'hero-by-path';
 
 const HEIGHT_VALUES = ['responsive', 'tall', 'standard', 'compact'];
 const ALIGN_VALUES = ['center', 'left'];
 const IMAGE_POSITION_VALUES = ['center', 'top', 'bottom'];
+const ACTION_STYLES = ['primary', 'static-light'];
 
-// Maps the six locked-preset variant classes (see _hero-v2.json "classes")
+// Maps the six locked-preset variant classes (see _hero-v2.json "classes"
 // field) to their fixed configuration. Required per Assumptions and Gaps
 // item A1: named variants make Height/Text Alignment/Image Position
 // non-author-editable, so the values must be resolved from the variant
@@ -80,53 +95,130 @@ function resolveLayoutConfig(block) {
 }
 
 /**
- * Builds one <a> action element. actionStyle defaults to the spec-defined
- * positional rule (first = primary, second = static-light) when the
- * authored style is missing or invalid, and also recognizes the common EDS
- * authoring convention of <strong> = primary / <em> = static-light so
- * authors typing directly into a rich-text cell get the same result.
+ * Builds one <a> action element from normalized action data. actionStyle
+ * defaults to the spec-defined positional rule (first = primary, second =
+ * static-light) when the style is missing or invalid.
  */
-function buildAction(anchor, index) {
-  const href = anchor.getAttribute('href');
+function buildAction({ text, href, style }, index) {
   if (!isSafeUrl(href)) return null;
+  const label = safeText(text);
+  if (!label) return null;
 
-  const text = safeText(anchor.textContent);
-  if (!text) return null;
-
-  let style = index === 0 ? 'primary' : 'static-light';
-  if (anchor.closest('strong')) style = 'primary';
-  else if (anchor.closest('em')) style = 'static-light';
-
-  const action = document.createElement('a');
-  action.className = `hero-action hero-action-${style}`;
-  action.href = href;
-  action.textContent = text;
-
-  // Preserve intent for a link that opens a new tab, added defensively by
-  // authors; never trust rel to already be safe.
-  if (anchor.target === '_blank') {
-    action.target = '_blank';
-    action.rel = 'noopener noreferrer';
+  let resolvedStyle = style;
+  if (!ACTION_STYLES.includes(resolvedStyle)) {
+    resolvedStyle = index === 0 ? 'primary' : 'static-light';
   }
 
+  const action = document.createElement('a');
+  action.className = `hero-action hero-action-${resolvedStyle}`;
+  action.href = href;
+  action.textContent = label;
   return action;
 }
 
-export default function decorate(block) {
-  const { height, align, imagePosition } = resolveLayoutConfig(block);
+/**
+ * Normalizes the block's authored (inline) markup into the shared hero data
+ * shape consumed by renderHero().
+ */
+function readInlineData(block) {
+  const img = block.querySelector('img');
+  const heading = block.querySelector('h1, h2, h3, h4, h5, h6');
+  const paragraphs = [...block.querySelectorAll('p')];
+  const subtitleParagraph = paragraphs.find((p) => !p.querySelector('a') && safeText(p.textContent));
+
+  const actions = [...block.querySelectorAll('a')].slice(0, 2).map((anchor, index) => {
+    // Honor the common EDS rich-text convention: <strong> = primary,
+    // <em> = static-light, else positional default.
+    let style;
+    if (anchor.closest('strong')) style = 'primary';
+    else if (anchor.closest('em')) style = 'static-light';
+    else style = index === 0 ? 'primary' : 'static-light';
+    return { text: anchor.textContent, href: anchor.getAttribute('href'), style };
+  });
+
+  return {
+    imageSrc: img ? img.getAttribute('src') : '',
+    imageAlt: img ? safeText(img.getAttribute('alt')) : '',
+    // Preserve the authored heading element (keeps its level and any UE
+    // instrumentation) rather than reconstructing it.
+    headingEl: heading && safeText(heading.textContent) ? heading : null,
+    subtitle: subtitleParagraph ? safeText(subtitleParagraph.textContent) : '',
+    actions,
+  };
+}
+
+/**
+ * Normalizes a Content Fragment item (as returned by the shared CF GraphQL
+ * service) into the hero data shape consumed by renderHero(). Field names
+ * match docs/hero-block/hero.model.json. Hero-specific mapping stays here;
+ * generic fetch/URL concerns live in scripts/cf-graphql.js.
+ */
+function normalizeFragment(item) {
+  if (!item || typeof item !== 'object') return null;
+
+  const rawActions = Array.isArray(item.actions) ? item.actions : [];
+  const actions = rawActions.slice(0, 2).map((a) => ({
+    text: a?.actionText,
+    href: a?.actionLink,
+    style: a?.actionStyle,
+  }));
+
+  return {
+    imageSrc: getCfImageUrl(item.image),
+    imageAlt: safeText(item.imageAlt),
+    // richtext/plain title from the CF: build a heading element (h2 by
+    // default; a hero is rarely the page's only h1 when CF-driven).
+    titleText: safeText(item.title),
+    subtitle: safeText(item.subtitle),
+    actions,
+    // Layout hints from the CF, used only for the base (non-locked) block.
+    height: item.height,
+    textAlignment: item.textAlignment,
+    imagePosition: item.imagePosition,
+  };
+}
+
+/**
+ * Fetches a single hero Content Fragment by path via the shared CF GraphQL
+ * service, then maps it to the hero data shape. The persisted query name comes
+ * from /config.json (cf.graphql.query.heroByPath), defaulting to 'hero-by-path'.
+ * @returns {Promise<Object|null>} normalized hero data, or null on any failure
+ */
+async function fetchHeroFragment(path) {
+  const config = await getSiteConfig();
+  const queryName = safeText(config['cf.graphql.query.heroByPath']) || DEFAULT_HERO_QUERY;
+  const item = await fetchFragmentByPath(queryName, path);
+  return normalizeFragment(item);
+}
+
+/**
+ * Detects whether the block is a Content Fragment reference: no inline
+ * heading/image, and its only meaningful content is a path (a link href or
+ * text) pointing at a fragment. Returns the path, or '' for inline mode.
+ */
+function getFragmentPath(block) {
+  if (block.querySelector('img, h1, h2, h3, h4, h5, h6')) return '';
+  const link = block.querySelector('a[href]');
+  const candidate = link ? link.getAttribute('href') : safeText(block.textContent);
+  // Treat only absolute in-repo paths as CF references (e.g. /content/dam/...).
+  return candidate.startsWith('/') ? candidate : '';
+}
+
+/**
+ * Renders the hero from normalized data into the block. This is the single
+ * DOM-building path shared by inline and CF-driven modes.
+ */
+function renderHero(block, data, layout) {
+  const { height, align, imagePosition } = layout;
 
   // --- Media -------------------------------------------------------------
   const media = document.createElement('div');
   media.className = 'hero-media';
 
-  // First authored image anywhere in the block is the background. Scanning the
-  // whole block (rather than a fixed first row) keeps this robust to both
-  // document-authored 2-row tables and xwalk one-field-per-row rendering.
-  const img = block.querySelector('img');
-  if (img) {
-    const alt = safeText(img.getAttribute('alt'));
+  if (data.imageSrc) {
+    const alt = safeText(data.imageAlt);
     // Hero image is very likely the LCP element: eager-load, high priority.
-    const optimizedPic = createOptimizedPicture(img.src, alt, true, [{ width: '1600' }]);
+    const optimizedPic = createOptimizedPicture(data.imageSrc, alt, true, [{ width: '1600' }]);
     optimizedPic.querySelectorAll('img').forEach((el) => {
       el.setAttribute('alt', alt); // decorative fallback: alt="" is valid and intentional
       el.setAttribute('loading', 'eager');
@@ -141,31 +233,31 @@ export default function decorate(block) {
   const content = document.createElement('div');
   content.className = 'hero-content';
 
-  const heading = block.querySelector('h1, h2, h3, h4, h5, h6');
-  if (heading && safeText(heading.textContent)) {
+  if (data.headingEl) {
+    data.headingEl.className = 'hero-title';
+    content.append(data.headingEl);
+  } else if (safeText(data.titleText)) {
+    const heading = document.createElement('h2');
     heading.className = 'hero-title';
+    heading.textContent = data.titleText;
     content.append(heading);
   }
 
-  // Subtitle = first non-empty paragraph that is not just a CTA link wrapper.
-  const paragraphs = [...block.querySelectorAll('p')];
-  const subtitleParagraph = paragraphs.find(
-    (p) => !p.querySelector('a') && safeText(p.textContent),
-  );
-  if (subtitleParagraph) {
-    subtitleParagraph.className = 'hero-subtitle';
-    content.append(subtitleParagraph);
+  if (safeText(data.subtitle)) {
+    const p = document.createElement('p');
+    p.className = 'hero-subtitle';
+    p.textContent = data.subtitle;
+    content.append(p);
   }
 
-  const anchors = [...block.querySelectorAll('a')].slice(0, 2);
-  if (anchors.length) {
+  const actionEls = (data.actions || [])
+    .map((action, index) => buildAction(action, index))
+    .filter(Boolean);
+  if (actionEls.length) {
     const actions = document.createElement('div');
     actions.className = 'hero-actions';
-    anchors.forEach((anchor, index) => {
-      const action = buildAction(anchor, index);
-      if (action) actions.append(action);
-    });
-    if (actions.childElementCount) content.append(actions);
+    actionEls.forEach((el) => actions.append(el));
+    content.append(actions);
   }
 
   // --- Assemble ----------------------------------------------------------
@@ -186,4 +278,34 @@ export default function decorate(block) {
 
   // Stable selector for Adobe Target (see Target integration guide).
   block.dataset.blockName = 'hero-v2';
+}
+
+export default async function decorate(block) {
+  const fragmentPath = getFragmentPath(block);
+
+  let data;
+  if (fragmentPath) {
+    // CF-driven mode: fetch from the persisted query, fall back to an empty
+    // (but non-collapsing) hero if the fetch fails.
+    data = (await fetchHeroFragment(fragmentPath)) || { actions: [] };
+
+    // Let the fetched CF drive layout on the base (non-locked) block by
+    // mirroring its values onto the dataset before resolving the config.
+    if (!Object.keys(VARIANT_PRESETS).some((key) => block.classList.contains(key))) {
+      if (HEIGHT_VALUES.includes(data.height)) {
+        block.dataset.height = data.height;
+      }
+      if (ALIGN_VALUES.includes(data.textAlignment)) {
+        block.dataset.textAlignment = data.textAlignment;
+      }
+      if (IMAGE_POSITION_VALUES.includes(data.imagePosition)) {
+        block.dataset.imagePosition = data.imagePosition;
+      }
+    }
+  } else {
+    // Inline authoring mode.
+    data = readInlineData(block);
+  }
+
+  renderHero(block, data, resolveLayoutConfig(block));
 }

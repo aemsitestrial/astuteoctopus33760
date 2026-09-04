@@ -48,6 +48,33 @@ export function moveInstrumentation(from, to) {
 }
 
 /**
+ * Loads and caches the site config sheet (/config.json) as a key -> value map.
+ * The config sheet holds environment-specific values (e.g. the Content
+ * Fragment GraphQL endpoint) so they are never hardcoded in block code.
+ * @returns {Promise<Object>} map of config key to string value
+ */
+let configPromise;
+export async function getSiteConfig() {
+  if (!configPromise) {
+    configPromise = (async () => {
+      try {
+        const resp = await fetch(`${window.hlx.codeBasePath}/config.json`);
+        if (!resp.ok) return {};
+        const json = await resp.json();
+        const rows = Array.isArray(json?.data) ? json.data : [];
+        return rows.reduce((acc, row) => {
+          if (row?.key) acc[row.key] = row.value ?? '';
+          return acc;
+        }, {});
+      } catch (e) {
+        return {};
+      }
+    })();
+  }
+  return configPromise;
+}
+
+/**
  * load fonts.css and set a session storage flag
  */
 async function loadFonts() {
