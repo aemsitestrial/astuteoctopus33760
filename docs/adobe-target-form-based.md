@@ -143,7 +143,35 @@ these field names:
 | `pricing-plans` | item | `name`, `price`, `cta` | plan name |
 | `cards` | item | `heading`, `body` | card heading |
 | `job-listings` | item | `title`, `description` | job title |
+| `default-content` | text | `text` | `match.text` (current text) + optional `match.wrapper` index |
 | `page` | composite | `blocks` (map of block → offer) | — |
+
+### Default content (not in a block)
+
+"Default content" is loose paragraphs, headings and lists authored straight into a
+section — EDS wraps them in `.default-content-wrapper`. They have no block class,
+labels or ids, so the `default-content` scope matches by the element's **current
+text** (scoped to `<main>`, so header/footer are never touched):
+
+```json
+{
+  "items": [
+    { "match": { "text": "This is a sample text block" },
+      "set":   { "text": "Personalized intro — Experience A" } },
+    { "match": { "text": "Second text block example" },
+      "set":   { "text": "Second block — Variant B" } }
+  ]
+}
+```
+
+- `match.text` (required) — exact trimmed text of the `p`/`h1..6`/`li` to replace.
+- `match.wrapper` (optional) — zero-based index of the default-content wrapper in
+  `<main>` to restrict the search, for when the same text appears more than once.
+- `set.text` — the replacement text.
+
+> Because the anchor *is* the current text, an offer breaks if the source copy is
+> edited. For frequently-changed copy, prefer promoting it into a block with a
+> stable class, or add a heading (which gets an auto-generated id).
 
 ### Composite offers — several blocks in one scope
 
