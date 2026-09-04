@@ -1,0 +1,59 @@
+{
+  "_comment": "Sample Adobe Target Form-Based (JSON) offers for the landing page. Create one JSON offer per scope in Target (Offers > Create > JSON Offer) and assign it to the experience for that decision scope. Each top-level key is the decision scope / mbox name (matches a handler in scripts/target.js). Field names inside `set` match that block's fieldMap. `_note` keys are documentation only — omit them from the real offer.",
+
+  "hero": {
+    "_note": "Block-level fields. Omit any field you don't want to change.",
+    "set": {
+      "badge": "Rated #1 for customer trust — 2026",
+      "heading": "Energy that works as hard as you do — Experience A",
+      "subtitle": "Fair, transparent pricing and 100% renewable supply for homes and businesses across the UK.",
+      "primaryCta": "Get your quote",
+      "secondaryCta": "Compare plans"
+    }
+  },
+
+  "metrics": {
+    "_note": "Item collection. `match.item` selects a metric by its current label text; `set` updates that item's value/label/change.",
+    "items": [
+      {
+        "match": { "item": "Current rate / kWh" },
+        "set": { "value": "£0.22", "label": "Current rate / kWh", "change": "↓ 8.3% vs last month" }
+      },
+      {
+        "match": { "item": "Renewable mix today" },
+        "set": { "value": "91%", "label": "Renewable mix today", "change": "↑ 19% vs avg" }
+      }
+    ]
+  },
+
+  "stats": {
+    "_note": "Item collection matched by label. Update value and/or label.",
+    "items": [
+      {
+        "match": { "item": "Avg. annual saving vs big six" },
+        "set": { "value": "£415", "label": "Avg. annual saving vs big six" }
+      },
+      {
+        "match": { "item": "Trustpilot rating" },
+        "set": { "value": "4.9★", "label": "Trustpilot rating" }
+      }
+    ]
+  },
+
+  "feature-cards": {
+    "_note": "Block-level header fields for the feature-cards section.",
+    "set": {
+      "label": "Why switch to Xcel",
+      "heading": "Green energy, made simple and honest — Experience A",
+      "subtitle": "No exit fees, no bill shock, no asterisks. Just fair energy powered by wind, solar, and hydro."
+    }
+  },
+
+  "usage-dashboard": {
+    "_note": "Block-level fields. `cta` is only applied if this dashboard instance has a CTA link.",
+    "set": {
+      "label": "Smart metering",
+      "heading": "Your meter. Your data. Your control. — Experience A"
+    }
+  }
+}
