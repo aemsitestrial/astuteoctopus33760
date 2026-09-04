@@ -143,6 +143,40 @@ these field names:
 | `pricing-plans` | item | `name`, `price`, `cta` | plan name |
 | `cards` | item | `heading`, `body` | card heading |
 | `job-listings` | item | `title`, `description` | job title |
+| `page` | composite | `blocks` (map of block → offer) | — |
+
+### Composite offers — several blocks in one scope
+
+The `page` scope drives **multiple blocks from a single JSON offer**. Its content is
+a `blocks` map keyed by block/scope name; each value is that block's normal offer
+shape, dispatched to its own handler (so nothing is duplicated). Use it when a
+personalized experience spans several blocks and you want one offer/one activity
+instead of many:
+
+```json
+{
+  "blocks": {
+    "hero": {
+      "set": { "heading": "Welcome back — Experience A", "subtitle": "Picked up where you left off." }
+    },
+    "metrics": {
+      "items": [
+        { "match": { "item": "Renewable mix today" }, "set": { "value": "91%", "change": "↑ 19% vs avg" } }
+      ]
+    },
+    "feature-cards": {
+      "set": { "heading": "Why switch to Xcel — Experience A" }
+    }
+  }
+}
+```
+
+Notes:
+- Each entry uses the **same shape** it would as a standalone offer (`set`,
+  `items`/`match`/`set`, multi-instance `key`, etc.).
+- Composite scopes cannot nest — a `page` offer may not contain another composite
+  scope (guarded by `COMPOSITE_SCOPES`).
+- Applies once when **all** listed blocks succeed; retries as blocks decorate.
 
 ### Adding a new form-based experience
 
