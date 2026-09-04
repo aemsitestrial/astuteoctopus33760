@@ -2,7 +2,7 @@
 
 This guide explains how to convert a Target activity from **Visual Experience
 Composer (VEC)** targeting to **Form-Based Experience Composer** targeting, and
-how the code in `scripts/scripts.js` applies those experiences.
+how the code in `scripts/target.js` applies those experiences.
 
 ## Why form-based for Edge Delivery Services
 
@@ -27,7 +27,8 @@ elements (ids, block classes, label text). Nothing structural to break.
 ## Part 1 — Rebuild the activity in Adobe Target
 
 1. **Create the JSON offers** (Offers → Create → JSON Offer), one per experience.
-   Shape them to match the handlers in `scripts.js` (see Part 3):
+   Shape the `set` fields to match the handler for that scope (see the field
+   table in Part 3):
 
    - Hero (`hero` scope):
      ```json
@@ -37,10 +38,10 @@ elements (ids, block classes, label text). Nothing structural to break.
      ```json
      { "set": { "heading": "Energy made simple, honest, and green - Text Experience A" } }
      ```
-   - Metrics label (`metrics` scope) — `match.label` locates the cell, `set.label`
-     is the new text:
+   - Metrics label (`metrics` scope) — `match.item` locates the metric by its
+     current label, `set` carries the new field values:
      ```json
-     { "items": [ { "match": { "label": "Renewable mix today" }, "set": { "label": "Renewable mix today - Test experience A" } } ] }
+     { "items": [ { "match": { "item": "Renewable mix today" }, "set": { "label": "Renewable mix today - Test experience A" } } ] }
      ```
 
    > For pages with several instances of the same block, use the `items` array with
@@ -50,7 +51,8 @@ elements (ids, block classes, label text). Nothing structural to break.
    **Form-Based Experience Composer** (not Visual).
 
 3. **Add a location (mbox / decision scope) per experience.** Name each scope to
-   match `FORM_BASED_SCOPES` in `scripts.js`: `hero`, `metrics`, `feature-cards`.
+   match a handler key in `FORM_BASED_HANDLERS` (`scripts/target.js`), e.g.
+   `hero`, `metrics`, `feature-cards`.
 
 4. **Assign the JSON offer** to each experience for its scope.
 
@@ -73,47 +75,85 @@ await window.alloy('sendEvent', {
 No datastream change is required beyond having Adobe Target enabled on the
 datastream (it already is — VEC offers are being delivered).
 
-## Part 3 — Code (`scripts/scripts.js`)
+## Part 3 — Code (`scripts/target.js`)
 
-Two things drive the integration:
+The whole integration lives in its own module, **`scripts/target.js`**.
+`scripts.js` only imports the readiness promise:
 
-- **`FORM_BASED_SCOPES`** — the list of decision scopes requested. Must match the
-  scope/mbox names in the Target activity.
-- **`FORM_BASED_HANDLERS`** — one function per scope that reads the JSON `content`
-  and writes it to a **stable anchor**. Each returns `true` once applied so it
-  runs only once as blocks decorate.
+```js
+import { alloyLoadedPromise } from './target.js';
+// ... awaited in loadEager before first paint
+```
 
-Handlers use three shared helpers:
+Three things drive the form-based side:
 
-- **`getBlocks(blockClass)`** — all instances of a block on the page.
-- **`pickBlock(blocks, match)`** — selects one instance from a `match` descriptor
-  (`{ key }`, `{ instance }`, or default = first). See *Multiple instances* below.
-- **`applyInstructions(content, applyOne)`** — normalises an offer to a list of
-  `{ match, set }` instructions and applies each; returns `true` only when *all*
-  applied, so the scope stops retrying.
+- **`FORM_BASED_HANDLERS`** — one entry per scope (keyed by block name). Each reads
+  the JSON offer and writes it to **stable anchors**, and returns `true` once fully
+  applied so it runs only once as blocks decorate.
+- **`FORM_BASED_SCOPES`** — derived automatically from the handler keys
+  (`Object.keys(FORM_BASED_HANDLERS)`), so adding a handler also requests its scope.
+- **Shared helpers** — `getBlocks`, `pickBlock`, `findItem`, `applyFields`,
+  `applyInstructions`, plus two factories that remove per-block boilerplate:
+  - **`blockHandler(blockClass, fieldMap)`** — for block-level fields (one heading,
+    subtitle, CTA…). `fieldMap` maps offer field names → a selector (or function)
+    within the picked block.
+  - **`itemHandler(blockClass, itemSelector, labelSelector, fieldMap)`** — for
+    repeated items (a metric, team member, plan…). `match.item` picks the item by
+    its label text; `fieldMap` maps fields → selectors within that item.
 
 ```js
 const FORM_BASED_HANDLERS = {
-  hero: (content) => applyInstructions(content, (match, set) => {
-    const heading = pickBlock(getBlocks('hero'), match)?.querySelector('h1, h2');
-    if (heading && set.heading) { heading.textContent = set.heading; return true; }
-    return false;
+  // block-level fields
+  hero: blockHandler('hero', {
+    badge: '.hero-badge',
+    heading: '.hero-heading h1, .hero-heading h2, .hero-heading h3',
+    subtitle: '.hero-subtitle',
+    primaryCta: '.hero-actions a.hero-btn-primary',
   }),
-  // feature-cards + metrics follow the same shape (see scripts.js)
+  // repeated items, matched by label text
+  metrics: itemHandler('metrics', '.metrics-item', '.metrics-label', {
+    value: '.metrics-value', label: '.metrics-label', change: '.metrics-change',
+  }),
 };
 ```
 
+### Supported blocks and offer fields
+
+All content blocks ship with a handler. Author your JSON offer's `set` object using
+these field names:
+
+| Scope (block) | Type | `set` fields | Item match key (`match.item`) |
+|---|---|---|---|
+| `hero` | block | `badge`, `heading`, `subtitle`, `primaryCta`, `secondaryCta` | — |
+| `feature-cards` | block | `label`, `heading`, `subtitle` | — |
+| `usage-dashboard` | block | `heading`, `label`, `cta` | — |
+| `cta-band` | block | `heading`, `subtitle`, `cta` | — |
+| `page-header` | block | `label`, `heading`, `subtitle` | — |
+| `about-hero` | block | `label`, `heading` | — |
+| `area-finder` | block | `heading` | — |
+| `contact-methods` | block | `heading` | — |
+| `contact-form` | block | `heading` | — |
+| `outage-banner` | block | `message` | — |
+| `columns` | block | `heading` | — |
+| `metrics` | item | `value`, `label`, `change` | current label text |
+| `stats` | item | `value`, `label` | current label text |
+| `team` | item | `name`, `role` | member name |
+| `timeline` | item | `year`, `heading`, `description` | year |
+| `values` | item | `heading`, `description` | title |
+| `pricing-plans` | item | `name`, `price`, `cta` | plan name |
+| `cards` | item | `heading`, `body` | card heading |
+| `job-listings` | item | `title`, `description` | job title |
+
 ### Adding a new form-based experience
 
-1. Add the scope name to `FORM_BASED_SCOPES`.
-2. Add a handler under the same key in `FORM_BASED_HANDLERS`, using
-   `applyInstructions` + `pickBlock` so it supports multiple instances for free.
-3. Anchor to something stable:
+1. Add an entry to `FORM_BASED_HANDLERS` (the scope is requested automatically).
+   Use `blockHandler` or `itemHandler` so multi-instance support comes for free.
+2. Anchor to something stable:
    - **Best:** a `data-target-key` on the block (authorable in UE — see below), or
      an element `id` (EDS auto-generates heading ids), e.g. `#some-heading`.
    - **Good:** a block class + content match (as `metrics` does by label text).
    - **Avoid:** `:nth-child` / `:nth-of-type` positional paths.
-4. Shape the Target JSON offer to match the fields the handler reads.
+3. Shape the Target JSON offer's `set` to match the field names in the `fieldMap`.
 
 ## Multiple instances of the same block on one page
 
@@ -131,12 +171,13 @@ instance) and a `set` (what to change):
 }
 ```
 
-`match` supports three strategies, best-first:
+`match` supports these strategies, best-first. `key`/`instance` pick the *block*;
+`item` picks a repeated item *within* an item-collection block (metrics, team…).
 
 | `match` | Selects | When to use |
 |---|---|---|
 | `{ "key": "hero-top" }` | block whose `data-target-key` = `hero-top` | **preferred** — position-independent, authorable in UE |
-| `{ "label": "Renewable mix today" }` | element found by its text (metrics) | content is uniquely identifiable by text |
+| `{ "item": "Renewable mix today" }` | repeated item found by its label text | item-collection blocks (metrics, stats, team, plans…) |
 | `{ "instance": 1 }` | zero-based index into the block list | layout order is guaranteed fixed |
 | *(omitted)* | first instance | single-instance pages |
 
@@ -153,8 +194,8 @@ A single-instance offer can stay flat — these are all equivalent:
 ```json
 {
   "items": [
-    { "match": { "key": "kpis", "label": "Renewable mix today" }, "set": { "label": "Renewable mix today - Exp A" } },
-    { "match": { "key": "kpis", "label": "Active customers" },     "set": { "label": "Active customers - Exp A" } }
+    { "match": { "key": "kpis", "item": "Renewable mix today" }, "set": { "label": "Renewable mix today - Exp A" } },
+    { "match": { "key": "kpis", "item": "Active customers" },     "set": { "label": "Active customers - Exp A" } }
   ]
 }
 ```
@@ -186,7 +227,7 @@ copy edits — the failure modes that break VEC selectors and positional matchin
 | | VEC (`dom-action`) | Form-Based (`json-content-item`) |
 |---|---|---|
 | Carries selector | Yes (fragile on EDS) | No |
-| Applied by | `alloy('applyPropositions')` | Custom handler in `scripts.js` |
+| Applied by | `alloy('applyPropositions')` | Custom handler in `scripts/target.js` |
 | Best anchor | element id only | `data-target-key` / id / block class / label text |
 | Survives EDS decoration | Only id-based selectors | Yes |
 | Multiple instances of a block | Separate fragile selector each | `items` array + `match` (key/label/instance) |

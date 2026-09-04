@@ -1,0 +1,342 @@
+import { getMetadata } from './aem.js';
+
+/*
+ * Adobe Target integration for AEM Edge Delivery Services.
+ *
+ * Supports two experience styles:
+ *  - VEC / dom-action  — rendered by alloy against captured selectors.
+ *  - Form-Based / JSON — applied here to stable anchors (see FORM_BASED_HANDLERS).
+ *
+ * See docs/adobe-target-form-based.md for the JSON offer contract, the
+ * multi-instance `items`/`match`/`set` model, and how to add new experiences.
+ */
+
+// --- Datastream configuration ------------------------------------------------
+
+const WEBSDK_CONFIG = {
+  datastreamId: 'd7e718aa-3cf8-429f-bc60-9921cdbed6cc',
+  orgId: '0CEB60F754C7E06B0A4C98A2@AdobeOrg',
+};
+
+const DOM_ACTION_SCHEMA = 'https://ns.adobe.com/personalization/dom-action';
+const JSON_CONTENT_ITEM_SCHEMA = 'https://ns.adobe.com/personalization/json-content-item';
+
+// --- WebSDK (alloy) bootstrap ------------------------------------------------
+
+function initWebSDK(path, config) {
+  // Preparing the alloy queue
+  if (!window.alloy) {
+    // eslint-disable-next-line no-underscore-dangle
+    (window.__alloyNS ||= []).push('alloy');
+    window.alloy = (...args) => new Promise((resolve, reject) => {
+      window.setTimeout(() => {
+        window.alloy.q.push([resolve, reject, args]);
+      });
+    });
+    window.alloy.q = [];
+  }
+  // Loading and configuring the websdk
+  return new Promise((resolve) => {
+    import(path)
+      .then(() => window.alloy('configure', config))
+      .then(resolve);
+  });
+}
+
+// --- Decoration observer (shared by VEC + Form-Based) ------------------------
+
+function onDecoratedElement(fn) {
+  // Apply propositions to all already decorated blocks/sections
+  if (document.querySelector('[data-block-status="loaded"],[data-section-status="loaded"]')) {
+    fn();
+  }
+
+  const observer = new MutationObserver((mutations) => {
+    if (mutations.some((m) => m.target.tagName === 'BODY'
+      || m.target.dataset.sectionStatus === 'loaded'
+      || m.target.dataset.blockStatus === 'loaded')) {
+      fn();
+    }
+  });
+  // Watch sections and blocks being decorated async
+  observer.observe(document.querySelector('main'), {
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['data-block-status', 'data-section-status'],
+  });
+  // Watch anything else added to the body
+  observer.observe(document.querySelector('body'), { childList: true });
+}
+
+// --- VEC / dom-action helpers ------------------------------------------------
+
+function toCssSelector(selector) {
+  return selector.replace(/(\.\S+)?:eq\((\d+)\)/g, (_, clss, i) => `:nth-child(${Number(i) + 1}${clss ? ` of ${clss})` : ''}`);
+}
+
+function getElementForProposition(proposition) {
+  const selector = proposition.data.prehidingSelector
+    || toCssSelector(proposition.data.selector);
+  return document.querySelector(selector);
+}
+
+// --- Form-Based / JSON offer helpers -----------------------------------------
+
+// All instances of a block on the page, e.g. getBlocks('metrics').
+function getBlocks(blockClass) {
+  return [...document.querySelectorAll(`.${blockClass}`)];
+}
+
+/**
+ * Picks a single block instance using a match descriptor:
+ *  - match.key      → block whose `data-target-key` attribute equals key
+ *                     (author this in UE as a stable, position-independent id)
+ *  - match.instance → zero-based index into the list
+ *  - default        → the first instance
+ */
+function pickBlock(blocks, match = {}) {
+  if (match.key) return blocks.find((b) => b.dataset.targetKey === match.key) || null;
+  if (typeof match.instance === 'number') return blocks[match.instance] || null;
+  return blocks[0] || null;
+}
+
+/**
+ * Finds a repeated item inside a block (a metric, team card, plan…) by the text
+ * of one of its child elements — position-independent. Falls back to the first
+ * item when no label is supplied.
+ */
+function findItem(block, itemSelector, labelSelector, labelText) {
+  if (!block) return null;
+  const items = [...block.querySelectorAll(itemSelector)];
+  if (!labelText) return items[0] || null;
+  return items.find(
+    (it) => it.querySelector(labelSelector)?.textContent.trim() === labelText,
+  ) || null;
+}
+
+// Sets textContent (preserving surrounding instrumentation) when both exist.
+function setText(el, value) {
+  if (el && typeof value === 'string') {
+    el.textContent = value;
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Applies each field in `set` to `container` via a fieldMap of
+ * { fieldName: cssSelector | (container) => element }. Unknown fields are
+ * ignored. Returns true only when every recognised field applied, so the scope
+ * stops retrying on later decoration passes.
+ */
+function applyFields(container, set, fieldMap) {
+  if (!container || !set) return false;
+  let total = 0;
+  let applied = 0;
+  Object.entries(set).forEach(([field, value]) => {
+    const resolver = fieldMap[field];
+    if (!resolver) return; // ignore fields this block does not expose
+    total += 1;
+    const el = typeof resolver === 'function' ? resolver(container) : container.querySelector(resolver);
+    if (setText(el, value)) applied += 1;
+  });
+  return total > 0 && applied === total;
+}
+
+/**
+ * Normalises a JSON offer to a list of { match, set } instructions and applies
+ * each via applyOne. Returns true only when every instruction applied.
+ *
+ * Accepts either a multi-instance array (`{ items: [{ match, set }] }`) or a
+ * flat single-instance offer (`{ set: {...} }` or the bare field object).
+ */
+function applyInstructions(content, applyOne) {
+  const items = Array.isArray(content.items)
+    ? content.items
+    : [{ match: content.match || {}, set: content.set || content }];
+  if (!items.length) return false;
+  const applied = items.filter((it) => applyOne(it.match || {}, it.set || {})).length;
+  return applied === items.length;
+}
+
+// Convenience: block-level handler that applies `set` fields to the picked block.
+function blockHandler(blockClass, fieldMap) {
+  return (content) => applyInstructions(content, (match, set) => applyFields(
+    pickBlock(getBlocks(blockClass), match),
+    set,
+    fieldMap,
+  ));
+}
+
+// Convenience: item-collection handler. `match` picks the block, then a repeated
+// item within it (by `match.item` text against labelSelector), and `set` fields
+// are applied to that item.
+function itemHandler(blockClass, itemSelector, labelSelector, fieldMap) {
+  return (content) => applyInstructions(content, (match, set) => applyFields(
+    findItem(pickBlock(getBlocks(blockClass), match), itemSelector, labelSelector, match.item),
+    set,
+    fieldMap,
+  ));
+}
+
+const HEADING = 'h1, h2, h3, h4, h5, h6';
+
+/**
+ * One handler per content block. Anchors are the post-decoration class names each
+ * block produces (see blocks/<name>/<name>.js), which are stable across reloads.
+ * `set` field names are the personalizable slots; author your Target JSON offer
+ * to match them.
+ */
+const FORM_BASED_HANDLERS = {
+  // --- Header / banner style blocks (block-level fields) ---
+  hero: blockHandler('hero', {
+    badge: '.hero-badge',
+    heading: '.hero-heading h1, .hero-heading h2, .hero-heading h3',
+    subtitle: '.hero-subtitle',
+    primaryCta: '.hero-actions a.hero-btn-primary',
+    secondaryCta: '.hero-actions a.hero-btn-ghost',
+  }),
+  'feature-cards': blockHandler('feature-cards', {
+    label: '.feature-cards-label',
+    heading: '.feature-cards-title',
+    subtitle: '.feature-cards-subtitle',
+  }),
+  'usage-dashboard': blockHandler('usage-dashboard', {
+    heading: (b) => b.querySelector(`.usage-promo ${HEADING}`),
+    label: '.usage-promo .usage-label',
+    cta: '.usage-promo a.usage-cta',
+  }),
+  'cta-band': blockHandler('cta-band', {
+    heading: '.cta-band-title',
+    subtitle: '.cta-band-sub',
+    cta: '.cta-band-actions a.cta-band-btn',
+  }),
+  'page-header': blockHandler('page-header', {
+    label: '.page-header-label',
+    heading: (b) => b.querySelector(`.page-header-title ${HEADING}`),
+    subtitle: '.page-header-subtitle',
+  }),
+  'about-hero': blockHandler('about-hero', {
+    label: '.about-hero-intro .about-hero-label',
+    heading: (b) => b.querySelector(`.about-hero-intro ${HEADING}`),
+  }),
+  'area-finder': blockHandler('area-finder', {
+    heading: '.geo-panel-title',
+  }),
+  'contact-methods': blockHandler('contact-methods', {
+    heading: '.contact-methods-title',
+  }),
+  'contact-form': blockHandler('contact-form', {
+    heading: '.contact-form-title',
+  }),
+  'outage-banner': blockHandler('outage-banner', {
+    message: '.outage-banner-content',
+  }),
+  columns: blockHandler('columns', {
+    heading: HEADING,
+  }),
+
+  // --- Item-collection blocks (match a row/card by its text, then set fields) ---
+  metrics: itemHandler('metrics', '.metrics-item', '.metrics-label', {
+    value: '.metrics-value',
+    label: '.metrics-label',
+    change: '.metrics-change',
+  }),
+  stats: itemHandler('stats', '.stats-item', '.stats-label', {
+    value: '.stats-value',
+    label: '.stats-label',
+  }),
+  team: itemHandler('team', '.team-card', '.team-name', {
+    name: '.team-name',
+    role: '.team-role',
+  }),
+  timeline: itemHandler('timeline', '.tl-item', '.tl-year', {
+    year: '.tl-year',
+    heading: '.tl-title',
+    description: '.tl-desc',
+  }),
+  values: itemHandler('values', '.value-item', '.value-title', {
+    heading: '.value-title',
+    description: '.value-desc',
+  }),
+  'pricing-plans': itemHandler('pricing-plans', '.plan-card', '.plan-name', {
+    name: '.plan-name',
+    price: '.plan-price',
+    cta: 'a.button, .plan-cta',
+  }),
+  cards: itemHandler('cards', ':scope > ul > li', HEADING, {
+    heading: HEADING,
+    body: '.cards-card-body p',
+  }),
+  'job-listings': itemHandler('job-listings', '.job-card', '.job-title', {
+    title: '.job-title',
+    description: '.job-desc',
+  }),
+};
+
+// Request only the scopes we can actually handle. Extend by adding a handler above.
+const FORM_BASED_SCOPES = Object.keys(FORM_BASED_HANDLERS);
+
+// --- Orchestration -----------------------------------------------------------
+
+async function getAndApplyRenderDecisions() {
+  // Get the decisions, but don't render them automatically so we can hook into
+  // the AEM EDS page load sequence. decisionScopes requests the Form-Based
+  // (JSON offer) experiences alongside the default __view__ scope used by VEC.
+  const response = await window.alloy('sendEvent', {
+    renderDecisions: false,
+    personalization: {
+      decisionScopes: FORM_BASED_SCOPES,
+    },
+  });
+  const { propositions } = response;
+
+  // Track which Form-Based scopes have already been applied so a handler runs once.
+  const appliedScopes = new Set();
+
+  onDecoratedElement(async () => {
+    // 1) VEC / dom-action offers: let alloy render them against their selectors.
+    await window.alloy('applyPropositions', { propositions });
+    // keep track of propositions that were applied
+    propositions.forEach((p) => {
+      p.items = p.items.filter(
+        (i) => i.schema !== DOM_ACTION_SCHEMA || !getElementForProposition(i),
+      );
+    });
+
+    // 2) Form-Based / JSON offers: apply manually to stable anchors.
+    propositions.forEach((p) => {
+      const handler = FORM_BASED_HANDLERS[p.scope];
+      if (!handler || appliedScopes.has(p.scope)) return;
+      const jsonItem = (p.items || []).find((i) => i.schema === JSON_CONTENT_ITEM_SCHEMA);
+      const content = jsonItem?.data?.content;
+      if (content && handler(content)) {
+        appliedScopes.add(p.scope);
+      }
+    });
+  });
+
+  // Reporting is deferred to avoid long tasks
+  window.setTimeout(() => {
+    // Report shown decisions
+    window.alloy('sendEvent', {
+      xdm: {
+        eventType: 'decisioning.propositionDisplay',
+        _experience: {
+          decisioning: { propositions },
+        },
+      },
+    });
+  });
+}
+
+// Initialise immediately on import — the promise is awaited in loadEager so alloy
+// is configured before first paint. Decisions are fetched only on target pages.
+const alloyLoadedPromise = initWebSDK('./alloy.js', WEBSDK_CONFIG);
+
+if (getMetadata('target')) {
+  alloyLoadedPromise.then(() => getAndApplyRenderDecisions());
+}
+
+export default alloyLoadedPromise;
+export { alloyLoadedPromise, FORM_BASED_HANDLERS, FORM_BASED_SCOPES };
