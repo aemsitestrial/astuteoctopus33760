@@ -1,0 +1,512 @@
+{
+  "definitions": [
+    {
+      "title": "Hero",
+      "id": "hero",
+      "fields": [
+        {
+          "component": "text",
+          "name": "title",
+          "label": "Title",
+          "valueType": "string"
+        },
+        {
+          "component": "multiline",
+          "name": "subtitle",
+          "label": "Subtitle",
+          "valueType": "string"
+        },
+        {
+          "component": "reference",
+          "name": "image",
+          "label": "Image",
+          "valueType": "string"
+        },
+        {
+          "component": "text",
+          "name": "imageAlt",
+          "label": "Alt text",
+          "valueType": "string"
+        },
+        {
+          "component": "aem-content",
+          "name": "actions",
+          "label": "Actions (max 2)",
+          "multi": true,
+          "maxItems": 2,
+          "fields": [
+            {
+              "component": "text",
+              "name": "actionText",
+              "label": "Action Text"
+            },
+            {
+              "component": "text",
+              "name": "actionLink",
+              "label": "Action Link"
+            },
+            {
+              "component": "select",
+              "name": "actionStyle",
+              "label": "Action Style",
+              "options": [
+                {
+                  "name": "Primary",
+                  "value": "primary"
+                },
+                {
+                  "name": "Static Light",
+                  "value": "static-light"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "component": "select",
+          "name": "height",
+          "label": "Height",
+          "options": [
+            {
+              "name": "Responsive",
+              "value": "responsive"
+            },
+            {
+              "name": "Tall",
+              "value": "tall"
+            },
+            {
+              "name": "Standard",
+              "value": "standard"
+            },
+            {
+              "name": "Compact",
+              "value": "compact"
+            }
+          ],
+          "value": "responsive"
+        },
+        {
+          "component": "select",
+          "name": "textAlignment",
+          "label": "Text Alignment",
+          "options": [
+            {
+              "name": "Center",
+              "value": "center"
+            },
+            {
+              "name": "Left",
+              "value": "left"
+            }
+          ],
+          "value": "center"
+        },
+        {
+          "component": "select",
+          "name": "imagePosition",
+          "label": "Image Position",
+          "options": [
+            {
+              "name": "Center",
+              "value": "center"
+            },
+            {
+              "name": "Top",
+              "value": "top"
+            },
+            {
+              "name": "Bottom",
+              "value": "bottom"
+            }
+          ],
+          "value": "center"
+        }
+      ]
+    },
+    {
+      "title": "Hero (Tall, Center, with Action) - Height/Text Alignment/Image Position locked by variant preset (not author-editable; see Assumptions and Gaps A1)",
+      "id": "hero-tall-center-with-action",
+      "fields": [
+        {
+          "component": "text",
+          "name": "title",
+          "label": "Title",
+          "valueType": "string"
+        },
+        {
+          "component": "multiline",
+          "name": "subtitle",
+          "label": "Subtitle",
+          "valueType": "string"
+        },
+        {
+          "component": "reference",
+          "name": "image",
+          "label": "Image",
+          "valueType": "string"
+        },
+        {
+          "component": "text",
+          "name": "imageAlt",
+          "label": "Alt text",
+          "valueType": "string"
+        },
+        {
+          "component": "aem-content",
+          "name": "actions",
+          "label": "Actions (max 2)",
+          "multi": true,
+          "maxItems": 2,
+          "fields": [
+            {
+              "component": "text",
+              "name": "actionText",
+              "label": "Action Text"
+            },
+            {
+              "component": "text",
+              "name": "actionLink",
+              "label": "Action Link"
+            },
+            {
+              "component": "select",
+              "name": "actionStyle",
+              "label": "Action Style",
+              "options": [
+                {
+                  "name": "Primary",
+                  "value": "primary"
+                },
+                {
+                  "name": "Static Light",
+                  "value": "static-light"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Hero (Tall, Left, with Actions) - Height/Text Alignment/Image Position locked by variant preset (not author-editable; see Assumptions and Gaps A1)",
+      "id": "hero-tall-left-with-actions",
+      "fields": [
+        {
+          "component": "text",
+          "name": "title",
+          "label": "Title",
+          "valueType": "string"
+        },
+        {
+          "component": "multiline",
+          "name": "subtitle",
+          "label": "Subtitle",
+          "valueType": "string"
+        },
+        {
+          "component": "reference",
+          "name": "image",
+          "label": "Image",
+          "valueType": "string"
+        },
+        {
+          "component": "text",
+          "name": "imageAlt",
+          "label": "Alt text",
+          "valueType": "string"
+        },
+        {
+          "component": "aem-content",
+          "name": "actions",
+          "label": "Actions (max 2)",
+          "multi": true,
+          "maxItems": 2,
+          "fields": [
+            {
+              "component": "text",
+              "name": "actionText",
+              "label": "Action Text"
+            },
+            {
+              "component": "text",
+              "name": "actionLink",
+              "label": "Action Link"
+            },
+            {
+              "component": "select",
+              "name": "actionStyle",
+              "label": "Action Style",
+              "options": [
+                {
+                  "name": "Primary",
+                  "value": "primary"
+                },
+                {
+                  "name": "Static Light",
+                  "value": "static-light"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Hero (Standard, Center, with Actions) - Height/Text Alignment locked by variant preset (not author-editable; see Assumptions and Gaps A1)",
+      "id": "hero-standard-center-with-actions",
+      "fields": [
+        {
+          "component": "text",
+          "name": "title",
+          "label": "Title",
+          "valueType": "string"
+        },
+        {
+          "component": "multiline",
+          "name": "subtitle",
+          "label": "Subtitle",
+          "valueType": "string"
+        },
+        {
+          "component": "reference",
+          "name": "image",
+          "label": "Image",
+          "valueType": "string"
+        },
+        {
+          "component": "text",
+          "name": "imageAlt",
+          "label": "Alt text",
+          "valueType": "string"
+        },
+        {
+          "component": "aem-content",
+          "name": "actions",
+          "label": "Actions (max 2)",
+          "multi": true,
+          "maxItems": 2,
+          "fields": [
+            {
+              "component": "text",
+              "name": "actionText",
+              "label": "Action Text"
+            },
+            {
+              "component": "text",
+              "name": "actionLink",
+              "label": "Action Link"
+            },
+            {
+              "component": "select",
+              "name": "actionStyle",
+              "label": "Action Style",
+              "options": [
+                {
+                  "name": "Primary",
+                  "value": "primary"
+                },
+                {
+                  "name": "Static Light",
+                  "value": "static-light"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Hero (Standard, Left, with Actions) - Height/Text Alignment locked by variant preset (not author-editable; see Assumptions and Gaps A1)",
+      "id": "hero-standard-left-with-actions",
+      "fields": [
+        {
+          "component": "text",
+          "name": "title",
+          "label": "Title",
+          "valueType": "string"
+        },
+        {
+          "component": "multiline",
+          "name": "subtitle",
+          "label": "Subtitle",
+          "valueType": "string"
+        },
+        {
+          "component": "reference",
+          "name": "image",
+          "label": "Image",
+          "valueType": "string"
+        },
+        {
+          "component": "text",
+          "name": "imageAlt",
+          "label": "Alt text",
+          "valueType": "string"
+        },
+        {
+          "component": "aem-content",
+          "name": "actions",
+          "label": "Actions (max 2)",
+          "multi": true,
+          "maxItems": 2,
+          "fields": [
+            {
+              "component": "text",
+              "name": "actionText",
+              "label": "Action Text"
+            },
+            {
+              "component": "text",
+              "name": "actionLink",
+              "label": "Action Link"
+            },
+            {
+              "component": "select",
+              "name": "actionStyle",
+              "label": "Action Style",
+              "options": [
+                {
+                  "name": "Primary",
+                  "value": "primary"
+                },
+                {
+                  "name": "Static Light",
+                  "value": "static-light"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Hero (Compact, Center, with Actions) - Height/Text Alignment locked by variant preset (not author-editable; see Assumptions and Gaps A1)",
+      "id": "hero-compact-center-with-actions",
+      "fields": [
+        {
+          "component": "text",
+          "name": "title",
+          "label": "Title",
+          "valueType": "string"
+        },
+        {
+          "component": "multiline",
+          "name": "subtitle",
+          "label": "Subtitle",
+          "valueType": "string"
+        },
+        {
+          "component": "reference",
+          "name": "image",
+          "label": "Image",
+          "valueType": "string"
+        },
+        {
+          "component": "text",
+          "name": "imageAlt",
+          "label": "Alt text",
+          "valueType": "string"
+        },
+        {
+          "component": "aem-content",
+          "name": "actions",
+          "label": "Actions (max 2)",
+          "multi": true,
+          "maxItems": 2,
+          "fields": [
+            {
+              "component": "text",
+              "name": "actionText",
+              "label": "Action Text"
+            },
+            {
+              "component": "text",
+              "name": "actionLink",
+              "label": "Action Link"
+            },
+            {
+              "component": "select",
+              "name": "actionStyle",
+              "label": "Action Style",
+              "options": [
+                {
+                  "name": "Primary",
+                  "value": "primary"
+                },
+                {
+                  "name": "Static Light",
+                  "value": "static-light"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Hero (Compact, Left, with Actions) - Height/Text Alignment locked by variant preset (not author-editable; see Assumptions and Gaps A1)",
+      "id": "hero-compact-left-with-actions",
+      "fields": [
+        {
+          "component": "text",
+          "name": "title",
+          "label": "Title",
+          "valueType": "string"
+        },
+        {
+          "component": "multiline",
+          "name": "subtitle",
+          "label": "Subtitle",
+          "valueType": "string"
+        },
+        {
+          "component": "reference",
+          "name": "image",
+          "label": "Image",
+          "valueType": "string"
+        },
+        {
+          "component": "text",
+          "name": "imageAlt",
+          "label": "Alt text",
+          "valueType": "string"
+        },
+        {
+          "component": "aem-content",
+          "name": "actions",
+          "label": "Actions (max 2)",
+          "multi": true,
+          "maxItems": 2,
+          "fields": [
+            {
+              "component": "text",
+              "name": "actionText",
+              "label": "Action Text"
+            },
+            {
+              "component": "text",
+              "name": "actionLink",
+              "label": "Action Link"
+            },
+            {
+              "component": "select",
+              "name": "actionStyle",
+              "label": "Action Style",
+              "options": [
+                {
+                  "name": "Primary",
+                  "value": "primary"
+                },
+                {
+                  "name": "Static Light",
+                  "value": "static-light"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

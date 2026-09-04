@@ -1,0 +1,110 @@
+{
+  "title": "Hero",
+  "name": "hero",
+  "description": "Content Fragment Model backing the EDS Hero block and all seven of its variants (base + 6 presets). Single shared model; variant-specific field locking/visibility is enforced in the Universal Editor component definitions, not in the model itself, because AEM Content Fragment Models cannot express per-consumer conditional requiredness.",
+  "status": "published",
+  "fields": [
+    {
+      "name": "title",
+      "label": "Title",
+      "dataType": "text",
+      "fieldType": "single-line",
+      "required": false,
+      "defaultValue": "",
+      "validation": { "maxLength": 120 },
+      "notes": "Spec: 'Primary hero headline'. Required=n/a in spec (base) / N (all named variants) -> modeled as optional everywhere."
+    },
+    {
+      "name": "subtitle",
+      "label": "Subtitle",
+      "dataType": "text",
+      "fieldType": "single-line",
+      "required": false,
+      "defaultValue": "",
+      "validation": { "maxLength": 220 },
+      "notes": "Spec: 'Supporting subheadline text'. Optional everywhere per spec."
+    },
+    {
+      "name": "image",
+      "label": "Image",
+      "dataType": "content-reference",
+      "fieldType": "content-reference",
+      "referenceType": "asset",
+      "mimeTypes": ["image/jpeg", "image/png", "image/webp", "image/avif"],
+      "required": false,
+      "defaultValue": null,
+      "notes": "Spec lists 'Image' twice with two field types ('Image URL' and 'Image URL DAM Picker'). Both rows are collapsed into ONE content-reference field resolved through the DAM asset picker; see Assumptions and Gaps, item A2."
+    },
+    {
+      "name": "imageAlt",
+      "label": "Alt",
+      "dataType": "text",
+      "fieldType": "single-line",
+      "required": false,
+      "defaultValue": "",
+      "validation": { "maxLength": 250 },
+      "notes": "Spec: 'Image Alt text'. Required=N in spec, kept optional; runtime falls back to alt=\"\" (decorative) when empty, per WCAG guidance -- see Accessibility section."
+    },
+    {
+      "name": "actions",
+      "label": "Actions",
+      "dataType": "json",
+      "fieldType": "multifield",
+      "maxItems": 2,
+      "required": false,
+      "defaultValue": [],
+      "itemSchema": {
+        "actionText": {
+          "dataType": "text",
+          "fieldType": "single-line",
+          "label": "Action Text",
+          "validation": { "maxLength": 40 }
+        },
+        "actionLink": {
+          "dataType": "text",
+          "fieldType": "single-line",
+          "label": "Action Link",
+          "validation": { "format": "uri-relative-or-https" }
+        },
+        "actionStyle": {
+          "dataType": "enum",
+          "fieldType": "single-select",
+          "label": "Action Style",
+          "allowedValues": ["primary", "static-light"],
+          "defaultByPosition": { "0": "primary", "1": "static-light" }
+        }
+      },
+      "notes": "Spec: 'Action Multifiled ... Max 2 first is primary and second is Static light', shown alongside separate flat 'Action Text'/'Action Link' fields. Modeled as the multifield (the more complete/superset definition); the flat fields are treated as legacy aliases -- see Assumptions and Gaps, item A3."
+    },
+    {
+      "name": "height",
+      "label": "Height",
+      "dataType": "enum",
+      "fieldType": "single-select",
+      "allowedValues": ["responsive", "tall", "standard", "compact"],
+      "defaultValue": "responsive",
+      "required": false,
+      "notes": "Required=n/a on base 'Hero'; Required=Y on all six named variants, where the value is locked by the variant selection itself (see Assumptions and Gaps, item A1)."
+    },
+    {
+      "name": "textAlignment",
+      "label": "Text Alignment",
+      "dataType": "enum",
+      "fieldType": "single-select",
+      "allowedValues": ["center", "left"],
+      "defaultValue": "center",
+      "required": false,
+      "notes": "Same required-locking pattern as Height (item A1)."
+    },
+    {
+      "name": "imagePosition",
+      "label": "Image Position",
+      "dataType": "enum",
+      "fieldType": "single-select",
+      "allowedValues": ["center", "top", "bottom"],
+      "defaultValue": "center",
+      "required": false,
+      "notes": "Required=Y and locked to 'center' on the two Tall variants; Required=N / value 'n/a' (field not applicable) on Standard and Compact variants; free-choice on base 'Hero'."
+    }
+  ]
+}
