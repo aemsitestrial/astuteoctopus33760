@@ -1,0 +1,186 @@
+/*
+ * Hero (v2) block styles
+ * Mobile-first, block-scoped custom properties, WCAG 2.2 AA target.
+ * Ported from the hero-block spec deliverable (docs/hero-block/hero.css),
+ * with class names conformed to this project's kebab-case convention.
+ */
+
+.hero-v2 {
+  --hero-min-height-responsive: clamp(18rem, 55vw, 32rem);
+  --hero-min-height-tall: 34rem;
+  --hero-min-height-standard: 24rem;
+  --hero-min-height-compact: 16rem;
+  --hero-content-max-width: 40rem;
+  --hero-scrim: linear-gradient(180deg, rgb(0 0 0 / 55%) 0%, rgb(0 0 0 / 65%) 100%);
+  --hero-text-color: #fff;
+  --hero-action-primary-bg: #0b3d91;
+  --hero-action-primary-color: #fff;
+  --hero-action-static-light-border: #fff;
+  --hero-action-static-light-color: #fff;
+  --hero-focus-color: #ffbf47;
+
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  background-color: #1b1b1b; /* prevents layout flash/white gap while image loads or if absent */
+  min-height: var(--hero-min-height-responsive);
+}
+
+.hero-v2.hero-height-tall { min-height: var(--hero-min-height-tall); }
+.hero-v2.hero-height-standard { min-height: var(--hero-min-height-standard); }
+.hero-v2.hero-height-compact { min-height: var(--hero-min-height-compact); }
+
+.hero-v2 .hero-media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.hero-v2 .hero-media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--hero-scrim);
+
+  /* Ensures WCAG AA contrast for overlaid text regardless of the authored
+     image; documented as an implementation addition, see Assumptions and
+     Gaps item A4. */
+}
+
+.hero-v2 .hero-media picture,
+.hero-v2 .hero-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center; /* base default, matches spec's Image Position default */
+}
+
+.hero-v2.hero-image-position-center .hero-media img { object-position: center; }
+.hero-v2.hero-image-position-top .hero-media img { object-position: top; }
+.hero-v2.hero-image-position-bottom .hero-media img { object-position: bottom; }
+
+.hero-v2 .hero-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: var(--hero-content-max-width);
+  margin-inline: auto;
+  padding: 2rem 1.25rem;
+  color: var(--hero-text-color);
+  text-align: center;
+}
+
+.hero-v2.hero-align-left .hero-content {
+  margin-inline: 0;
+  text-align: left;
+  align-items: flex-start;
+}
+
+.hero-v2.hero-align-center .hero-content {
+  align-items: center;
+}
+
+.hero-v2 .hero-title {
+  margin: 0;
+  font-size: clamp(1.75rem, 4vw + 1rem, 3rem);
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.hero-v2 .hero-subtitle {
+  margin: 0;
+  font-size: clamp(1rem, 1vw + 0.85rem, 1.25rem);
+  line-height: 1.5;
+  max-width: 38ch;
+}
+
+.hero-v2 .hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.hero-v2 .hero-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px; /* touch target size */
+  padding: 0.65rem 1.5rem;
+  border-radius: 0.25rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 2px solid transparent;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.hero-v2 .hero-action-primary {
+  background-color: var(--hero-action-primary-bg);
+  color: var(--hero-action-primary-color);
+}
+
+.hero-v2 .hero-action-primary:hover,
+.hero-v2 .hero-action-primary:focus-visible {
+  background-color: color-mix(in srgb, var(--hero-action-primary-bg) 85%, black);
+}
+
+.hero-v2 .hero-action-static-light {
+  background-color: transparent;
+  color: var(--hero-action-static-light-color);
+  border-color: var(--hero-action-static-light-border);
+}
+
+.hero-v2 .hero-action-static-light:hover,
+.hero-v2 .hero-action-static-light:focus-visible {
+  background-color: rgb(255 255 255 / 15%);
+}
+
+.hero-v2 .hero-action:focus-visible {
+  outline: 3px solid var(--hero-focus-color);
+  outline-offset: 2px;
+}
+
+/* Reduced motion: remove non-essential transitions. */
+@media (prefers-reduced-motion: reduce) {
+  .hero-v2 .hero-action {
+    transition: none;
+  }
+}
+
+/* High-contrast / forced-colors mode: rely on system colors, keep visible
+   borders so buttons remain distinguishable. */
+@media (forced-colors: active) {
+  .hero-v2 .hero-media::after {
+    display: none;
+  }
+
+  .hero-v2 .hero-action {
+    border: 2px solid CanvasText;
+    forced-color-adjust: none;
+    background-color: Canvas;
+    color: CanvasText;
+  }
+
+  .hero-v2 .hero-action:focus-visible {
+    outline: 3px solid Highlight;
+  }
+}
+
+/* Tablet and up: allow left/right breathing room without changing the
+   mobile-first stacked structure. */
+@media (width >= 600px) {
+  .hero-v2 .hero-content {
+    padding: 3rem 2.5rem;
+  }
+}
+
+@media (width >= 900px) {
+  .hero-v2.hero-align-left .hero-content {
+    margin-inline: 4rem 0;
+  }
+}

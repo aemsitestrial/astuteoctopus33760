@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-label="Sample hero background">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0b6e4f"/>
+      <stop offset="55%" stop-color="#094f39"/>
+      <stop offset="100%" stop-color="#052e22"/>
+    </linearGradient>
+    <linearGradient id="hill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f7d59"/>
+      <stop offset="100%" stop-color="#063a2a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#sky)"/>
+  <circle cx="1240" cy="220" r="120" fill="#f5a623" opacity="0.85"/>
+  <path d="M0 640 C 260 560, 520 700, 820 620 C 1100 550, 1360 680, 1600 600 L 1600 900 L 0 900 Z" fill="url(#hill)"/>
+  <path d="M0 760 C 300 700, 640 800, 980 740 C 1240 700, 1420 780, 1600 730 L 1600 900 L 0 900 Z" fill="#04241a" opacity="0.9"/>
+</svg>
