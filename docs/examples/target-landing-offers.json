@@ -13,7 +13,7 @@
   },
 
   "metrics": {
-    "_note": "Item collection. `match.item` selects a metric by its current label text; `set` updates that item's value/label/change.",
+    "_note": "Item collection. `match.item` selects a metric by its current label text; `set` updates that item's value/label/change. This example targets all three metrics in the block.",
     "items": [
       {
         "match": { "item": "Current rate / kWh" },
@@ -22,6 +22,32 @@
       {
         "match": { "item": "Renewable mix today" },
         "set": { "value": "91%", "label": "Renewable mix today", "change": "↑ 19% vs avg" }
+      },
+      {
+        "match": { "item": "Active customers" },
+        "set": { "value": "2.4M", "label": "Active customers", "change": "+38k this month" }
+      }
+    ]
+  },
+
+  "_metrics_multi_instance_example": {
+    "_note": "Use this shape (still under the `metrics` scope) when the page has MORE THAN ONE metrics block. `match.key` picks the block by its data-target-key (authored in UE); `match.item` then picks the metric within that block. Rename this key to `metrics` to use it, and give each metrics block a distinct data-target-key.",
+    "items": [
+      {
+        "match": { "key": "hero-kpis", "item": "Current rate / kWh" },
+        "set": { "value": "£0.22", "change": "↓ 8.3% vs last month" }
+      },
+      {
+        "match": { "key": "hero-kpis", "item": "Renewable mix today" },
+        "set": { "value": "91%", "change": "↑ 19% vs avg" }
+      },
+      {
+        "match": { "key": "footer-kpis", "item": "Active customers" },
+        "set": { "value": "2.4M", "change": "+38k this month" }
+      },
+      {
+        "match": { "key": "footer-kpis", "item": "CO₂ saved" },
+        "set": { "value": "1.2M tonnes", "change": "↑ 6% YoY" }
       }
     ]
   },
