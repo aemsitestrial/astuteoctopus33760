@@ -179,6 +179,37 @@ function itemHandler(blockClass, itemSelector, labelSelector, fieldMap) {
   ));
 }
 
+// Scope names that resolve to a composite handler — skipped when a composite
+// dispatches, so one composite can never recurse into another (or itself).
+const COMPOSITE_SCOPES = new Set();
+
+/**
+ * Composite handler: a single offer/scope drives several block types at once.
+ * The offer's `content.blocks` maps each block/scope name to that block's own
+ * offer shape, which is dispatched to its existing handler, e.g.
+ *   {
+ *     "blocks": {
+ *       "hero":    { "set": { "heading": "..." } },
+ *       "metrics": { "items": [ { "match": { "item": "..." }, "set": { "value": "..." } } ] }
+ *     }
+ *   }
+ * Returns true only when every listed block applied (so the scope stops retrying).
+ */
+function compositeHandler() {
+  return (content) => {
+    const blocks = content.blocks || {};
+    const keys = Object.keys(blocks).filter((k) => !COMPOSITE_SCOPES.has(k));
+    if (!keys.length) return false;
+    const applied = keys.filter((key) => {
+      // FORM_BASED_HANDLERS is defined below; only read at runtime, so this is safe.
+      // eslint-disable-next-line no-use-before-define
+      const handler = FORM_BASED_HANDLERS[key];
+      return handler ? handler(blocks[key]) : false;
+    }).length;
+    return applied === keys.length;
+  };
+}
+
 const HEADING = 'h1, h2, h3, h4, h5, h6';
 
 /**
@@ -272,7 +303,13 @@ const FORM_BASED_HANDLERS = {
     title: '.job-title',
     description: '.job-desc',
   }),
+
+  // --- Composite: one offer that drives several blocks at once (see compositeHandler) ---
+  page: compositeHandler(),
 };
+
+// Mark composite scopes so a composite offer never dispatches into another composite.
+['page'].forEach((s) => COMPOSITE_SCOPES.add(s));
 
 // Request only the scopes we can actually handle. Extend by adding a handler above.
 const FORM_BASED_SCOPES = Object.keys(FORM_BASED_HANDLERS);

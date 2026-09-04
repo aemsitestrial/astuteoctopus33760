@@ -81,5 +81,27 @@
       "label": "Smart metering",
       "heading": "Your meter. Your data. Your control. — Experience A"
     }
+  },
+
+  "page": {
+    "_note": "Composite offer — one scope drives several blocks at once. `blocks` maps each block/scope name to that block's normal offer shape. Use this instead of separate hero/metrics/feature-cards offers when a single experience spans multiple blocks.",
+    "blocks": {
+      "hero": {
+        "set": {
+          "heading": "Welcome back — Experience A",
+          "subtitle": "Fair, transparent, renewable energy — picked up where you left off."
+        }
+      },
+      "metrics": {
+        "items": [
+          { "match": { "item": "Current rate / kWh" }, "set": { "value": "£0.22", "change": "↓ 8.3% vs last month" } },
+          { "match": { "item": "Renewable mix today" }, "set": { "value": "91%", "change": "↑ 19% vs avg" } },
+          { "match": { "item": "Active customers" }, "set": { "value": "2.4M", "change": "+38k this month" } }
+        ]
+      },
+      "feature-cards": {
+        "set": { "heading": "Why switch to Xcel — Experience A" }
+      }
+    }
   }
 }
