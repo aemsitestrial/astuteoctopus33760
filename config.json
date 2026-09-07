@@ -5,17 +5,17 @@
   "data": [
     {
       "key": "cf.graphql.endpoint",
-      "value": "",
+      "value": "http://localhost:4502/graphql/execute.json",
       "comment": "Base URL of the AEM persisted-query endpoint, WITHOUT trailing slash, e.g. https://publish-pXXXX-eYYYY.adobeaemcloud.com/graphql/execute.json. Leave empty to use the same-origin relative path /graphql/execute.json (works when the endpoint is proxied on this domain)."
     },
     {
       "key": "cf.graphql.project",
-      "value": "hastyfalcon60506",
+      "value": "hero",
       "comment": "AEM project/config name that persisted queries are published under, i.e. the {project} segment in /graphql/execute.json/{project}/{queryName}."
     },
     {
       "key": "cf.graphql.query.heroByPath",
-      "value": "hero-by-path",
+      "value": "hero-by-block",
       "comment": "Name of the persisted GraphQL query that returns one hero fragment for a given path parameter. Called as /graphql/execute.json/{project}/{queryName};path={cfPath}."
     }
   ],
