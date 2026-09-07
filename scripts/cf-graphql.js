@@ -1,0 +1,126 @@
+/*
+ * Content Fragment GraphQL service
+ * ---------------------------------
+ * Reusable helper for fetching AEM Content Fragments via persisted GraphQL
+ * queries. Any block backed by a Content Fragment can use this instead of
+ * re-implementing endpoint resolution, URL building, and response digging.
+ *
+ * Environment-specific values (endpoint host, project/config name) are read
+ * from /config.json (via getSiteConfig) so nothing is hardcoded in block code.
+ *
+ * Config keys (see /config.json):
+ *   cf.graphql.endpoint   base URL of the persisted-query endpoint, without a
+ *                         trailing slash. Empty => same-origin
+ *                         '/graphql/execute.json'.
+ *   cf.graphql.project    the {project} segment in
+ *                         /graphql/execute.json/{project}/{queryName}.
+ *
+ * Usage:
+ *   import { fetchPersistedQuery, getCfImageUrl } from '../../scripts/cf-graphql.js';
+ *   const data = await fetchPersistedQuery('hero-by-path', { path: cfPath });
+ *   const item = data?.heroByPath?.item;
+ */
+
+import { getSiteConfig } from './scripts.js';
+
+/** Trim a value to a string, '' for non-strings/nullish. */
+function str(value) {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+/**
+ * Resolves the persisted-query base URL and project name from site config.
+ * @returns {Promise<{base: string, project: string}>}
+ */
+export async function getCfEndpoint() {
+  const config = await getSiteConfig();
+  const base = str(config['cf.graphql.endpoint']) || '/graphql/execute.json';
+  const project = str(config['cf.graphql.project']);
+  return { base, project };
+}
+
+/**
+ * Builds a persisted-query request URL. Persisted-query parameters are
+ * appended as `;name=value` segments (AEM convention), URL-encoded.
+ * @param {string} base persisted-query endpoint base
+ * @param {string} project project/config name
+ * @param {string} queryName persisted query name
+ * @param {Object} [params] query variables to append as ;name=value
+ * @returns {string} the full request URL
+ */
+export function buildPersistedQueryUrl(base, project, queryName, params = {}) {
+  const segments = Object.entries(params)
+    .filter(([, value]) => value !== undefined && value !== null && value !== '')
+    .map(([name, value]) => `;${encodeURIComponent(name)}=${encodeURIComponent(value)}`)
+    .join('');
+  return `${base}/${project}/${queryName}${segments}`;
+}
+
+/**
+ * Fetches a persisted GraphQL query and returns its `data` object.
+ * Fully defensive: returns null on missing config, network error, non-OK
+ * response, JSON parse failure, or GraphQL errors.
+ * @param {string} queryName persisted query name (e.g. 'hero-by-path')
+ * @param {Object} [params] query variables (e.g. { path: '/content/dam/...' })
+ * @param {Object} [options] optional { signal } passthrough to fetch
+ * @returns {Promise<Object|null>} the GraphQL `data` object, or null
+ */
+export async function fetchPersistedQuery(queryName, params = {}, options = {}) {
+  const name = str(queryName);
+  if (!name) return null;
+
+  const { base, project } = await getCfEndpoint();
+  if (!project) return null;
+
+  const url = buildPersistedQueryUrl(base, project, name, params);
+
+  try {
+    const resp = await fetch(url, { signal: options.signal });
+    if (!resp.ok) return null;
+    const json = await resp.json();
+    if (Array.isArray(json?.errors) && json.errors.length) return null;
+    return json?.data && typeof json.data === 'object' ? json.data : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
+ * Convenience wrapper for the common "one fragment by path" pattern. Digs the
+ * first `data.*` key so a differently-named query field still resolves, and
+ * returns the single item (from `.item` or the first of `.items`).
+ * @param {string} queryName persisted query name
+ * @param {string} path the Content Fragment path
+ * @param {Object} [options] optional { signal }
+ * @returns {Promise<Object|null>} the fragment item, or null
+ */
+export async function fetchFragmentByPath(queryName, path, options = {}) {
+  const cfPath = str(path);
+  if (!cfPath) return null;
+
+  const data = await fetchPersistedQuery(queryName, { path: cfPath }, options);
+  if (!data) return null;
+
+  const firstKey = Object.keys(data)[0];
+  const payload = firstKey ? data[firstKey] : null;
+  if (!payload || typeof payload !== 'object') return null;
+  if (payload.item) return payload.item;
+  if (Array.isArray(payload.items)) return payload.items[0] || null;
+  return null;
+}
+
+/**
+ * Resolves an AEM Content Fragment image field to a delivery URL. GraphQL
+ * asset references may arrive as a plain path string or an object exposing
+ * _publishUrl / _dynamicUrl / url / _path — handle all defensively.
+ * @param {string|Object|null} image the CF image field value
+ * @returns {string} a URL string, or '' when unresolved
+ */
+export function getCfImageUrl(image) {
+  if (!image) return '';
+  if (typeof image === 'string') return image;
+  // AEM GraphQL asset fields use leading-underscore names.
+  /* eslint-disable no-underscore-dangle */
+  return image._publishUrl || image._dynamicUrl || image.url || image._path || '';
+  /* eslint-enable no-underscore-dangle */
+}
