@@ -1,0 +1,23 @@
+{
+  "data": {
+    "heroByPath": {
+      "item": {
+        "_path": "/content/dam/hastyfalcon60506/fragments/hero-main",
+        "title": "Energy that works as hard as you do",
+        "subtitle": "Transparent pricing, renewable-first supply, and real-time usage insights — built for homes and businesses across the UK.",
+        "imageAlt": "Rolling green hills at dusk with a low sun on the horizon",
+        "height": "standard",
+        "textAlignment": "center",
+        "imagePosition": "center",
+        "image": {
+          "_publishUrl": "https://publish-pXXXX-eYYYY.adobeaemcloud.com/content/dam/hastyfalcon60506/images/hero-hills-dusk.jpg",
+          "_dynamicUrl": "/adobe/dynamicmedia/deliver/dm-aid--hero-hills-dusk/hero-hills-dusk.jpg"
+        },
+        "actions": [
+          { "actionText": "Check your area", "actionLink": "/area", "actionStyle": "primary" },
+          { "actionText": "View plans", "actionLink": "/plans", "actionStyle": "static-light" }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "modelName": "hero-v2",
+  "path": "/content/dam/hastyfalcon60506/fragments/hero-main",
+  "title": "Hero — Homepage Main",
+  "description": "Sample Content Fragment instance for the Hero V2 block (standard-center-with-actions variant). Safe, non-sensitive sample values only — no PII, secrets, or tracking parameters.",
+  "fields": {
+    "title": "Energy that works as hard as you do",
+    "subtitle": "Transparent pricing, renewable-first supply, and real-time usage insights — built for homes and businesses across the UK.",
+    "image": "/content/dam/hastyfalcon60506/images/hero-hills-dusk.jpg",
+    "imageAlt": "Rolling green hills at dusk with a low sun on the horizon",
+    "actions": [
+      { "actionText": "Check your area", "actionLink": "/area", "actionStyle": "primary" },
+      { "actionText": "View plans", "actionLink": "/plans", "actionStyle": "static-light" }
+    ],
+    "height": "standard",
+    "textAlignment": "center",
+    "imagePosition": "center"
+  }
+}

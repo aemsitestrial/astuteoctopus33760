@@ -1,0 +1,18 @@
+{
+  "modelName": "hero-v2",
+  "path": "/content/dam/hastyfalcon60506/fragments/hero-promo",
+  "title": "Hero — Seasonal Promo",
+  "description": "Second sample instance (tall, left-aligned, single primary action). Demonstrates a minimal hero: no subtitle, one action.",
+  "fields": {
+    "title": "Switch to greener energy this winter",
+    "subtitle": "",
+    "image": "/content/dam/hastyfalcon60506/images/hero-turbines.webp",
+    "imageAlt": "Wind turbines on a coastal ridge under a bright sky",
+    "actions": [
+      { "actionText": "Get a quote", "actionLink": "/quote", "actionStyle": "primary" }
+    ],
+    "height": "tall",
+    "textAlignment": "left",
+    "imagePosition": "center"
+  }
+}

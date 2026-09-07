@@ -1,0 +1,110 @@
+{
+  "title": "Hero V2",
+  "name": "hero-v2",
+  "description": "Content Fragment Model backing the EDS Hero V2 block (blocks/hero-v2) and all seven of its variants (base + 6 locked presets). Single shared model; variant-specific field locking/visibility is enforced in the Universal Editor component definition (blocks/hero-v2/_hero-v2.json), not in the model, because AEM Content Fragment Models cannot express per-consumer conditional requiredness. Field names match what blocks/hero-v2/hero-v2.js reads via the persisted GraphQL query (see docs/hero-block/persisted-query-hero-by-path.md).",
+  "status": "published",
+  "fields": [
+    {
+      "name": "title",
+      "label": "Title",
+      "dataType": "text",
+      "fieldType": "single-line",
+      "required": false,
+      "defaultValue": "",
+      "validation": { "maxLength": 120 },
+      "notes": "Primary hero headline. Optional everywhere; rendered into a heading element by the block."
+    },
+    {
+      "name": "subtitle",
+      "label": "Subtitle",
+      "dataType": "text",
+      "fieldType": "single-line",
+      "required": false,
+      "defaultValue": "",
+      "validation": { "maxLength": 220 },
+      "notes": "Supporting subheadline text. Optional everywhere."
+    },
+    {
+      "name": "image",
+      "label": "Image",
+      "dataType": "content-reference",
+      "fieldType": "content-reference",
+      "referenceType": "asset",
+      "mimeTypes": ["image/jpeg", "image/png", "image/webp", "image/avif"],
+      "required": false,
+      "defaultValue": null,
+      "notes": "Background image, resolved through the DAM asset picker. Delivered to the block as _publishUrl / _dynamicUrl via the GraphQL ImageRef; getCfImageUrl() resolves it."
+    },
+    {
+      "name": "imageAlt",
+      "label": "Alt",
+      "dataType": "text",
+      "fieldType": "single-line",
+      "required": false,
+      "defaultValue": "",
+      "validation": { "maxLength": 250 },
+      "notes": "Image alt text. Optional; the block falls back to alt=\"\" (decorative) when empty, per WCAG guidance."
+    },
+    {
+      "name": "actions",
+      "label": "Actions",
+      "dataType": "json",
+      "fieldType": "multifield",
+      "maxItems": 2,
+      "required": false,
+      "defaultValue": [],
+      "itemSchema": {
+        "actionText": {
+          "dataType": "text",
+          "fieldType": "single-line",
+          "label": "Action Text",
+          "validation": { "maxLength": 40 }
+        },
+        "actionLink": {
+          "dataType": "text",
+          "fieldType": "single-line",
+          "label": "Action Link",
+          "validation": { "format": "uri-relative-or-https" }
+        },
+        "actionStyle": {
+          "dataType": "enum",
+          "fieldType": "single-select",
+          "label": "Action Style",
+          "allowedValues": ["primary", "static-light"],
+          "defaultByPosition": { "0": "primary", "1": "static-light" }
+        }
+      },
+      "notes": "Up to two calls to action. Positional default: first = primary, second = static-light. actionLink is validated to a relative or https URL; the block additionally drops unsafe links (javascript:, data:, protocol-relative) at render via isSafeUrl."
+    },
+    {
+      "name": "height",
+      "label": "Height",
+      "dataType": "enum",
+      "fieldType": "single-select",
+      "allowedValues": ["responsive", "tall", "standard", "compact"],
+      "defaultValue": "responsive",
+      "required": false,
+      "notes": "Drives layout only on the base (non-locked) block; a locked variant class overrides this value."
+    },
+    {
+      "name": "textAlignment",
+      "label": "Text Alignment",
+      "dataType": "enum",
+      "fieldType": "single-select",
+      "allowedValues": ["center", "left"],
+      "defaultValue": "center",
+      "required": false,
+      "notes": "Base-block only; overridden by a locked variant."
+    },
+    {
+      "name": "imagePosition",
+      "label": "Image Position",
+      "dataType": "enum",
+      "fieldType": "single-select",
+      "allowedValues": ["center", "top", "bottom"],
+      "defaultValue": "center",
+      "required": false,
+      "notes": "Base-block only; hidden/not-applicable on Standard and Compact variants, locked to center on Tall variants."
+    }
+  ]
+}
