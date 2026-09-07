@@ -49,9 +49,13 @@ export async function getCfEndpoint() {
  * @returns {string} the full request URL
  */
 export function buildPersistedQueryUrl(base, project, queryName, params = {}) {
+  // AEM's persisted-query endpoint expects literal '/' in parameter values
+  // (e.g. path=/content/dam/...), not percent-encoded '%2F'. Encode other
+  // unsafe characters but keep forward slashes intact.
+  const encodeValue = (value) => encodeURIComponent(value).replace(/%2F/gi, '/');
   const segments = Object.entries(params)
     .filter(([, value]) => value !== undefined && value !== null && value !== '')
-    .map(([name, value]) => `;${encodeURIComponent(name)}=${encodeURIComponent(value)}`)
+    .map(([name, value]) => `;${encodeURIComponent(name)}=${encodeValue(value)}`)
     .join('');
   return `${base}/${project}/${queryName}${segments}`;
 }
