@@ -1,7 +1,7 @@
 {
-  "total": 4,
+  "total": 5,
   "offset": 0,
-  "limit": 4,
+  "limit": 5,
   "data": [
     {
       "key": "cf.graphql.endpoint",
@@ -22,6 +22,11 @@
       "key": "cf.graphql.authorization",
       "value": "Basic YWRtaW46YWRtaW4=",
       "comment": "LOCAL DEV ONLY. Optional Authorization header sent with CF GraphQL requests, for a protected AEM author instance. 'Basic YWRtaW46YWRtaW4=' is base64 of the default admin:admin credential. REMOVE (set to empty) for production — requests should target an unauthenticated publish tier, and this default credential must never reach a deployed site."
+    },
+    {
+      "key": "cf.assets.host",
+      "value": "https://author-p153710-e1614654.adobeaemcloud.com",
+      "comment": "Absolute AEM origin used to prefix bare /content/dam/... image paths from Content Fragments (no trailing slash). Only used when the CF image has no absolute _dynamicUrl/_publishUrl. For production set this to the PUBLISH host so images load unauthenticated in the browser — an author host requires login and <img> tags cannot send auth, so author-hosted images will not render for end users."
     }
   ],
   ":type": "sheet"

@@ -24,7 +24,7 @@ import { createOptimizedPicture } from '../../scripts/aem.js';
 import { getSiteConfig } from '../../scripts/scripts.js';
 // Shared Content Fragment GraphQL service — endpoint resolution, persisted
 // query fetching, and asset-URL resolution, reusable across CF-backed blocks.
-import { fetchFragmentByPath, getCfImageUrl } from '../../scripts/cf-graphql.js';
+import { fetchFragmentByPath, getCfImageUrl, getCfAssetHost } from '../../scripts/cf-graphql.js';
 
 // Persisted query name is read from config with this documented fallback.
 const DEFAULT_HERO_QUERY = 'hero-by-path';
@@ -153,7 +153,7 @@ function readInlineData(block) {
  * match docs/hero-block/hero.model.json. Hero-specific mapping stays here;
  * generic fetch/URL concerns live in scripts/cf-graphql.js.
  */
-function normalizeFragment(item) {
+function normalizeFragment(item, assetHost) {
   if (!item || typeof item !== 'object') return null;
 
   const rawActions = Array.isArray(item.actions) ? item.actions : [];
@@ -164,7 +164,7 @@ function normalizeFragment(item) {
   }));
 
   return {
-    imageSrc: getCfImageUrl(item.image),
+    imageSrc: getCfImageUrl(item.image, assetHost),
     imageAlt: safeText(item.imageAlt),
     // richtext/plain title from the CF: build a heading element (h2 by
     // default; a hero is rarely the page's only h1 when CF-driven).
@@ -187,8 +187,11 @@ function normalizeFragment(item) {
 async function fetchHeroFragment(path) {
   const config = await getSiteConfig();
   const queryName = safeText(config['cf.graphql.query.heroByPath']) || DEFAULT_HERO_QUERY;
-  const item = await fetchFragmentByPath(queryName, path);
-  return normalizeFragment(item);
+  const [item, assetHost] = await Promise.all([
+    fetchFragmentByPath(queryName, path),
+    getCfAssetHost(),
+  ]);
+  return normalizeFragment(item, assetHost);
 }
 
 /**
@@ -229,13 +232,27 @@ function renderHero(block, data, layout) {
   if (data.imageSrc) {
     const alt = safeText(data.imageAlt);
     // Hero image is very likely the LCP element: eager-load, high priority.
-    const optimizedPic = createOptimizedPicture(data.imageSrc, alt, true, [{ width: '1600' }]);
-    optimizedPic.querySelectorAll('img').forEach((el) => {
-      el.setAttribute('alt', alt); // decorative fallback: alt="" is valid and intentional
-      el.setAttribute('loading', 'eager');
-      el.setAttribute('fetchpriority', 'high');
-    });
-    media.append(optimizedPic);
+    // An absolute (cross-origin) URL means an AEM-hosted CF asset — the EDS
+    // createOptimizedPicture helper only keeps the pathname (dropping the
+    // host) and appends EDS media-pipeline params that AEM/DM do not honor,
+    // so it would 404. Render a plain <img> at the absolute URL instead.
+    const isAbsolute = /^(https?:)?\/\//i.test(data.imageSrc);
+    if (isAbsolute) {
+      const img = document.createElement('img');
+      img.setAttribute('src', data.imageSrc);
+      img.setAttribute('alt', alt);
+      img.setAttribute('loading', 'eager');
+      img.setAttribute('fetchpriority', 'high');
+      media.append(img);
+    } else {
+      const optimizedPic = createOptimizedPicture(data.imageSrc, alt, true, [{ width: '1600' }]);
+      optimizedPic.querySelectorAll('img').forEach((el) => {
+        el.setAttribute('alt', alt); // decorative fallback: alt="" is valid and intentional
+        el.setAttribute('loading', 'eager');
+        el.setAttribute('fetchpriority', 'high');
+      });
+      media.append(optimizedPic);
+    }
   }
   // Missing image: media stays empty; CSS provides a neutral background so
   // layout does not collapse or shift when the image is absent.

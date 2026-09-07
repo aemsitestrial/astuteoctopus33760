@@ -40,6 +40,16 @@ export async function getCfEndpoint() {
 }
 
 /**
+ * Resolves the AEM asset host used to prefix bare DAM image paths, from
+ * config (cf.assets.host). Empty when not configured (paths left relative).
+ * @returns {Promise<string>} absolute origin without trailing slash, or ''
+ */
+export async function getCfAssetHost() {
+  const config = await getSiteConfig();
+  return str(config['cf.assets.host']).replace(/\/+$/, '');
+}
+
+/**
  * Builds the fetch init (headers/credentials) for a CF GraphQL request from
  * config. Supports an optional Authorization header for protected endpoints
  * (e.g. an AEM author instance during local development):
@@ -136,17 +146,41 @@ export async function fetchFragmentByPath(queryName, path, options = {}) {
 }
 
 /**
- * Resolves an AEM Content Fragment image field to a delivery URL. GraphQL
- * asset references may arrive as a plain path string or an object exposing
- * _publishUrl / _dynamicUrl / url / _path — handle all defensively.
+ * Resolves an AEM Content Fragment image field to a browser-loadable URL.
+ *
+ * GraphQL asset references arrive as a plain path string or an object exposing
+ * _dynamicUrl / _publishUrl / url / _path. Resolution order:
+ *   1. _dynamicUrl  — absolute, public Dynamic Media (Scene7) URL; CDN-served
+ *                     and already optimized. Preferred when present.
+ *   2. _publishUrl  — absolute publish delivery URL.
+ *   3. a DAM path (_path / url / string) — a relative /content/dam/... path
+ *      that does NOT resolve on the EDS page origin (that host does not serve
+ *      DAM assets). Prefixed with `assetHost` (the AEM publish host) so the
+ *      browser requests it from the right origin.
+ *
  * @param {string|Object|null} image the CF image field value
+ * @param {string} [assetHost] absolute origin to prefix bare DAM paths with
+ *   (e.g. https://publish-pXXXX-eYYYY.adobeaemcloud.com), no trailing slash
  * @returns {string} a URL string, or '' when unresolved
  */
-export function getCfImageUrl(image) {
-  if (!image) return '';
-  if (typeof image === 'string') return image;
-  // AEM GraphQL asset fields use leading-underscore names.
+export function getCfImageUrl(image, assetHost = '') {
   /* eslint-disable no-underscore-dangle */
-  return image._publishUrl || image._dynamicUrl || image.url || image._path || '';
+  let raw = '';
+  if (typeof image === 'string') {
+    raw = image;
+  } else if (image && typeof image === 'object') {
+    // Prefer the absolute, public Dynamic Media URL, then publish URL.
+    if (image._dynamicUrl) return image._dynamicUrl;
+    if (image._publishUrl) return image._publishUrl;
+    raw = image.url || image._path || '';
+  }
   /* eslint-enable no-underscore-dangle */
+
+  raw = str(raw);
+  if (!raw) return '';
+  // Already absolute (http/https or protocol-relative): use as-is.
+  if (/^(https?:)?\/\//i.test(raw)) return raw;
+  // Bare DAM path: prefix with the configured asset host so it loads from AEM.
+  const host = str(assetHost).replace(/\/+$/, '');
+  return host ? `${host}${raw.startsWith('/') ? '' : '/'}${raw}` : raw;
 }
