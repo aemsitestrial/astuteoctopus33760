@@ -21,6 +21,13 @@
       "id": "hero-v2",
       "fields": [
         {
+          "component": "aem-content",
+          "valueType": "string",
+          "name": "contentFragment",
+          "label": "Content Fragment (optional)",
+          "description": "Pick a Hero Content Fragment to drive this block from AEM. When set, leave the fields below empty — the block fetches title, image, subtitle, and actions from the fragment. Leave this empty to author the hero inline instead."
+        },
+        {
           "component": "reference",
           "valueType": "string",
           "name": "image",

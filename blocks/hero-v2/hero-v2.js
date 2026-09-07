@@ -192,11 +192,22 @@ async function fetchHeroFragment(path) {
 }
 
 /**
- * Detects whether the block is a Content Fragment reference: no inline
- * heading/image, and its only meaningful content is a path (a link href or
- * text) pointing at a fragment. Returns the path, or '' for inline mode.
+ * Resolves the Content Fragment path for CF-driven mode, or '' for inline mode.
+ *
+ * The authoring model (blocks/hero-v2/_hero-v2.json) exposes a "Content
+ * Fragment" field (component: aem-content) which delivers as a link to the
+ * chosen fragment. Content Fragments are always DAM assets, so a link whose
+ * href points under /content/dam/ is the CF reference — this reliably
+ * distinguishes it from CTA links (which target pages or external URLs) even
+ * when inline fields are also (mistakenly) filled.
+ *
+ * Falls back to the document-authoring convention: if there is no inline
+ * image/heading and the block's only content is an absolute path, use it.
  */
 function getFragmentPath(block) {
+  const cfLink = block.querySelector('a[href^="/content/dam/"]');
+  if (cfLink) return cfLink.getAttribute('href');
+
   if (block.querySelector('img, h1, h2, h3, h4, h5, h6')) return '';
   const link = block.querySelector('a[href]');
   const candidate = link ? link.getAttribute('href') : safeText(block.textContent);
