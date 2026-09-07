@@ -105,14 +105,36 @@ function buildAction({ text, href, style }, index) {
 /**
  * Normalizes the block's authored markup into the hero data shape consumed
  * by renderHero().
+ *
+ * The model (_hero-v3.json) delivers one field per row, in order: image,
+ * title, subtitle, actions. Rows are therefore classified positionally rather
+ * than by heuristics: the image row is the one with a picture/img, action rows
+ * are those with links, and the remaining text rows are — in document order —
+ * the title then the subtitle. This correctly handles a title authored as
+ * plain rich text (not a heading), while still preserving a heading element
+ * when the author uses one.
  */
 function readInlineData(block) {
-  const img = block.querySelector('img');
-  const heading = block.querySelector('h1, h2, h3, h4, h5, h6');
-  const paragraphs = [...block.querySelectorAll('p')];
-  const subtitleParagraph = paragraphs.find((p) => !p.querySelector('a') && safeText(p.textContent));
+  const rows = [...block.children];
+  let img = null;
+  const anchorEls = [];
+  const textCells = [];
 
-  const actions = [...block.querySelectorAll('a')].slice(0, 2).map((anchor, index) => {
+  rows.forEach((row) => {
+    const cell = row.children.length === 1 ? row.firstElementChild : row;
+    if (!img && cell.querySelector('img')) {
+      img = cell.querySelector('img');
+      return;
+    }
+    const cellAnchors = [...cell.querySelectorAll('a')];
+    if (cellAnchors.length) {
+      anchorEls.push(...cellAnchors);
+      return;
+    }
+    if (safeText(cell.textContent)) textCells.push(cell);
+  });
+
+  const actions = anchorEls.slice(0, 2).map((anchor, index) => {
     // Honor the common EDS rich-text convention: <strong> = primary,
     // <em> = static-light, else positional default.
     let style;
@@ -122,13 +144,19 @@ function readInlineData(block) {
     return { text: anchor.textContent, href: anchor.getAttribute('href'), style };
   });
 
+  // Title = first text row, subtitle = second (model field order).
+  const titleCell = textCells[0] || null;
+  const subtitleCell = textCells[1] || null;
+  const headingEl = titleCell ? titleCell.querySelector('h1, h2, h3, h4, h5, h6') : null;
+
   return {
     imageSrc: img ? img.getAttribute('src') : '',
     imageAlt: img ? safeText(img.getAttribute('alt')) : '',
-    // Preserve the authored heading element (keeps its level and any UE
-    // instrumentation) rather than reconstructing it.
-    headingEl: heading && safeText(heading.textContent) ? heading : null,
-    subtitle: subtitleParagraph ? safeText(subtitleParagraph.textContent) : '',
+    // Preserve an authored heading element (keeps its level and any UE
+    // instrumentation); otherwise the plain title text is used to build one.
+    headingEl: headingEl && safeText(headingEl.textContent) ? headingEl : null,
+    titleText: !headingEl && titleCell ? safeText(titleCell.textContent) : '',
+    subtitle: subtitleCell ? safeText(subtitleCell.textContent) : '',
     actions,
   };
 }
