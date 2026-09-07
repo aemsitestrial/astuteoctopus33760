@@ -263,6 +263,14 @@ const FORM_BASED_HANDLERS = {
     primaryCta: '.hero-actions a.hero-btn-primary',
     secondaryCta: '.hero-actions a.hero-btn-ghost',
   }),
+  // hero-v3: clean inline hero. Anchors are the classes hero-v3.js emits.
+  // The primary/secondary CTAs map to the positional action styles.
+  'hero-v3': blockHandler('hero-v3', {
+    heading: '.hero-title',
+    subtitle: '.hero-subtitle',
+    primaryCta: '.hero-actions a.hero-action-primary',
+    secondaryCta: '.hero-actions a.hero-action-static-light',
+  }),
   'feature-cards': blockHandler('feature-cards', {
     label: '.feature-cards-label',
     heading: '.feature-cards-title',

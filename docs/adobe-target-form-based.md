@@ -125,6 +125,7 @@ these field names:
 | Scope (block) | Type | `set` fields | Item match key (`match.item`) |
 |---|---|---|---|
 | `hero` | block | `badge`, `heading`, `subtitle`, `primaryCta`, `secondaryCta` | — |
+| `hero-v3` | block | `heading`, `subtitle`, `primaryCta`, `secondaryCta` | — |
 | `feature-cards` | block | `label`, `heading`, `subtitle` | — |
 | `usage-dashboard` | block | `heading`, `label`, `cta` | — |
 | `cta-band` | block | `heading`, `subtitle`, `cta` | — |
