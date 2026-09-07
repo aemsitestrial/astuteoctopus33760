@@ -40,6 +40,28 @@ export async function getCfEndpoint() {
 }
 
 /**
+ * Builds the fetch init (headers/credentials) for a CF GraphQL request from
+ * config. Supports an optional Authorization header for protected endpoints
+ * (e.g. an AEM author instance during local development):
+ *   cf.graphql.authorization  full header value, e.g. "Basic YWRtaW46YWRtaW4=".
+ * Kept in config (not hardcoded) so it is easy to omit for production, where
+ * the request should target an unauthenticated publish tier instead.
+ * @param {AbortSignal} [signal]
+ * @returns {Promise<RequestInit>}
+ */
+export async function getCfRequestInit(signal) {
+  const config = await getSiteConfig();
+  const init = { signal };
+  const authorization = str(config['cf.graphql.authorization']);
+  if (authorization) {
+    init.headers = { Authorization: authorization };
+    // Needed so the browser sends credentials to a cross-origin AEM host.
+    init.credentials = 'include';
+  }
+  return init;
+}
+
+/**
  * Builds a persisted-query request URL. Persisted-query parameters are
  * appended as `;name=value` segments (AEM convention), URL-encoded.
  * @param {string} base persisted-query endpoint base
@@ -79,7 +101,7 @@ export async function fetchPersistedQuery(queryName, params = {}, options = {}) 
   const url = buildPersistedQueryUrl(base, project, name, params);
 
   try {
-    const resp = await fetch(url, { signal: options.signal });
+    const resp = await fetch(url, await getCfRequestInit(options.signal));
     if (!resp.ok) return null;
     const json = await resp.json();
     if (Array.isArray(json?.errors) && json.errors.length) return null;

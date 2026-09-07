@@ -1,7 +1,7 @@
 {
-  "total": 1,
+  "total": 4,
   "offset": 0,
-  "limit": 1,
+  "limit": 4,
   "data": [
     {
       "key": "cf.graphql.endpoint",
@@ -17,6 +17,11 @@
       "key": "cf.graphql.query.heroByPath",
       "value": "hero-by-block",
       "comment": "Name of the persisted GraphQL query that returns one hero fragment for a given path parameter. Called as /graphql/execute.json/{project}/{queryName};path={cfPath}."
+    },
+    {
+      "key": "cf.graphql.authorization",
+      "value": "Basic YWRtaW46YWRtaW4=",
+      "comment": "LOCAL DEV ONLY. Optional Authorization header sent with CF GraphQL requests, for a protected AEM author instance. 'Basic YWRtaW46YWRtaW4=' is base64 of the default admin:admin credential. REMOVE (set to empty) for production — requests should target an unauthenticated publish tier, and this default credential must never reach a deployed site."
     }
   ],
   ":type": "sheet"
