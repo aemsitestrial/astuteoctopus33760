@@ -225,7 +225,9 @@ function defaultContentHandler() {
  * by its current text — position-independent, scoped to the section so nothing
  * outside it is touched.
  *
- *   match.section → the section's authored id (data-id) — required
+ *   match.section → the section id — required. Matches either the real DOM
+ *                   `id` (normalized, e.g. "hero-intent") or the raw authored
+ *                   `data-id`, so an offer works regardless of casing/spacing.
  *   match.text    → current trimmed text of the child element to replace — required
  *   set.text      → the replacement text
  *
@@ -238,7 +240,7 @@ function intentSectionHandler() {
     const main = document.querySelector('main');
     if (!main) return false;
     const section = [...main.querySelectorAll('.section')]
-      .find((s) => s.dataset.id === match.section);
+      .find((s) => s.id === match.section || s.dataset.id === match.section);
     if (!section) return false;
     const el = [...section.querySelectorAll('h1, h2, h3, h4, h5, h6, p, li')]
       .find((e) => e.textContent.trim() === match.text);

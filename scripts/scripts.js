@@ -10,6 +10,7 @@ import {
   loadSection,
   loadSections,
   loadCSS,
+  toClassName,
 } from './aem.js';
 import { alloyLoadedPromise } from './target.js';
 
@@ -100,6 +101,25 @@ function buildAutoBlocks() {
 }
 
 /**
+ * Promotes a section's authored `id` field to a real `id` attribute on the
+ * section element. decorateSections() reads the section-metadata `id` field
+ * into `section.dataset.id`; this also exposes it as a DOM id so it works as a
+ * CSS hook and a fragment/anchor-link target (e.g. #hero-intent). The
+ * data-id attribute is preserved (Adobe Target matches on it). Skips missing
+ * ids and avoids creating duplicate ids on the page.
+ * @param {Element} main The main element
+ */
+function decorateSectionIds(main) {
+  const used = new Set([...document.querySelectorAll('[id]')].map((el) => el.id));
+  main.querySelectorAll(':scope > .section').forEach((section) => {
+    const id = toClassName(section.dataset.id || '');
+    if (!id || section.id || used.has(id)) return;
+    section.id = id;
+    used.add(id);
+  });
+}
+
+/**
  * Decorates the main element.
  * @param {Element} main The main element
  */
@@ -110,6 +130,7 @@ export function decorateMain(main) {
   decorateIcons(main);
   buildAutoBlocks(main);
   decorateSections(main);
+  decorateSectionIds(main);
   decorateBlocks(main);
 }
 

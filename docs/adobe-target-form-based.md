@@ -145,7 +145,7 @@ these field names:
 | `cards` | item | `heading`, `body` | card heading |
 | `job-listings` | item | `title`, `description` | job title |
 | `default-content` | text | `text` | `match.text` (current text) + optional `match.wrapper` index |
-| `intent-section` | section | `text` | `match.section` (section `data-id`) + `match.text` (current child text) |
+| `intent-section` | section | `text` | `match.section` (section `id` / `data-id`) + `match.text` (current child text) |
 | `page` | composite | `blocks` (map of block → offer) | — |
 
 ### Default content (not in a block)
@@ -178,9 +178,11 @@ text** (scoped to `<main>`, so header/footer are never touched):
 ### Intent Section (section-scoped text)
 
 The **Intent Section** (`models/_intent-section.json`) is a section container that only allows
-`text` and `hero-v3`, and exposes an authored **`id`** field (rendered as `data-id` on the
-section). The `intent-section` scope personalizes text *within a specific section*, matched by
-that id — so the same activity can target one section without touching identical copy elsewhere.
+`text` and `hero-v3`, and exposes an authored **`id`** field. That field is rendered both as a
+real DOM `id` attribute on the section (a normalized token, e.g. `hero-intent`, usable as a CSS
+hook and `#anchor` target) and preserved as `data-id`. The `intent-section` scope personalizes
+text *within a specific section*, matched by either form of that id — so the same activity can
+target one section without touching identical copy elsewhere.
 
 ```json
 {
@@ -193,7 +195,8 @@ that id — so the same activity can target one section without touching identic
 }
 ```
 
-- `match.section` (required) — the section's authored `id` (matched against `section.dataset.id`).
+- `match.section` (required) — the section id; matches the section's real `id` attribute
+  (normalized) or its raw `data-id`.
 - `match.text` (required) — exact trimmed text of the child `h1..6`/`p`/`li` to replace.
 - `set.text` — the replacement text.
 

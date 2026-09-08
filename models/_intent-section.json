@@ -23,7 +23,7 @@
           "component": "text",
           "name": "id",
           "label": "Section ID",
-          "description": "Stable identifier for this section, used for anchoring/personalization (e.g. Adobe Target). Rendered as data-id on the section."
+          "description": "Stable identifier for this section, used for anchoring/personalization (e.g. Adobe Target). Rendered as a real id attribute (normalized, usable as a #anchor / CSS hook) and preserved as data-id."
         },
         {
           "component": "text",
