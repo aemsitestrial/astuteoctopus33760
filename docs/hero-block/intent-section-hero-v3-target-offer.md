@@ -26,80 +26,85 @@ decoration the relevant DOM is:
 </div>
 ```
 
+## hero-v3 model-property fields
+
+Both scopes below use the hero-v3 block's **model property names** (from
+`blocks/hero-v3/_hero-v3.json`) as the `set` field names — not raw element text. So an offer
+survives copy edits and reads the way an author thinks about the block:
+
+| `set` field | Model property | Personalizes |
+|---|---|---|
+| `title` | Title | the hero headline (`.hero-title`) |
+| `subtitle` | Subtitle | the subtitle (`.hero-subtitle`) |
+| `primaryCta` | Primary action text | the primary button label |
+| `secondaryCta` | Secondary action text | the secondary button label |
+
+> `heading` is accepted as a back-compat alias for `title`.
+
 ## Two ways to target it
 
-| Goal | Use scope | Section-scoped? | Can set CTAs? |
-|---|---|---|---|
-| Change the hero's **title / subtitle** only, and only in this section | `intent-section` | ✅ by section id | ❌ (text elements only) |
-| Change **title / subtitle / CTAs** of a hero-v3 | `hero-v3` | ❌ block-scoped (pick by `instance`/`key`) | ✅ |
+| Goal | Use scope | Section-scoped? |
+|---|---|---|
+| Personalize the hero **only in this section** (by section id) | `intent-section` | ✅ by section id |
+| Personalize a hero-v3 picked by `instance`/`key` | `hero-v3` | ❌ block-scoped |
 
-If the page has only one hero-v3 and you need the CTAs, the `hero-v3` scope is simplest. If there
-are several hero-v3 blocks and you must scope to the one in `#hero-intent`, use `intent-section`
-for the text and give the hero a `data-target-key` for CTA targeting (see note at the end).
+Both set the same fields (title/subtitle/primaryCta/secondaryCta). Use `intent-section` when you
+need to scope to one section; use `hero-v3` when picking by instance/key is enough.
 
 ---
 
-## Option A — `intent-section` scope (section-scoped text)
+## Option A — `intent-section` scope (section-scoped, by model property)
 
-Decision scope: **`intent-section`**. Matches the section by `id`/`data-id`, then replaces child
-text by its current value. Targets the hero-v3 title and subtitle without affecting identical copy
-in other sections.
+Decision scope: **`intent-section`**. Matches the section by `id`/`data-id`, then sets the hero-v3
+inside it by its model properties. Does not affect an identical hero in another section.
 
 ```json
 {
   "items": [
     {
-      "match": { "section": "hero-intent", "text": "Coffee title" },
-      "set":   { "text": "Tea title — Experience A" }
-    },
-    {
-      "match": { "section": "hero-intent", "text": "Drink a delicious coffee in the morning" },
-      "set":   { "text": "Start your day with a fresh brew — Experience A" }
+      "match": { "section": "hero-intent" },
+      "set": {
+        "title": "Tea title — Experience A",
+        "subtitle": "Start your day with a fresh brew — Experience A",
+        "primaryCta": "Order tea",
+        "secondaryCta": "Talk to us"
+      }
     }
   ]
 }
 ```
 
 - `match.section` — the section's `id` (`hero-intent`) or raw `data-id`.
-- `match.text` — the exact current trimmed text of the hero title / subtitle.
-- `set.text` — the replacement text.
+- `set.<field>` — any hero-v3 model property (`title`, `subtitle`, `primaryCta`, `secondaryCta`);
+  unknown fields are ignored.
 
-> Anchored by current text, so the offer breaks if the source copy is edited. It cannot change
-> the CTAs (anchors are not in the `h1–h6 / p / li` set the handler targets).
+Title + subtitle only:
+
+```json
+{ "items": [ { "match": { "section": "hero-intent" },
+              "set": { "title": "Tea title — Experience A", "subtitle": "Fresh brew every morning" } } ] }
+```
 
 ---
 
-## Option B — `hero-v3` scope (title, subtitle, and CTAs)
+## Option B — `hero-v3` scope (pick by instance/key)
 
-Decision scope: **`hero-v3`**. Sets the block's fields directly. Use this when you need the CTAs.
-
-Full personalization (single hero-v3 on the page):
-
-```json
-{
-  "set": {
-    "heading": "Tea title — Experience A",
-    "subtitle": "Start your day with a fresh brew — Experience A",
-    "primaryCta": "Order tea",
-    "secondaryCta": "Talk to us"
-  }
-}
-```
-
-CTAs only:
-
-```json
-{ "set": { "primaryCta": "Order now", "secondaryCta": "Live chat" } }
-```
-
-Multiple hero-v3 blocks — pick the intended one by zero-based `instance`:
+Decision scope: **`hero-v3`**. Sets the block's fields directly; pick which hero-v3 with
+`match.instance` (zero-based) or `match.key` (a `data-target-key`).
 
 ```json
 {
   "items": [
-    { "match": { "instance": 0 }, "set": { "heading": "Tea title — Experience A", "primaryCta": "Order tea" } }
+    { "match": { "instance": 0 },
+      "set": { "title": "Tea title — Experience A", "primaryCta": "Order tea" } }
   ]
 }
+```
+
+Single hero-v3 on the page — flat offer:
+
+```json
+{ "set": { "title": "Tea title — Experience A", "subtitle": "Fresh brew every morning" } }
 ```
 
 > `set` fields update **text only** (the CTA `href` is preserved). Changing a CTA link needs a VEC
@@ -130,7 +135,7 @@ hero-v3 *in a specific section* — give the block a stable key:
 {
   "items": [
     { "match": { "key": "hero-intent" },
-      "set": { "heading": "Tea title — Experience A", "primaryCta": "Order tea", "secondaryCta": "Talk to us" } }
+      "set": { "title": "Tea title — Experience A", "primaryCta": "Order tea", "secondaryCta": "Talk to us" } }
   ]
 }
 ```

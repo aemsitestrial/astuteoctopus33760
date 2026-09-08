@@ -7,21 +7,26 @@ re-decoration. See `docs/adobe-target-form-based.md` for the general model.
 
 ## Handler & anchors
 
+`set` field names are the block's **model property names** (`blocks/hero-v3/_hero-v3.json`),
+mapped to the post-decoration selectors via the shared `HERO_V3_FIELDS`:
+
 ```js
-'hero-v3': blockHandler('hero-v3', {
-  heading:      '.hero-title',
+const HERO_V3_FIELDS = {
+  title:        '.hero-title',
+  heading:      '.hero-title', // back-compat alias for `title`
   subtitle:     '.hero-subtitle',
   primaryCta:   '.hero-actions a.hero-action-primary',
   secondaryCta: '.hero-actions a.hero-action-static-light',
-}),
+};
+'hero-v3': blockHandler('hero-v3', HERO_V3_FIELDS),
 ```
 
-| `set` field | Personalizes | Anchor |
+| `set` field | Model property | Anchor |
 |---|---|---|
-| `heading` | Title text | `.hero-title` |
-| `subtitle` | Subtitle text | `.hero-subtitle` |
-| `primaryCta` | Primary button label | `.hero-actions a.hero-action-primary` |
-| `secondaryCta` | Secondary button label | `.hero-actions a.hero-action-static-light` |
+| `title` (alias `heading`) | Title | `.hero-title` |
+| `subtitle` | Subtitle | `.hero-subtitle` |
+| `primaryCta` | Primary action text | `.hero-actions a.hero-action-primary` |
+| `secondaryCta` | Secondary action text | `.hero-actions a.hero-action-static-light` |
 
 > Fields set **text only** (via `textContent`), preserving instrumentation and the CTA `href`.
 > To change a CTA destination, use a VEC/dom-action offer or extend the handler — Target-authored
@@ -34,7 +39,7 @@ re-decoration. See `docs/adobe-target-form-based.md` for the general model.
 ```json
 {
   "set": {
-    "heading": "Welcome back — pick up where you left off",
+    "title": "Welcome back — pick up where you left off",
     "subtitle": "Your saved plan is ready to review.",
     "primaryCta": "Resume application",
     "secondaryCta": "Compare other plans"
@@ -42,10 +47,10 @@ re-decoration. See `docs/adobe-target-form-based.md` for the general model.
 }
 ```
 
-### 2. Heading only
+### 2. Title only
 
 ```json
-{ "set": { "heading": "Energy that works as hard as you do — Experience A" } }
+{ "set": { "title": "Energy that works as hard as you do — Experience A" } }
 ```
 
 ### 3. Multiple Hero V3 instances on one page (`items` + `match`)
@@ -59,11 +64,11 @@ with an `items` array. Preferred match is a `data-target-key` the author sets pe
   "items": [
     {
       "match": { "key": "hero-top" },
-      "set": { "heading": "Welcome back — Experience A", "primaryCta": "Resume" }
+      "set": { "title": "Welcome back — Experience A", "primaryCta": "Resume" }
     },
     {
       "match": { "key": "hero-promo" },
-      "set": { "heading": "Switch and save this winter — Experience A" }
+      "set": { "title": "Switch and save this winter — Experience A" }
     }
   ]
 }
@@ -74,8 +79,8 @@ Positional fallback when no key is authored:
 ```json
 {
   "items": [
-    { "match": { "instance": 0 }, "set": { "heading": "First hero — Exp A" } },
-    { "match": { "instance": 1 }, "set": { "heading": "Second hero — Exp A" } }
+    { "match": { "instance": 0 }, "set": { "title": "First hero — Exp A" } },
+    { "match": { "instance": 1 }, "set": { "title": "Second hero — Exp A" } }
   ]
 }
 ```
@@ -88,7 +93,7 @@ Drive Hero V3 alongside other blocks from one offer/one activity via the `page` 
 {
   "blocks": {
     "hero-v3": {
-      "set": { "heading": "Welcome back — Experience A", "subtitle": "Your saved plan is ready." }
+      "set": { "title": "Welcome back — Experience A", "subtitle": "Your saved plan is ready." }
     },
     "metrics": {
       "items": [

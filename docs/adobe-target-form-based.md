@@ -125,7 +125,7 @@ these field names:
 | Scope (block) | Type | `set` fields | Item match key (`match.item`) |
 |---|---|---|---|
 | `hero` | block | `badge`, `heading`, `subtitle`, `primaryCta`, `secondaryCta` | — |
-| `hero-v3` | block | `heading`, `subtitle`, `primaryCta`, `secondaryCta` | — |
+| `hero-v3` | block | `title` (alias `heading`), `subtitle`, `primaryCta`, `secondaryCta` | — |
 | `feature-cards` | block | `label`, `heading`, `subtitle` | — |
 | `usage-dashboard` | block | `heading`, `label`, `cta` | — |
 | `cta-band` | block | `heading`, `subtitle`, `cta` | — |
@@ -145,7 +145,7 @@ these field names:
 | `cards` | item | `heading`, `body` | card heading |
 | `job-listings` | item | `title`, `description` | job title |
 | `default-content` | text | `text` | `match.text` (current text) + optional `match.wrapper` index |
-| `intent-section` | section | `text` | `match.section` (section `id` / `data-id`) + `match.text` (current child text) |
+| `intent-section` | section | hero-v3 fields: `title`, `subtitle`, `primaryCta`, `secondaryCta` | `match.section` (section `id` / `data-id`) |
 | `page` | composite | `blocks` (map of block → offer) | — |
 
 ### Default content (not in a block)
@@ -175,34 +175,36 @@ text** (scoped to `<main>`, so header/footer are never touched):
 > edited. For frequently-changed copy, prefer promoting it into a block with a
 > stable class, or add a heading (which gets an auto-generated id).
 
-### Intent Section (section-scoped text)
+### Intent Section (section-scoped hero-v3)
 
 The **Intent Section** (`models/_intent-section.json`) is a section container that only allows
 `text` and `hero-v3`, and exposes an authored **`id`** field. That field is rendered both as a
 real DOM `id` attribute on the section (a normalized token, e.g. `hero-intent`, usable as a CSS
 hook and `#anchor` target) and preserved as `data-id`. The `intent-section` scope personalizes
-text *within a specific section*, matched by either form of that id — so the same activity can
-target one section without touching identical copy elsewhere.
+the **hero-v3 inside a specific section**, matched by either form of that id — so the same
+activity can target one section without touching an identical hero elsewhere.
+
+Fields are the hero-v3 **model properties** (`title`, `subtitle`, `primaryCta`, `secondaryCta`),
+not raw element text — so an offer survives copy edits.
 
 ```json
 {
   "items": [
-    { "match": { "section": "hero-intent", "text": "Coffee title" },
-      "set":   { "text": "Tea title — Experience A" } },
-    { "match": { "section": "hero-intent", "text": "Drink a delicious coffee in the morning" },
-      "set":   { "text": "Start your day with tea — Experience A" } }
+    { "match": { "section": "hero-intent" },
+      "set":   { "title": "Tea title — Experience A",
+                 "subtitle": "Start your day with a fresh brew — Experience A",
+                 "primaryCta": "Order tea" } }
   ]
 }
 ```
 
 - `match.section` (required) — the section id; matches the section's real `id` attribute
   (normalized) or its raw `data-id`.
-- `match.text` (required) — exact trimmed text of the child `h1..6`/`p`/`li` to replace.
-- `set.text` — the replacement text.
+- `set.<field>` — any hero-v3 model property (`title`, `subtitle`, `primaryCta`, `secondaryCta`);
+  unknown fields are ignored.
 
 Scoped to `<main>` and to the matched section, so header/footer and other sections are never
-touched. As with default content, the anchor *is* the current text, so an offer breaks if the
-source copy is edited.
+touched. See `docs/hero-block/intent-section-hero-v3-target-offer.md` for more examples.
 
 ### Composite offers — several blocks in one scope
 

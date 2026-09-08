@@ -215,36 +215,51 @@ function defaultContentHandler() {
   });
 }
 
+// hero-v3 personalizable fields, keyed by the block's MODEL property names
+// (blocks/hero-v3/_hero-v3.json) → the post-decoration selector each maps to.
+// Shared by the `hero-v3` block handler and the `intent-section` handler so the
+// offer field names match what an author sees in the model. `heading` is kept
+// as a back-compat alias for `title`.
+const HERO_V3_FIELDS = {
+  title: '.hero-title',
+  heading: '.hero-title',
+  subtitle: '.hero-subtitle',
+  primaryCta: '.hero-actions a.hero-action-primary',
+  secondaryCta: '.hero-actions a.hero-action-static-light',
+};
+
 /**
  * Handler for the "Intent Section" (models/_intent-section.json) — a section
- * container whose authored `id` field is rendered onto the section as
- * `data-id` (via section metadata → section.dataset.id).
+ * container whose authored `id` field is rendered onto the section as a real
+ * `id` attribute and preserved as `data-id`.
  *
- * Each instruction picks the section by id, then replaces the text of a child
- * element (heading/paragraph/list-item, i.e. text and hero-v3 content) matched
- * by its current text — position-independent, scoped to the section so nothing
- * outside it is touched.
+ * Each instruction picks the section by id, then sets the hero-v3 inside it by
+ * its MODEL property names (title/subtitle/primaryCta/secondaryCta) — no
+ * fragile current-text matching, so an offer survives copy edits. Scoped to the
+ * matched section, so an identical hero elsewhere is not affected.
  *
  *   match.section → the section id — required. Matches either the real DOM
  *                   `id` (normalized, e.g. "hero-intent") or the raw authored
  *                   `data-id`, so an offer works regardless of casing/spacing.
- *   match.text    → current trimmed text of the child element to replace — required
- *   set.text      → the replacement text
+ *   set.<field>   → new value for a hero-v3 model property (title, subtitle,
+ *                   primaryCta, secondaryCta). Unknown fields are ignored.
  *
- *   { "items": [ { "match": { "section": "hero-intent", "text": "Coffee title" },
- *                  "set":   { "text": "Tea title — Experience A" } } ] }
+ *   { "items": [ { "match": { "section": "hero-intent" },
+ *                  "set":   { "title": "Tea title — Experience A",
+ *                             "subtitle": "Start your day with a fresh brew",
+ *                             "primaryCta": "Order tea" } } ] }
  */
 function intentSectionHandler() {
   return (content) => applyInstructions(content, (match, set) => {
-    if (!match.section || !match.text || typeof set.text !== 'string') return false;
+    if (!match.section) return false;
     const main = document.querySelector('main');
     if (!main) return false;
     const section = [...main.querySelectorAll('.section')]
       .find((s) => s.id === match.section || s.dataset.id === match.section);
     if (!section) return false;
-    const el = [...section.querySelectorAll('h1, h2, h3, h4, h5, h6, p, li')]
-      .find((e) => e.textContent.trim() === match.text);
-    return setText(el, set.text);
+    const hero = section.querySelector('.hero-v3');
+    if (!hero) return false;
+    return applyFields(hero, set, HERO_V3_FIELDS);
   });
 }
 
@@ -296,14 +311,10 @@ const FORM_BASED_HANDLERS = {
     primaryCta: '.hero-actions a.hero-btn-primary',
     secondaryCta: '.hero-actions a.hero-btn-ghost',
   }),
-  // hero-v3: clean inline hero. Anchors are the classes hero-v3.js emits.
-  // The primary/secondary CTAs map to the positional action styles.
-  'hero-v3': blockHandler('hero-v3', {
-    heading: '.hero-title',
-    subtitle: '.hero-subtitle',
-    primaryCta: '.hero-actions a.hero-action-primary',
-    secondaryCta: '.hero-actions a.hero-action-static-light',
-  }),
+  // hero-v3: clean inline hero. Fields are the block's model properties
+  // (title/subtitle/primaryCta/secondaryCta), mapped to the classes hero-v3.js
+  // emits. See HERO_V3_FIELDS.
+  'hero-v3': blockHandler('hero-v3', HERO_V3_FIELDS),
   'feature-cards': blockHandler('feature-cards', {
     label: '.feature-cards-label',
     heading: '.feature-cards-title',
