@@ -18,6 +18,9 @@
     "...": "./_section.json#/models"
   },
   {
+    "...": "./_intent-section.json#/models"
+  },
+  {
     "...": "../blocks/*/_*.json#/models"
   }
 ]

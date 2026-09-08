@@ -2,7 +2,8 @@
   {
     "id": "main",
     "components": [
-      "section"
+      "section",
+      "intent-section"
     ]
   },
   {
@@ -22,6 +23,13 @@
       "stats",
       "feature-cards",
       "usage-dashboard"
+    ]
+  },
+  {
+    "id": "intent-section",
+    "components": [
+      "text",
+      "hero-v3"
     ]
   },
   {

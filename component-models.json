@@ -159,6 +159,23 @@
     ]
   },
   {
+    "id": "intent-section",
+    "fields": [
+      {
+        "component": "text",
+        "name": "id",
+        "label": "Section ID",
+        "description": "Stable identifier for this section, used for anchoring/personalization (e.g. Adobe Target). Rendered as data-id on the section."
+      },
+      {
+        "component": "text",
+        "name": "name",
+        "label": "Section Name",
+        "description": "The label shown for this section in the Content Tree"
+      }
+    ]
+  },
+  {
     "id": "about-hero",
     "fields": [
       {

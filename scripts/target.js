@@ -215,6 +215,37 @@ function defaultContentHandler() {
   });
 }
 
+/**
+ * Handler for the "Intent Section" (models/_intent-section.json) — a section
+ * container whose authored `id` field is rendered onto the section as
+ * `data-id` (via section metadata → section.dataset.id).
+ *
+ * Each instruction picks the section by id, then replaces the text of a child
+ * element (heading/paragraph/list-item, i.e. text and hero-v3 content) matched
+ * by its current text — position-independent, scoped to the section so nothing
+ * outside it is touched.
+ *
+ *   match.section → the section's authored id (data-id) — required
+ *   match.text    → current trimmed text of the child element to replace — required
+ *   set.text      → the replacement text
+ *
+ *   { "items": [ { "match": { "section": "hero-intent", "text": "Coffee title" },
+ *                  "set":   { "text": "Tea title — Experience A" } } ] }
+ */
+function intentSectionHandler() {
+  return (content) => applyInstructions(content, (match, set) => {
+    if (!match.section || !match.text || typeof set.text !== 'string') return false;
+    const main = document.querySelector('main');
+    if (!main) return false;
+    const section = [...main.querySelectorAll('.section')]
+      .find((s) => s.dataset.id === match.section);
+    if (!section) return false;
+    const el = [...section.querySelectorAll('h1, h2, h3, h4, h5, h6, p, li')]
+      .find((e) => e.textContent.trim() === match.text);
+    return setText(el, set.text);
+  });
+}
+
 // Scope names that resolve to a composite handler — skipped when a composite
 // dispatches, so one composite can never recurse into another (or itself).
 const COMPOSITE_SCOPES = new Set();
@@ -350,6 +381,9 @@ const FORM_BASED_HANDLERS = {
 
   // --- Default content (loose paragraphs/headings/lists, not in a block) ---
   'default-content': defaultContentHandler(),
+
+  // --- Intent Section: match a section by its authored id, set child text ---
+  'intent-section': intentSectionHandler(),
 
   // --- Composite: one offer that drives several blocks at once (see compositeHandler) ---
   page: compositeHandler(),
