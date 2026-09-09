@@ -462,11 +462,13 @@ const FORM_BASED_SCOPES = Object.keys(FORM_BASED_HANDLERS);
 //
 // Personalized content is applied client-side after decoration, which can flash
 // the default copy first (FOOC — flash of original content). To avoid it we
-// pre-hide only the containers a scope may replace (never the whole page), then
-// reveal each once its offer has applied. Hiding uses opacity — the box keeps
-// its size so there is no layout shift/CLS while hidden. A hard timeout reveals
-// everything as a failsafe, so content is never stuck hidden if Target is slow
-// or errors.
+// pre-hide the TEXT that a scope may replace, then reveal it once the offer has
+// applied. Only text nodes are hidden — never whole containers — so background
+// images, media and scrims stay fully visible throughout (hiding a container's
+// opacity dimmed the background, which looked wrong). Hiding uses opacity, so
+// each text box keeps its size and there is no layout shift/CLS. A hard timeout
+// reveals everything as a failsafe, so content is never stuck hidden if Target
+// is slow or errors.
 //
 // On reveal, a short fade-in animation replaces the abrupt swap so the
 // transition from hidden → personalized copy reads smoothly instead of as a
@@ -477,10 +479,15 @@ const FLICKER_REVEAL_CLASS = 'target-flicker-reveal';
 const FLICKER_TIMEOUT_MS = 3000;
 const FLICKER_FADE_MS = 300;
 
-// Resolves the container element(s) a scope will modify, so only those are
-// hidden. Section-id scopes hide their section; block/section-type scopes hide
-// every instance of that block on the page.
-function elementsForScope(scope, sectionScopes) {
+// Text-bearing elements that Target offers replace (headings, copy, CTA labels,
+// list/table cells). Deliberately excludes img/picture/svg so backgrounds and
+// media are never dimmed by the flicker hide.
+const FLICKER_TEXT_SELECTOR = 'h1, h2, h3, h4, h5, h6, p, li, a, span, td, th, dt, dd';
+
+// Resolves the container(s) a scope will modify. Section-id scopes → their
+// section; page → main; default-content → its wrappers; block scopes → every
+// instance of that block.
+function containersForScope(scope, sectionScopes) {
   if (sectionScopes.includes(scope)) {
     const section = getIntentSections().find((s) => s.id === scope);
     return section ? [section] : [];
@@ -488,6 +495,13 @@ function elementsForScope(scope, sectionScopes) {
   if (scope === 'page') return [document.querySelector('main')].filter(Boolean);
   if (scope === 'default-content') return getBlocks('default-content-wrapper');
   return getBlocks(scope); // block-type scope, e.g. "hero-v3", "metrics"
+}
+
+// The text elements a scope may replace — only these are hidden/faded, so the
+// background/media of the container stays visible the whole time.
+function elementsForScope(scope, sectionScopes) {
+  return containersForScope(scope, sectionScopes)
+    .flatMap((container) => [...container.querySelectorAll(FLICKER_TEXT_SELECTOR)]);
 }
 
 // Injects the pre-hiding + reveal-animation styles once.

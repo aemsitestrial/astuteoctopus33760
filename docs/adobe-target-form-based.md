@@ -334,13 +334,18 @@ Because offers are applied client-side after decoration, the default copy could
 flash before personalization replaces it (flash of original content). The code
 prevents this:
 
-- **Targeted pre-hiding.** Only the container(s) a *returned* offer will modify
-  are hidden — never the whole page. A section-id scope hides its section; a
-  block scope hides that block's instances; `page` hides `<main>`. A scope that
-  returns no offer is never hidden, so unpersonalized content paints immediately.
+- **Text-only pre-hiding.** Within the container(s) a *returned* offer will
+  modify, only the **text** elements are hidden (`h1`–`h6`, `p`, `li`, `a`,
+  `span`, table cells…) — never the container itself. Background images, media
+  and scrims stay fully visible, so there's no odd fade of the whole box; only
+  the copy that's about to change is masked. Scope → container mapping: section-id
+  scope → its section; block scope → that block's instances; `page` → `<main>`.
+  A scope that returns no offer hides nothing, so unpersonalized content paints
+  immediately.
 - **No layout shift.** Hiding uses `opacity:0` (via an injected
-  `.target-flicker-hide` rule), so the box keeps its size — CLS is unaffected.
-- **Reveal with a fade.** When an offer applies, the container swaps to a
+  `.target-flicker-hide` rule) on the text elements, so each keeps its size —
+  CLS is unaffected.
+- **Reveal with a fade.** When an offer applies, the hidden text swaps to a
   `.target-flicker-reveal` class that fades it in (~300ms), so the switch to
   personalized copy reads as a smooth transition rather than a text flicker. The
   class is removed on `animationend`. Under `prefers-reduced-motion: reduce` the
