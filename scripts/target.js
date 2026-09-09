@@ -229,9 +229,9 @@ const HERO_V3_FIELDS = {
 };
 
 // Blocks that can be personalized inside an Intent Section, keyed by the name
-// used in the offer's `blocks` map → the block's selector within the section
-// and its field map. `hero` is an author-friendly alias for `hero-v3` (the
-// only hero the section allows).
+// used in the offer's `blocks` entries → the block's selector within the
+// section and its field map. `hero` is an author-friendly alias for `hero-v3`
+// (the only hero the section allows).
 const INTENT_SECTION_BLOCKS = {
   'hero-v3': { selector: '.hero-v3', fields: HERO_V3_FIELDS },
   hero: { selector: '.hero-v3', fields: HERO_V3_FIELDS },
@@ -242,30 +242,48 @@ const INTENT_SECTION_BLOCKS = {
  * container whose authored `id` field is rendered onto the section as a real
  * `id` attribute and preserved as `data-id` (its `name` field → `data-name`).
  *
- * Offer shape: pick the section by `id` (or `name`), then a `blocks` map keyed
- * by block name applies that block's model-property fields to the block inside
- * the section. Scoped to the matched section, so an identical block elsewhere
- * is not affected. Model-property field names survive copy edits.
+ * Offer shape: pick the section by `id` (or `name`), then `blocks` lists the
+ * blocks to personalize, each with that block's model-property fields, applied
+ * to the block inside the section. Scoped to the matched section, so an
+ * identical block elsewhere is not affected; model-property field names survive
+ * copy edits.
+ *
+ * `blocks` accepts either an ARRAY of single-key objects (preferred) or a map:
  *
  *   {
- *     "id": "hero-intent",            // or "name": "Hero Intent"
- *     "blocks": {
- *       "hero": {                     // "hero" or "hero-v3"
- *         "title": "Tea title — Experience A",
- *         "subtitle": "Start your day with a fresh brew",
- *         "primaryCta": "Order tea",
- *         "secondaryCta": "Talk to us"
- *       }
- *     }
+ *     "id": "hero-intent",              // or "name": "Hero Intent"
+ *     "blocks": [
+ *       { "hero": {                     // "hero" or "hero-v3"
+ *           "title": "Tea title — Experience A",
+ *           "subtitle": "Start your day with a fresh brew",
+ *           "primaryCta": "Order tea",
+ *           "secondaryCta": "Talk to us"
+ *       } }
+ *     ]
  *   }
  *
  * Several sections can be driven from one offer via an `items` array of the
  * above shape. Returns true only when every section/block applied, so the scope
  * stops retrying once fully applied.
  */
+
+// Normalises `blocks` (array of single-key objects, or a name→fields map) into
+// a flat list of [blockName, fields] entries.
+function toBlockEntries(blocks) {
+  if (Array.isArray(blocks)) {
+    return blocks
+      .filter((entry) => entry && typeof entry === 'object')
+      .flatMap((entry) => Object.entries(entry));
+  }
+  if (blocks && typeof blocks === 'object') return Object.entries(blocks);
+  return [];
+}
+
 function applyIntentSection(item) {
   const key = item.id || item.name || item.section;
-  if (!key || !item.blocks || typeof item.blocks !== 'object') return false;
+  if (!key) return false;
+  const entries = toBlockEntries(item.blocks);
+  if (!entries.length) return false;
 
   const main = document.querySelector('main');
   if (!main) return false;
@@ -273,14 +291,12 @@ function applyIntentSection(item) {
     .find((s) => s.id === key || s.dataset.id === key || s.dataset.name === key);
   if (!section) return false;
 
-  const blockNames = Object.keys(item.blocks);
-  if (!blockNames.length) return false;
-  const applied = blockNames.filter((name) => {
+  const applied = entries.filter(([name, fields]) => {
     const spec = INTENT_SECTION_BLOCKS[name];
     if (!spec) return false; // block not personalizable in this section
-    return applyFields(section.querySelector(spec.selector), item.blocks[name], spec.fields);
+    return applyFields(section.querySelector(spec.selector), fields, spec.fields);
   }).length;
-  return applied === blockNames.length;
+  return applied === entries.length;
 }
 
 function intentSectionHandler() {

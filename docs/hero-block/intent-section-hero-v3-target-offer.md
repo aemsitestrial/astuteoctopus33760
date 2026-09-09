@@ -45,7 +45,7 @@ copy edits and reads the way an author thinks about the block:
 
 | Goal | Use scope | Section-scoped? | Offer shape |
 |---|---|---|---|
-| Personalize the hero **only in this section** (by id/name) | `intent-section` | ✅ by section id/name | `{ id, blocks: { hero: {…} } }` |
+| Personalize the hero **only in this section** (by id/name) | `intent-section` | ✅ by section id/name | `{ id, blocks: [ { hero: {…} } ] }` |
 | Personalize a hero-v3 picked by `instance`/`key` | `hero-v3` | ❌ block-scoped | `{ set: {…} }` |
 
 Both reach the same hero fields (title/subtitle/primaryCta/secondaryCta). Use `intent-section`
@@ -56,26 +56,30 @@ when you need to scope to one section; use `hero-v3` when picking by instance/ke
 ## Option A — `intent-section` scope (section-scoped, by model property)
 
 Decision scope: **`intent-section`**. The offer picks the section by its authored **`id`** (or
-**`name`**), then a **`blocks`** map keyed by block name applies that block's model-property fields
-to the block inside the section. Does not affect an identical block in another section.
+**`name`**), then **`blocks`** — an array of single-key objects — applies each block's
+model-property fields to the block inside the section. Does not affect an identical block in
+another section.
 
 ```json
 {
   "id": "hero-intent",
-  "blocks": {
-    "hero": {
-      "title": "Tea title — Experience A",
-      "subtitle": "Start your day with a fresh brew — Experience A",
-      "primaryCta": "Order tea",
-      "secondaryCta": "Talk to us"
+  "blocks": [
+    {
+      "hero": {
+        "title": "Tea title — Experience A",
+        "subtitle": "Start your day with a fresh brew — Experience A",
+        "primaryCta": "Order tea",
+        "secondaryCta": "Talk to us"
+      }
     }
-  }
+  ]
 }
 ```
 
 - `id` (or `name`) — the section's authored id (matches the real `id` / `data-id`) or its `name`
   (`data-name`). Required.
-- `blocks` — map keyed by block name. Use `hero` (alias) or `hero-v3` for the section's hero.
+- `blocks` — an array of `{ "<blockName>": { …fields } }` objects. Use `hero` (alias) or `hero-v3`
+  for the section's hero. (A `{ "<blockName>": {…} }` map is also accepted.)
 - each block's fields are its model properties (`title`, `subtitle`, `primaryCta`,
   `secondaryCta`); unknown fields are ignored.
 
@@ -83,7 +87,7 @@ Match by name, title + subtitle only:
 
 ```json
 { "name": "Hero Intent",
-  "blocks": { "hero": { "title": "Tea title — Experience A", "subtitle": "Fresh brew every morning" } } }
+  "blocks": [ { "hero": { "title": "Tea title — Experience A", "subtitle": "Fresh brew every morning" } } ] }
 ```
 
 Drive several sections from one offer with an `items` array:
@@ -91,8 +95,8 @@ Drive several sections from one offer with an `items` array:
 ```json
 {
   "items": [
-    { "id": "hero-intent", "blocks": { "hero": { "title": "Welcome back — Exp A" } } },
-    { "id": "promo-intent", "blocks": { "hero": { "title": "Switch and save — Exp A" } } }
+    { "id": "hero-intent",  "blocks": [ { "hero": { "title": "Welcome back — Exp A" } } ] },
+    { "id": "promo-intent", "blocks": [ { "hero": { "title": "Switch and save — Exp A" } } ] }
   ]
 }
 ```
