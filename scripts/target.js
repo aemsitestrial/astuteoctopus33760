@@ -279,18 +279,22 @@ function toBlockEntries(blocks) {
   return [];
 }
 
-function applyIntentSection(item) {
-  const key = item.id || item.name || item.section;
-  if (!key) return false;
-  const entries = toBlockEntries(item.blocks);
-  if (!entries.length) return false;
+// Finds a top-level section by identifier: its real `id` attribute, or the
+// authored `data-id` / `data-name` fallbacks.
+function findSectionByKey(key) {
+  const main = key ? document.querySelector('main') : null;
+  if (!main) return null;
+  return [...main.querySelectorAll(':scope > .section')]
+    .find((s) => s.id === key || s.dataset.id === key || s.dataset.name === key) || null;
+}
 
-  const main = document.querySelector('main');
-  if (!main) return false;
-  const section = [...main.querySelectorAll('.section')]
-    .find((s) => s.id === key || s.dataset.id === key || s.dataset.name === key);
-  if (!section) return false;
-
+// Applies a `blocks` offer (array of single-key objects, or a name→fields map)
+// to the blocks inside one section. Returns true only when every listed block
+// applied. Unknown/unpersonalizable block names cause a false (so the scope
+// keeps retrying as the section decorates).
+function applyBlocksToSection(section, blocks) {
+  const entries = toBlockEntries(blocks);
+  if (!section || !entries.length) return false;
   const applied = entries.filter(([name, fields]) => {
     const spec = INTENT_SECTION_BLOCKS[name];
     if (!spec) return false; // block not personalizable in this section
@@ -299,12 +303,45 @@ function applyIntentSection(item) {
   return applied === entries.length;
 }
 
+function applyIntentSection(item) {
+  return applyBlocksToSection(findSectionByKey(item.id || item.name || item.section), item.blocks);
+}
+
 function intentSectionHandler() {
   return (content) => {
     const items = Array.isArray(content.items) ? content.items : [content];
     if (!items.length) return false;
     return items.filter(applyIntentSection).length === items.length;
   };
+}
+
+/**
+ * Per-section scope handler: the decision scope name IS the section id, so the
+ * offer only needs `blocks` — no `id`/`name` inside it. Enables the simplified
+ * offer for a scope named after a section id (see getSectionScopes):
+ *
+ *   scope "hero-intent"  →  { "blocks": [ { "hero": { "title": "…" } } ] }
+ *
+ * Accepts `content.blocks`, or a bare `blocks` array as the content itself.
+ */
+function sectionScopeHandler(scopeName) {
+  return (content) => {
+    const blocks = Array.isArray(content) ? content : content.blocks;
+    return applyBlocksToSection(findSectionByKey(scopeName), blocks);
+  };
+}
+
+/**
+ * Section ids present on the page, each of which is offered to Target as its
+ * own decision scope. Read after decoration (decorateSectionIds in scripts.js
+ * promotes the authored `id` field to a real id attribute), so an author can
+ * point a Target activity at scope = the section id and ship a blocks-only
+ * offer. Top-level sections only.
+ */
+function getSectionScopes() {
+  const main = document.querySelector('main');
+  if (!main) return [];
+  return [...main.querySelectorAll(':scope > .section[id]')].map((s) => s.id).filter(Boolean);
 }
 
 // Scope names that resolve to a composite handler — skipped when a composite
@@ -454,14 +491,32 @@ const FORM_BASED_SCOPES = Object.keys(FORM_BASED_HANDLERS);
 
 // --- Orchestration -----------------------------------------------------------
 
+/**
+ * Resolves the handler for a decision scope. Static scopes (block/section
+ * types) come from FORM_BASED_HANDLERS; any other scope that names a section id
+ * present on the page is handled dynamically as a per-section scope, so Target
+ * can drive a section with a blocks-only offer just by naming the scope after
+ * the section id.
+ */
+function resolveScopeHandler(scope, sectionScopes) {
+  if (FORM_BASED_HANDLERS[scope]) return FORM_BASED_HANDLERS[scope];
+  if (sectionScopes.includes(scope)) return sectionScopeHandler(scope);
+  return null;
+}
+
 async function getAndApplyRenderDecisions() {
+  // Section ids on the page are each offered to Target as their own decision
+  // scope (sections are already decorated by decorateMain at this point), so an
+  // activity can target a section by naming the scope after its id.
+  const sectionScopes = getSectionScopes();
+
   // Get the decisions, but don't render them automatically so we can hook into
   // the AEM EDS page load sequence. decisionScopes requests the Form-Based
   // (JSON offer) experiences alongside the default __view__ scope used by VEC.
   const response = await window.alloy('sendEvent', {
     renderDecisions: false,
     personalization: {
-      decisionScopes: FORM_BASED_SCOPES,
+      decisionScopes: [...FORM_BASED_SCOPES, ...sectionScopes],
     },
   });
   const { propositions } = response;
@@ -481,7 +536,7 @@ async function getAndApplyRenderDecisions() {
 
     // 2) Form-Based / JSON offers: apply manually to stable anchors.
     propositions.forEach((p) => {
-      const handler = FORM_BASED_HANDLERS[p.scope];
+      const handler = resolveScopeHandler(p.scope, sectionScopes);
       if (!handler || appliedScopes.has(p.scope)) return;
       const jsonItem = (p.items || []).find((i) => i.schema === JSON_CONTENT_ITEM_SCHEMA);
       const content = jsonItem?.data?.content;
