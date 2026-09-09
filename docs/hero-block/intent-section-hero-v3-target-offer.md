@@ -41,25 +41,25 @@ copy edits and reads the way an author thinks about the block:
 
 > `heading` is accepted as a back-compat alias for `title`.
 
-## Three ways to target it
+## Two ways to target it
 
 | Goal | Use scope | Section-scoped? | Offer shape |
 |---|---|---|---|
-| Simplest — pick the section by naming the scope after its id | `<section id>` (e.g. `hero-intent`) | ✅ automatic | `{ blocks: [ { hero: {…} } ] }` |
-| Target one/more sections from a single scope | `intent-section` | ✅ by id/name in offer | `{ id, blocks: [ { hero: {…} } ] }` |
+| Personalize the hero **in a specific section** | `<section id>` (e.g. `hero-intent`) | ✅ automatic | `{ blocks: [ { hero: {…} } ] }` |
 | Personalize a hero-v3 picked by `instance`/`key` | `hero-v3` | ❌ block-scoped | `{ set: {…} }` |
 
-All reach the same hero fields (title/subtitle/primaryCta/secondaryCta). Prefer the section-id
-scope (Option A) for the simplest offer; use `intent-section` when one activity drives several
-named sections; use `hero-v3` when picking by instance/key is enough.
+Both reach the same hero fields (title/subtitle/primaryCta/secondaryCta). Prefer the section-id
+scope (Option A) — it is section-scoped with the simplest offer; use `hero-v3` (Option B) when the
+page has a single hero-v3 or you are happy to pick by instance/key.
 
 ---
 
-## Option A (simplest) — scope named after the section id
+## Option A — scope named after the section id (recommended)
 
 Every **Intent Section** that has an authored **Section ID** is automatically offered to Target as
-its **own decision scope** (the scope name *is* the section id). So you can pick the section just
-by naming the location/scope, and the JSON offer only needs `blocks` — no `id`/`name` inside it.
+its **own decision scope** (the scope name *is* the section id). This is a composite scoped to that
+one section: point a Target activity at the scope and the JSON offer only needs `blocks` — no
+`id`/`name` inside it, and no touching an identical hero in another section.
 
 > Only **Intent Sections** get a per-id scope. The scope is keyed off the section's `id`
 > attribute, and only the intent-section model exposes an id field — so a plain section is never
@@ -88,69 +88,21 @@ A bare `blocks` array as the whole offer content also works:
 [ { "hero": { "title": "Tea title — Experience A" } } ]
 ```
 
-- The **scope name** must equal the section's id (e.g. `hero-intent`). No `intent-section` scope,
-  no `id` field in the offer.
-- `blocks` — same shape as Option B below: an array of `{ "<blockName>": { …fields } }` (`hero`
-  alias or `hero-v3`).
+- The **scope name** must equal the section's id (e.g. `hero-intent`).
+- `blocks` — an array of `{ "<blockName>": { …fields } }` (`hero` alias or `hero-v3`); a
+  `{ "<blockName>": {…} }` map is also accepted.
+- each block's fields are its model properties (`title`, `subtitle`, `primaryCta`,
+  `secondaryCta`); unknown fields are ignored.
 - Scoping is automatic: the offer only touches the section whose id matches the scope.
 
 > Requires the section to have a **Section ID** authored (rendered as a real `id` attribute). The
 > available scopes are discovered from the page at request time, so a newly-added section id is
-> picked up automatically — no code change.
+> picked up automatically — no code change. Personalize several sections by running one activity
+> per section-id scope.
 
 ---
 
-## Option B — `intent-section` scope (section-scoped, by model property)
-
-Decision scope: **`intent-section`**. The offer picks the section by its authored **`id`** (or
-**`name`**), then **`blocks`** — an array of single-key objects — applies each block's
-model-property fields to the block inside the section. Does not affect an identical block in
-another section.
-
-```json
-{
-  "id": "hero-intent",
-  "blocks": [
-    {
-      "hero": {
-        "title": "Tea title — Experience A",
-        "subtitle": "Start your day with a fresh brew — Experience A",
-        "primaryCta": "Order tea",
-        "secondaryCta": "Talk to us"
-      }
-    }
-  ]
-}
-```
-
-- `id` (or `name`) — the section's authored id (matches the real `id` / `data-id`) or its `name`
-  (`data-name`). Required.
-- `blocks` — an array of `{ "<blockName>": { …fields } }` objects. Use `hero` (alias) or `hero-v3`
-  for the section's hero. (A `{ "<blockName>": {…} }` map is also accepted.)
-- each block's fields are its model properties (`title`, `subtitle`, `primaryCta`,
-  `secondaryCta`); unknown fields are ignored.
-
-Match by name, title + subtitle only:
-
-```json
-{ "name": "Hero Intent",
-  "blocks": [ { "hero": { "title": "Tea title — Experience A", "subtitle": "Fresh brew every morning" } } ] }
-```
-
-Drive several sections from one offer with an `items` array:
-
-```json
-{
-  "items": [
-    { "id": "hero-intent",  "blocks": [ { "hero": { "title": "Welcome back — Exp A" } } ] },
-    { "id": "promo-intent", "blocks": [ { "hero": { "title": "Switch and save — Exp A" } } ] }
-  ]
-}
-```
-
----
-
-## Option C — `hero-v3` scope (pick by instance/key)
+## Option B — `hero-v3` scope (pick by instance/key)
 
 Decision scope: **`hero-v3`**. Sets the block's fields directly; pick which hero-v3 with
 `match.instance` (zero-based) or `match.key` (a `data-target-key`).
@@ -182,20 +134,18 @@ Single hero-v3 on the page — flat offer:
    Composer**.
 3. Add a **location / decision scope** and assign the JSON offer:
    - Option A — name it after the **section id** (e.g. `hero-intent`).
-   - Option B — name it **`intent-section`**.
-   - Option C — name it **`hero-v3`**.
+   - Option B — name it **`hero-v3`**.
 
-   The section-id scopes are discovered from the page automatically; the `intent-section` and
-   `hero-v3` scopes are derived from `FORM_BASED_HANDLERS`.
+   The section-id scopes are discovered from the page automatically; the `hero-v3` scope is derived
+   from `FORM_BASED_HANDLERS`.
 4. Set audiences/goals and **activate**.
 
 ## Which to use
 
-**Option A (section-id scope)** is the simplest — name the scope after the section id and ship a
-blocks-only offer; scoping is automatic. **Option B (`intent-section`)** puts the id/name inside
-the offer, handy when one activity drives several named sections via an `items` array. **Option C
-(`hero-v3`)** is fine when the page has a single hero-v3 or you pick by `instance`/`key`. All three
-set the same hero fields, including CTAs.
+**Option A (section-id scope)** is the recommended path — section-scoped, with the simplest offer:
+name the scope after the section id and ship a blocks-only offer. To personalize several sections,
+run one activity per section-id scope. **Option B (`hero-v3`)** is fine when the page has a single
+hero-v3 or you pick by `instance`/`key`. Both set the same hero fields, including CTAs.
 
 See `docs/hero-block/hero-v3-target-offer.md` and `docs/adobe-target-form-based.md` for the full
 contract.

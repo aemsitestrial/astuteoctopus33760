@@ -7,6 +7,10 @@ import { getMetadata } from './aem.js';
  *  - VEC / dom-action  — rendered by alloy against captured selectors.
  *  - Form-Based / JSON — applied here to stable anchors (see FORM_BASED_HANDLERS).
  *
+ * Intent Sections get their own decision scope named after the section id, so
+ * one section can be personalized with a blocks-only offer (see getSectionScopes
+ * / sectionScopeHandler).
+ *
  * See docs/adobe-target-form-based.md for the JSON offer contract, the
  * multi-instance `items`/`match`/`set` model, and how to add new experiences.
  */
@@ -237,34 +241,19 @@ const INTENT_SECTION_BLOCKS = {
   hero: { selector: '.hero-v3', fields: HERO_V3_FIELDS },
 };
 
-/**
- * Handler for the "Intent Section" (models/_intent-section.json) — a section
- * container whose authored `id` field is rendered onto the section as a real
- * `id` attribute and preserved as `data-id` (its `name` field → `data-name`).
+/*
+ * Intent Section personalization — a composite scoped to a single section.
  *
- * Offer shape: pick the section by `id` (or `name`), then `blocks` lists the
- * blocks to personalize, each with that block's model-property fields, applied
- * to the block inside the section. Scoped to the matched section, so an
- * identical block elsewhere is not affected; model-property field names survive
- * copy edits.
+ * Each Intent Section is exposed to Target as its own decision scope named
+ * after the section's id (see getSectionScopes / resolveScopeHandler). The
+ * offer is a section-scoped composite: `blocks` lists the blocks inside that
+ * section to personalize, each with its model-property fields. Because it is
+ * scoped to one section, an identical block elsewhere is untouched, and the
+ * model-property field names survive copy edits.
  *
- * `blocks` accepts either an ARRAY of single-key objects (preferred) or a map:
- *
- *   {
- *     "id": "hero-intent",              // or "name": "Hero Intent"
- *     "blocks": [
- *       { "hero": {                     // "hero" or "hero-v3"
- *           "title": "Tea title — Experience A",
- *           "subtitle": "Start your day with a fresh brew",
- *           "primaryCta": "Order tea",
- *           "secondaryCta": "Talk to us"
- *       } }
- *     ]
- *   }
- *
- * Several sections can be driven from one offer via an `items` array of the
- * above shape. Returns true only when every section/block applied, so the scope
- * stops retrying once fully applied.
+ *   scope "hero-intent"  →
+ *   { "blocks": [ { "hero": { "title": "…", "subtitle": "…",
+ *                             "primaryCta": "…", "secondaryCta": "…" } } ] }
  */
 
 // Normalises `blocks` (array of single-key objects, or a name→fields map) into
@@ -279,19 +268,9 @@ function toBlockEntries(blocks) {
   return [];
 }
 
-// Finds a top-level section by identifier: its real `id` attribute, or the
-// authored `data-id` / `data-name` fallbacks.
-function findSectionByKey(key) {
-  const main = key ? document.querySelector('main') : null;
-  if (!main) return null;
-  return [...main.querySelectorAll(':scope > .section')]
-    .find((s) => s.id === key || s.dataset.id === key || s.dataset.name === key) || null;
-}
-
-// Applies a `blocks` offer (array of single-key objects, or a name→fields map)
-// to the blocks inside one section. Returns true only when every listed block
-// applied. Unknown/unpersonalizable block names cause a false (so the scope
-// keeps retrying as the section decorates).
+// Applies a `blocks` composite to the blocks inside one section. Returns true
+// only when every listed block applied; an unknown/unpersonalizable block name
+// or a not-yet-decorated block yields false, so the scope keeps retrying.
 function applyBlocksToSection(section, blocks) {
   const entries = toBlockEntries(blocks);
   if (!section || !entries.length) return false;
@@ -303,47 +282,31 @@ function applyBlocksToSection(section, blocks) {
   return applied === entries.length;
 }
 
-function applyIntentSection(item) {
-  return applyBlocksToSection(findSectionByKey(item.id || item.name || item.section), item.blocks);
-}
-
-function intentSectionHandler() {
-  return (content) => {
-    const items = Array.isArray(content.items) ? content.items : [content];
-    if (!items.length) return false;
-    return items.filter(applyIntentSection).length === items.length;
-  };
-}
-
-/**
- * Per-section scope handler: the decision scope name IS the section id, so the
- * offer only needs `blocks` — no `id`/`name` inside it. Enables the simplified
- * offer for a scope named after a section id (see getSectionScopes):
- *
- *   scope "hero-intent"  →  { "blocks": [ { "hero": { "title": "…" } } ] }
- *
- * Accepts `content.blocks`, or a bare `blocks` array as the content itself.
- */
-function sectionScopeHandler(scopeName) {
-  return (content) => {
-    const blocks = Array.isArray(content) ? content : content.blocks;
-    return applyBlocksToSection(findSectionByKey(scopeName), blocks);
-  };
-}
-
-/**
- * Section ids offered to Target as their own decision scope — capped to
- * Intent Sections. Only the intent-section model (models/_intent-section.json)
- * exposes an `id` field, so a top-level section that carries an `id` attribute
- * is definitionally an Intent Section (decorateSectionIds in scripts.js
- * promotes that authored `id` to a real id attribute). No dependency on which
- * child blocks are present. An author can then point a Target activity at
- * scope = the section id and ship a blocks-only offer.
- */
-function getSectionScopes() {
+// Top-level Intent Sections on the page. Only the intent-section model
+// (models/_intent-section.json) exposes an `id` field, so a top-level section
+// carrying an `id` attribute is definitionally an Intent Section
+// (decorateSectionIds in scripts.js promotes the authored id to a real id
+// attribute). Read after decoration.
+function getIntentSections() {
   const main = document.querySelector('main');
-  if (!main) return [];
-  return [...main.querySelectorAll(':scope > .section[id]')].map((s) => s.id).filter(Boolean);
+  return main ? [...main.querySelectorAll(':scope > .section[id]')] : [];
+}
+
+// Handler for a per-section decision scope: the scope name IS the section id
+// (from getSectionScopes), so the offer only carries `blocks` (or a bare blocks
+// array) — no id/name needed inside it.
+function sectionScopeHandler(scopeName) {
+  return (content) => applyBlocksToSection(
+    getIntentSections().find((s) => s.id === scopeName) || null,
+    Array.isArray(content) ? content : content.blocks,
+  );
+}
+
+// Each Intent Section id is offered to Target as its own decision scope, so an
+// author points a Target activity at scope = the section id and ships a
+// blocks-only offer.
+function getSectionScopes() {
+  return getIntentSections().map((s) => s.id).filter(Boolean);
 }
 
 // Scope names that resolve to a composite handler — skipped when a composite
@@ -478,10 +441,9 @@ const FORM_BASED_HANDLERS = {
   // --- Default content (loose paragraphs/headings/lists, not in a block) ---
   'default-content': defaultContentHandler(),
 
-  // --- Intent Section: match a section by its authored id, set child text ---
-  'intent-section': intentSectionHandler(),
-
   // --- Composite: one offer that drives several blocks at once (see compositeHandler) ---
+  // NOTE: Intent Sections are not listed here — each is exposed as its own
+  // decision scope named after its id (see getSectionScopes / sectionScopeHandler).
   page: compositeHandler(),
 };
 

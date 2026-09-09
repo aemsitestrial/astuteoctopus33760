@@ -145,7 +145,7 @@ these field names:
 | `cards` | item | `heading`, `body` | card heading |
 | `job-listings` | item | `title`, `description` | job title |
 | `default-content` | text | `text` | `match.text` (current text) + optional `match.wrapper` index |
-| `intent-section` | section | `id`/`name` + `blocks` array (per block: `title`, `subtitle`, `primaryCta`, `secondaryCta`) | section `id` / `data-id` / `data-name` |
+| `<section id>` (Intent Section) | section | `blocks` array (per block: `title`, `subtitle`, `primaryCta`, `secondaryCta`) | scope name = the section's `id` |
 | `page` | composite | `blocks` (map of block → offer) | — |
 
 ### Default content (not in a block)
@@ -175,21 +175,23 @@ text** (scoped to `<main>`, so header/footer are never touched):
 > edited. For frequently-changed copy, prefer promoting it into a block with a
 > stable class, or add a heading (which gets an auto-generated id).
 
-### Intent Section (section-scoped hero-v3)
+### Intent Section — a scope per section id
 
 The **Intent Section** (`models/_intent-section.json`) is a section container that only allows
-`text` and `hero-v3`, and exposes authored **`id`** and **`name`** fields. `id` is rendered both
-as a real DOM `id` attribute (a normalized token, e.g. `hero-intent`, usable as a CSS hook and
-`#anchor` target) and as `data-id`; `name` is rendered as `data-name`.
+`text` and `hero-v3`, and exposes an authored **`id`** field, rendered as a real DOM `id`
+attribute (a normalized token, e.g. `hero-intent`, also usable as a CSS hook and `#anchor` target)
+and preserved as `data-id`.
 
-The offer picks the section by `id` (or `name`), then **`blocks`** — an array of single-key
-objects — applies each block's **model-property** fields to the block inside the section — so the
-same activity can target one section without touching an identical block elsewhere, and offers
-survive copy edits.
+Every Intent Section is offered to Target as **its own decision scope, named after the section
+id**. So an activity targets a section just by naming the location/scope, and the offer is a
+composite scoped to that one section: **`blocks`** lists the blocks inside it to personalize, each
+with that block's **model-property** fields. Scoped to the matched section, so an identical block
+elsewhere is untouched; model-property field names survive copy edits.
+
+Decision scope: **`hero-intent`** (the section's id). Offer:
 
 ```json
 {
-  "id": "hero-intent",
   "blocks": [
     {
       "hero": {
@@ -202,30 +204,19 @@ survive copy edits.
 }
 ```
 
-- `id` / `name` (required) — the section's authored id (matches real `id` / `data-id`) or `name`
-  (`data-name`).
+- The **scope name** equals the section's `id`.
 - `blocks` — an array of `{ "<blockName>": { …fields } }` (`hero` alias or `hero-v3`); each block's
-  fields are its model properties (`title`, `subtitle`, `primaryCta`, `secondaryCta`). A name→fields
-  map is also accepted. Unknown fields are ignored.
-- Drive several sections from one offer with an `items` array of the above shape.
-
-Scoped to `<main>` and to the matched section, so header/footer and other sections are never
-touched. See `docs/hero-block/intent-section-hero-v3-target-offer.md` for more examples.
-
-**Simpler: a scope per section id.** Every **Intent Section** that has an authored **Section ID**
-is *also* offered to Target as its own decision scope (the scope name equals the section id).
-Point a Target activity at scope = the section id and the offer only needs `blocks` — no
-`intent-section` scope, no `id` field in the JSON:
-
-```json
-{ "blocks": [ { "hero": { "title": "Tea title — Experience A", "primaryCta": "Order tea" } } ] }
-```
+  fields are its model properties (`title`, `subtitle`, `primaryCta`, `secondaryCta`). A
+  name→fields map, or a bare `blocks` array as the offer content, also works. Unknown fields are
+  ignored.
+- Personalize several sections by running one activity per section-id scope.
 
 These scopes are discovered from the decorated page at request time (see `getSectionScopes` /
-`resolveScopeHandler` in `scripts/target.js`) and capped to Intent Sections — only the
-intent-section model exposes an `id` field, so a section carrying an `id` attribute is
-definitionally an Intent Section (plain sections never get a per-id scope). Adding an Intent
-Section needs no code change. A bare `blocks` array as the offer content also works.
+`sectionScopeHandler` / `resolveScopeHandler` in `scripts/target.js`) and capped to Intent
+Sections — only the intent-section model exposes an `id` field, so a top-level section carrying an
+`id` attribute is definitionally an Intent Section (plain sections never get a per-id scope).
+Adding an Intent Section needs no code change. See
+`docs/hero-block/intent-section-hero-v3-target-offer.md` for more examples.
 
 ### Composite offers — several blocks in one scope
 
