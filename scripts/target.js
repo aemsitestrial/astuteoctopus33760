@@ -159,13 +159,23 @@ function setAttr(el, attr, value) {
  * Swaps a hero background image to `url`. The image is a <picture> whose
  * <source srcset> siblings override <img src>, so set the img src AND drop the
  * sources so the new URL wins at every breakpoint. URL is safety-checked.
+ *
+ * The offer URL is used directly (its own origin) — an absolute Dynamic Media /
+ * Scene7 URL works as-is. For a DM URL a `wid`-based srcset is added so the CDN
+ * serves a responsive image; otherwise srcset is cleared.
  */
 function setPictureImage(img, url) {
   if (!img || !isSafeUrl(url)) return false;
   const picture = img.closest('picture');
   if (picture) picture.querySelectorAll('source').forEach((s) => s.remove());
   img.setAttribute('src', url);
-  img.removeAttribute('srcset');
+  if (/\/is\/image\//i.test(url) || /(scene7\.com|\.s7\.|adobedynamicmedia)/i.test(url)) {
+    const wid = (w) => { try { const u = new URL(url, window.location.href); u.searchParams.set('wid', w); return u.toString(); } catch (e) { return url; } };
+    img.setAttribute('srcset', [750, 1200, 1600, 2000].map((w) => `${wid(String(w))} ${w}w`).join(', '));
+    img.setAttribute('sizes', '100vw');
+  } else {
+    img.removeAttribute('srcset');
+  }
   return true;
 }
 

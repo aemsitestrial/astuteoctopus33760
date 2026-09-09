@@ -34,12 +34,75 @@ const VARIANT_PRESETS = {
   'compact-left-with-actions': { height: 'compact', align: 'left', imagePosition: null },
 };
 
+// Widths used for the responsive background image srcset.
+const IMAGE_WIDTHS = [750, 1200, 1600, 2000];
+
 /**
  * Returns a trimmed string, or '' for any non-string / nullish input.
  * Centralizes defensive text handling for missing/invalid authored content.
  */
 function safeText(value) {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+/**
+ * True for an absolute/external image URL (has an origin), e.g. a Dynamic Media
+ * / Scene7 delivery URL. These must NOT go through createOptimizedPicture: that
+ * helper keeps only the pathname (dropping the DM host) and appends EDS-pipeline
+ * params Scene7 does not understand, so the image would 404.
+ */
+function isExternalImage(src) {
+  return /^https?:\/\//i.test(safeText(src)) || safeText(src).startsWith('//');
+}
+
+/**
+ * Heuristic: is this a Dynamic Media / Scene7 image delivery URL? Matches the
+ * classic `/is/image/` delivery path and common Scene7 hostnames.
+ */
+function isDynamicMedia(src) {
+  const url = safeText(src);
+  return /\/is\/image\//i.test(url) || /(scene7\.com|\.s7\.|adobedynamicmedia)/i.test(url);
+}
+
+/**
+ * Adds/overrides a query param on a URL string, preserving the origin. Used to
+ * build a Dynamic Media srcset (Scene7 uses `wid` for width).
+ */
+function withParam(src, key, value) {
+  try {
+    const url = new URL(src, window.location.href);
+    url.searchParams.set(key, value);
+    return url.toString();
+  } catch (e) {
+    return src;
+  }
+}
+
+/**
+ * Builds a responsive <picture> for an external/DM image, rendered directly at
+ * its own origin (no EDS media pipeline). For Dynamic Media URLs a `wid`-based
+ * srcset is generated so the CDN serves an appropriately sized image; for other
+ * absolute URLs the src is used as-is. The hero image is the likely LCP element,
+ * so it is eager + high priority.
+ */
+function buildExternalPicture(src, alt) {
+  const picture = document.createElement('picture');
+  const img = document.createElement('img');
+  img.setAttribute('alt', alt);
+  img.setAttribute('loading', 'eager');
+  img.setAttribute('fetchpriority', 'high');
+  if (isDynamicMedia(src)) {
+    img.setAttribute('src', withParam(src, 'wid', String(IMAGE_WIDTHS[IMAGE_WIDTHS.length - 1])));
+    img.setAttribute(
+      'srcset',
+      IMAGE_WIDTHS.map((w) => `${withParam(src, 'wid', String(w))} ${w}w`).join(', '),
+    );
+    img.setAttribute('sizes', '100vw');
+  } else {
+    img.setAttribute('src', src);
+  }
+  picture.append(img);
+  return picture;
 }
 
 /**
@@ -174,13 +237,20 @@ function renderHero(block, data, layout) {
   if (data.imageSrc) {
     const alt = safeText(data.imageAlt);
     // Hero image is very likely the LCP element: eager-load, high priority.
-    const optimizedPic = createOptimizedPicture(data.imageSrc, alt, true, [{ width: '1600' }]);
-    optimizedPic.querySelectorAll('img').forEach((el) => {
-      el.setAttribute('alt', alt); // decorative fallback: alt="" is valid and intentional
-      el.setAttribute('loading', 'eager');
-      el.setAttribute('fetchpriority', 'high');
-    });
-    media.append(optimizedPic);
+    if (isExternalImage(data.imageSrc)) {
+      // Absolute URL (e.g. Dynamic Media / Scene7): render at its own origin,
+      // bypassing the EDS optimizer which would drop the host and 404.
+      media.append(buildExternalPicture(data.imageSrc, alt));
+    } else {
+      // Same-origin asset: use the EDS media pipeline for responsive delivery.
+      const optimizedPic = createOptimizedPicture(data.imageSrc, alt, true, [{ width: '1600' }]);
+      optimizedPic.querySelectorAll('img').forEach((el) => {
+        el.setAttribute('alt', alt); // decorative fallback: alt="" is valid and intentional
+        el.setAttribute('loading', 'eager');
+        el.setAttribute('fetchpriority', 'high');
+      });
+      media.append(optimizedPic);
+    }
   }
   // Missing image: media stays empty; CSS provides a neutral background so
   // layout does not collapse or shift when the image is absent.
