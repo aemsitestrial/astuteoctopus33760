@@ -228,39 +228,67 @@ const HERO_V3_FIELDS = {
   secondaryCta: '.hero-actions a.hero-action-static-light',
 };
 
+// Blocks that can be personalized inside an Intent Section, keyed by the name
+// used in the offer's `blocks` map → the block's selector within the section
+// and its field map. `hero` is an author-friendly alias for `hero-v3` (the
+// only hero the section allows).
+const INTENT_SECTION_BLOCKS = {
+  'hero-v3': { selector: '.hero-v3', fields: HERO_V3_FIELDS },
+  hero: { selector: '.hero-v3', fields: HERO_V3_FIELDS },
+};
+
 /**
  * Handler for the "Intent Section" (models/_intent-section.json) — a section
  * container whose authored `id` field is rendered onto the section as a real
- * `id` attribute and preserved as `data-id`.
+ * `id` attribute and preserved as `data-id` (its `name` field → `data-name`).
  *
- * Each instruction picks the section by id, then sets the hero-v3 inside it by
- * its MODEL property names (title/subtitle/primaryCta/secondaryCta) — no
- * fragile current-text matching, so an offer survives copy edits. Scoped to the
- * matched section, so an identical hero elsewhere is not affected.
+ * Offer shape: pick the section by `id` (or `name`), then a `blocks` map keyed
+ * by block name applies that block's model-property fields to the block inside
+ * the section. Scoped to the matched section, so an identical block elsewhere
+ * is not affected. Model-property field names survive copy edits.
  *
- *   match.section → the section id — required. Matches either the real DOM
- *                   `id` (normalized, e.g. "hero-intent") or the raw authored
- *                   `data-id`, so an offer works regardless of casing/spacing.
- *   set.<field>   → new value for a hero-v3 model property (title, subtitle,
- *                   primaryCta, secondaryCta). Unknown fields are ignored.
+ *   {
+ *     "id": "hero-intent",            // or "name": "Hero Intent"
+ *     "blocks": {
+ *       "hero": {                     // "hero" or "hero-v3"
+ *         "title": "Tea title — Experience A",
+ *         "subtitle": "Start your day with a fresh brew",
+ *         "primaryCta": "Order tea",
+ *         "secondaryCta": "Talk to us"
+ *       }
+ *     }
+ *   }
  *
- *   { "items": [ { "match": { "section": "hero-intent" },
- *                  "set":   { "title": "Tea title — Experience A",
- *                             "subtitle": "Start your day with a fresh brew",
- *                             "primaryCta": "Order tea" } } ] }
+ * Several sections can be driven from one offer via an `items` array of the
+ * above shape. Returns true only when every section/block applied, so the scope
+ * stops retrying once fully applied.
  */
+function applyIntentSection(item) {
+  const key = item.id || item.name || item.section;
+  if (!key || !item.blocks || typeof item.blocks !== 'object') return false;
+
+  const main = document.querySelector('main');
+  if (!main) return false;
+  const section = [...main.querySelectorAll('.section')]
+    .find((s) => s.id === key || s.dataset.id === key || s.dataset.name === key);
+  if (!section) return false;
+
+  const blockNames = Object.keys(item.blocks);
+  if (!blockNames.length) return false;
+  const applied = blockNames.filter((name) => {
+    const spec = INTENT_SECTION_BLOCKS[name];
+    if (!spec) return false; // block not personalizable in this section
+    return applyFields(section.querySelector(spec.selector), item.blocks[name], spec.fields);
+  }).length;
+  return applied === blockNames.length;
+}
+
 function intentSectionHandler() {
-  return (content) => applyInstructions(content, (match, set) => {
-    if (!match.section) return false;
-    const main = document.querySelector('main');
-    if (!main) return false;
-    const section = [...main.querySelectorAll('.section')]
-      .find((s) => s.id === match.section || s.dataset.id === match.section);
-    if (!section) return false;
-    const hero = section.querySelector('.hero-v3');
-    if (!hero) return false;
-    return applyFields(hero, set, HERO_V3_FIELDS);
-  });
+  return (content) => {
+    const items = Array.isArray(content.items) ? content.items : [content];
+    if (!items.length) return false;
+    return items.filter(applyIntentSection).length === items.length;
+  };
 }
 
 // Scope names that resolve to a composite handler — skipped when a composite

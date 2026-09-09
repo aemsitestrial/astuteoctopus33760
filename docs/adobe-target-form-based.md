@@ -145,7 +145,7 @@ these field names:
 | `cards` | item | `heading`, `body` | card heading |
 | `job-listings` | item | `title`, `description` | job title |
 | `default-content` | text | `text` | `match.text` (current text) + optional `match.wrapper` index |
-| `intent-section` | section | hero-v3 fields: `title`, `subtitle`, `primaryCta`, `secondaryCta` | `match.section` (section `id` / `data-id`) |
+| `intent-section` | section | `id`/`name` + `blocks` map (per block: `title`, `subtitle`, `primaryCta`, `secondaryCta`) | section `id` / `data-id` / `data-name` |
 | `page` | composite | `blocks` (map of block → offer) | — |
 
 ### Default content (not in a block)
@@ -178,30 +178,34 @@ text** (scoped to `<main>`, so header/footer are never touched):
 ### Intent Section (section-scoped hero-v3)
 
 The **Intent Section** (`models/_intent-section.json`) is a section container that only allows
-`text` and `hero-v3`, and exposes an authored **`id`** field. That field is rendered both as a
-real DOM `id` attribute on the section (a normalized token, e.g. `hero-intent`, usable as a CSS
-hook and `#anchor` target) and preserved as `data-id`. The `intent-section` scope personalizes
-the **hero-v3 inside a specific section**, matched by either form of that id — so the same
-activity can target one section without touching an identical hero elsewhere.
+`text` and `hero-v3`, and exposes authored **`id`** and **`name`** fields. `id` is rendered both
+as a real DOM `id` attribute (a normalized token, e.g. `hero-intent`, usable as a CSS hook and
+`#anchor` target) and as `data-id`; `name` is rendered as `data-name`.
 
-Fields are the hero-v3 **model properties** (`title`, `subtitle`, `primaryCta`, `secondaryCta`),
-not raw element text — so an offer survives copy edits.
+The offer picks the section by `id` (or `name`), then a **`blocks`** map keyed by block name
+applies that block's **model-property** fields to the block inside the section — so the same
+activity can target one section without touching an identical block elsewhere, and offers survive
+copy edits.
 
 ```json
 {
-  "items": [
-    { "match": { "section": "hero-intent" },
-      "set":   { "title": "Tea title — Experience A",
-                 "subtitle": "Start your day with a fresh brew — Experience A",
-                 "primaryCta": "Order tea" } }
-  ]
+  "id": "hero-intent",
+  "blocks": {
+    "hero": {
+      "title": "Tea title — Experience A",
+      "subtitle": "Start your day with a fresh brew — Experience A",
+      "primaryCta": "Order tea"
+    }
+  }
 }
 ```
 
-- `match.section` (required) — the section id; matches the section's real `id` attribute
-  (normalized) or its raw `data-id`.
-- `set.<field>` — any hero-v3 model property (`title`, `subtitle`, `primaryCta`, `secondaryCta`);
-  unknown fields are ignored.
+- `id` / `name` (required) — the section's authored id (matches real `id` / `data-id`) or `name`
+  (`data-name`).
+- `blocks` — map keyed by block name (`hero` alias or `hero-v3`); each value is that block's
+  model-property fields (`title`, `subtitle`, `primaryCta`, `secondaryCta`). Unknown fields are
+  ignored.
+- Drive several sections from one offer with an `items` array of the above shape.
 
 Scoped to `<main>` and to the matched section, so header/footer and other sections are never
 touched. See `docs/hero-block/intent-section-hero-v3-target-offer.md` for more examples.

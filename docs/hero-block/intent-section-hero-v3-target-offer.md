@@ -9,7 +9,7 @@ An Intent Section authored with **Section ID = `hero-intent`** containing one he
 decoration the relevant DOM is:
 
 ```html
-<div class="section intent-section-container" id="hero-intent" data-id="hero-intent">
+<div class="section intent-section-container" id="hero-intent" data-id="hero-intent" data-name="Hero Intent">
   <div class="hero-v3-wrapper">
     <div class="hero-v3 block hero-height-responsive hero-align-center …" data-block-name="hero-v3">
       <div class="hero-media">…</div>
@@ -29,10 +29,10 @@ decoration the relevant DOM is:
 ## hero-v3 model-property fields
 
 Both scopes below use the hero-v3 block's **model property names** (from
-`blocks/hero-v3/_hero-v3.json`) as the `set` field names — not raw element text. So an offer
-survives copy edits and reads the way an author thinks about the block:
+`blocks/hero-v3/_hero-v3.json`) as the field names — not raw element text. So an offer survives
+copy edits and reads the way an author thinks about the block:
 
-| `set` field | Model property | Personalizes |
+| field | Model property | Personalizes |
 |---|---|---|
 | `title` | Title | the hero headline (`.hero-title`) |
 | `subtitle` | Subtitle | the subtitle (`.hero-subtitle`) |
@@ -43,46 +43,58 @@ survives copy edits and reads the way an author thinks about the block:
 
 ## Two ways to target it
 
-| Goal | Use scope | Section-scoped? |
-|---|---|---|
-| Personalize the hero **only in this section** (by section id) | `intent-section` | ✅ by section id |
-| Personalize a hero-v3 picked by `instance`/`key` | `hero-v3` | ❌ block-scoped |
+| Goal | Use scope | Section-scoped? | Offer shape |
+|---|---|---|---|
+| Personalize the hero **only in this section** (by id/name) | `intent-section` | ✅ by section id/name | `{ id, blocks: { hero: {…} } }` |
+| Personalize a hero-v3 picked by `instance`/`key` | `hero-v3` | ❌ block-scoped | `{ set: {…} }` |
 
-Both set the same fields (title/subtitle/primaryCta/secondaryCta). Use `intent-section` when you
-need to scope to one section; use `hero-v3` when picking by instance/key is enough.
+Both reach the same hero fields (title/subtitle/primaryCta/secondaryCta). Use `intent-section`
+when you need to scope to one section; use `hero-v3` when picking by instance/key is enough.
 
 ---
 
 ## Option A — `intent-section` scope (section-scoped, by model property)
 
-Decision scope: **`intent-section`**. Matches the section by `id`/`data-id`, then sets the hero-v3
-inside it by its model properties. Does not affect an identical hero in another section.
+Decision scope: **`intent-section`**. The offer picks the section by its authored **`id`** (or
+**`name`**), then a **`blocks`** map keyed by block name applies that block's model-property fields
+to the block inside the section. Does not affect an identical block in another section.
+
+```json
+{
+  "id": "hero-intent",
+  "blocks": {
+    "hero": {
+      "title": "Tea title — Experience A",
+      "subtitle": "Start your day with a fresh brew — Experience A",
+      "primaryCta": "Order tea",
+      "secondaryCta": "Talk to us"
+    }
+  }
+}
+```
+
+- `id` (or `name`) — the section's authored id (matches the real `id` / `data-id`) or its `name`
+  (`data-name`). Required.
+- `blocks` — map keyed by block name. Use `hero` (alias) or `hero-v3` for the section's hero.
+- each block's fields are its model properties (`title`, `subtitle`, `primaryCta`,
+  `secondaryCta`); unknown fields are ignored.
+
+Match by name, title + subtitle only:
+
+```json
+{ "name": "Hero Intent",
+  "blocks": { "hero": { "title": "Tea title — Experience A", "subtitle": "Fresh brew every morning" } } }
+```
+
+Drive several sections from one offer with an `items` array:
 
 ```json
 {
   "items": [
-    {
-      "match": { "section": "hero-intent" },
-      "set": {
-        "title": "Tea title — Experience A",
-        "subtitle": "Start your day with a fresh brew — Experience A",
-        "primaryCta": "Order tea",
-        "secondaryCta": "Talk to us"
-      }
-    }
+    { "id": "hero-intent", "blocks": { "hero": { "title": "Welcome back — Exp A" } } },
+    { "id": "promo-intent", "blocks": { "hero": { "title": "Switch and save — Exp A" } } }
   ]
 }
-```
-
-- `match.section` — the section's `id` (`hero-intent`) or raw `data-id`.
-- `set.<field>` — any hero-v3 model property (`title`, `subtitle`, `primaryCta`, `secondaryCta`);
-  unknown fields are ignored.
-
-Title + subtitle only:
-
-```json
-{ "items": [ { "match": { "section": "hero-intent" },
-              "set": { "title": "Tea title — Experience A", "subtitle": "Fresh brew every morning" } } ] }
 ```
 
 ---
@@ -122,23 +134,12 @@ Single hero-v3 on the page — flat offer:
    (derived from `FORM_BASED_HANDLERS`).
 4. Set audiences/goals and **activate**.
 
-## Robust CTA targeting scoped to this section (optional)
+## Which to use
 
-Option A can't set CTAs and Option B isn't section-scoped. To do both — target the CTAs of the
-hero-v3 *in a specific section* — give the block a stable key:
-
-1. Add a **"Personalization key"** field to `blocks/hero-v3/_hero-v3.json` mapped to
-   `data-target-key` (e.g. `hero-intent`).
-2. Use the `hero-v3` scope with `match.key`:
-
-```json
-{
-  "items": [
-    { "match": { "key": "hero-intent" },
-      "set": { "title": "Tea title — Experience A", "primaryCta": "Order tea", "secondaryCta": "Talk to us" } }
-  ]
-}
-```
+**Option A (`intent-section`)** is section-scoped **and** sets all hero fields including CTAs, so
+it is the right choice when you need to target the hero *in a specific section* — no
+`data-target-key` needed. **Option B (`hero-v3`)** is simplest when the page has a single hero-v3
+or you are happy to pick by `instance`/`key`.
 
 See `docs/hero-block/hero-v3-target-offer.md` and `docs/adobe-target-form-based.md` for the full
 contract.
