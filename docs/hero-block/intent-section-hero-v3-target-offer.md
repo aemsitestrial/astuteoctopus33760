@@ -38,8 +38,16 @@ copy edits and reads the way an author thinks about the block:
 | `subtitle` | Subtitle | the subtitle (`.hero-subtitle`) |
 | `primaryCta` | Primary action text | the primary button label |
 | `secondaryCta` | Secondary action text | the secondary button label |
+| `primaryCtaLink` | Primary action link | the primary button `href` |
+| `secondaryCtaLink` | Secondary action link | the secondary button `href` |
+| `image` | Background image | the hero background image (`src`) |
 
 > `heading` is accepted as a back-compat alias for `title`.
+>
+> **Link/image fields are URL-safety-checked.** `primaryCtaLink`, `secondaryCtaLink`, and `image`
+> values must be an `https:`/`http:` or same-origin relative URL; `javascript:`, `data:`,
+> `vbscript:` and protocol-relative (`//…`) values are rejected. `image` swaps the `<picture>`
+> background (its `<source>`s are dropped so the new URL wins at every breakpoint).
 
 ## Two ways to target it
 
@@ -86,6 +94,24 @@ A bare `blocks` array as the whole offer content also works:
 
 ```json
 [ { "hero": { "title": "Tea title — Experience A" } } ]
+```
+
+Personalizing the image and CTA links too:
+
+```json
+{
+  "blocks": [
+    {
+      "hero": {
+        "title": "Winter sale — up to 30% off",
+        "primaryCta": "Shop the sale",
+        "primaryCtaLink": "/sale",
+        "secondaryCtaLink": "https://example.com/terms",
+        "image": "/content/dam/hastyfalcon60506/images/winter-hero.jpg"
+      }
+    }
+  ]
+}
 ```
 
 - The **scope name** must equal the section's id (e.g. `hero-intent`).

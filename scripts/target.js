@@ -133,10 +133,69 @@ function setText(el, value) {
 }
 
 /**
+ * Validates a Target-authored URL before it is written to an href/src. Target
+ * offers bypass the block's own isSafeUrl, so re-check here: block
+ * javascript:/data:/vbscript: (DOM XSS) and protocol-relative (open-redirect)
+ * URLs; allow http(s) and same-origin relative/hash links.
+ */
+function isSafeUrl(rawUrl) {
+  const url = typeof rawUrl === 'string' ? rawUrl.trim() : '';
+  if (!url) return false;
+  if (/^\s*(javascript|data|vbscript):/i.test(url)) return false;
+  if (url.startsWith('//')) return false;
+  if (/^https?:\/\//i.test(url)) return true;
+  return url.startsWith('/') || url.startsWith('#') || url.startsWith('./') || url.startsWith('../');
+}
+
+// Sets an element attribute; href/src values must pass isSafeUrl.
+function setAttr(el, attr, value) {
+  if (!el || typeof value !== 'string') return false;
+  if ((attr === 'href' || attr === 'src' || attr === 'srcset') && !isSafeUrl(value)) return false;
+  el.setAttribute(attr, value);
+  return true;
+}
+
+/**
+ * Swaps a hero background image to `url`. The image is a <picture> whose
+ * <source srcset> siblings override <img src>, so set the img src AND drop the
+ * sources so the new URL wins at every breakpoint. URL is safety-checked.
+ */
+function setPictureImage(img, url) {
+  if (!img || !isSafeUrl(url)) return false;
+  const picture = img.closest('picture');
+  if (picture) picture.querySelectorAll('source').forEach((s) => s.remove());
+  img.setAttribute('src', url);
+  img.removeAttribute('srcset');
+  return true;
+}
+
+/**
+ * Applies one field value to the element resolved by `resolver` within
+ * `container`. A resolver is:
+ *   - string                       → CSS selector; sets textContent
+ *   - (container) => element       → function; sets textContent
+ *   - { selector|resolve, attr }   → sets that attribute (href/src URL-checked)
+ *   - { selector|resolve, apply }  → custom apply(el, value) => boolean
+ */
+function applyField(container, resolver, value) {
+  if (typeof resolver === 'string') return setText(container.querySelector(resolver), value);
+  if (typeof resolver === 'function') return setText(resolver(container), value);
+  if (resolver && typeof resolver === 'object') {
+    const el = resolver.resolve
+      ? resolver.resolve(container)
+      : container.querySelector(resolver.selector);
+    if (!el) return false;
+    if (resolver.apply) return resolver.apply(el, value);
+    if (resolver.attr) return setAttr(el, resolver.attr, value);
+  }
+  return false;
+}
+
+/**
  * Applies each field in `set` to `container` via a fieldMap of
- * { fieldName: cssSelector | (container) => element }. Unknown fields are
- * ignored. Returns true only when every recognised field applied, so the scope
- * stops retrying on later decoration passes.
+ * { fieldName: resolver } (see applyField for resolver shapes). Unknown fields
+ * are ignored. Returns true only when every recognised field applied, so the
+ * scope stops retrying on later decoration passes.
  */
 function applyFields(container, set, fieldMap) {
   if (!container || !set) return false;
@@ -146,8 +205,7 @@ function applyFields(container, set, fieldMap) {
     const resolver = fieldMap[field];
     if (!resolver) return; // ignore fields this block does not expose
     total += 1;
-    const el = typeof resolver === 'function' ? resolver(container) : container.querySelector(resolver);
-    if (setText(el, value)) applied += 1;
+    if (applyField(container, resolver, value)) applied += 1;
   });
   return total > 0 && applied === total;
 }
@@ -230,11 +288,17 @@ function defaultContentHandler() {
 // offer field names match what an author sees in the model. `heading` is kept
 // as a back-compat alias for `title`.
 const HERO_V3_FIELDS = {
+  // Text fields (set textContent).
   title: '.hero-title',
   heading: '.hero-title',
   subtitle: '.hero-subtitle',
   primaryCta: '.hero-actions a.hero-action-primary',
   secondaryCta: '.hero-actions a.hero-action-static-light',
+  // Link fields (set the CTA href; URL-safety-checked).
+  primaryCtaLink: { selector: '.hero-actions a.hero-action-primary', attr: 'href' },
+  secondaryCtaLink: { selector: '.hero-actions a.hero-action-static-light', attr: 'href' },
+  // Image field (swap the background image; handles the <picture> sources).
+  image: { selector: '.hero-media img', apply: setPictureImage },
 };
 
 // Blocks that can be personalized inside an Intent Section, keyed by the name

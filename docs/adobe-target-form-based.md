@@ -132,7 +132,7 @@ these field names:
 | Scope (block) | Type | `set` fields | Item match key (`match.item`) |
 |---|---|---|---|
 | `hero` | block | `badge`, `heading`, `subtitle`, `primaryCta`, `secondaryCta` | — |
-| `hero-v3` | block | `title` (alias `heading`), `subtitle`, `primaryCta`, `secondaryCta` | — |
+| `hero-v3` | block | `title` (alias `heading`), `subtitle`, `primaryCta`, `secondaryCta`, `primaryCtaLink`, `secondaryCtaLink`, `image` | — |
 | `feature-cards` | block | `label`, `heading`, `subtitle` | — |
 | `usage-dashboard` | block | `heading`, `label`, `cta` | — |
 | `cta-band` | block | `heading`, `subtitle`, `cta` | — |
@@ -152,7 +152,7 @@ these field names:
 | `cards` | item | `heading`, `body` | card heading |
 | `job-listings` | item | `title`, `description` | job title |
 | `default-content` | text | `text` | `match.text` (current text) + optional `match.wrapper` index |
-| `<section id>` (Intent Section) | section | `blocks` array (per block: `title`, `subtitle`, `primaryCta`, `secondaryCta`) | scope name = the section's `id` |
+| `<section id>` (Intent Section) | section | `blocks` array (per block: text + `primaryCtaLink`, `secondaryCtaLink`, `image`) | scope name = the section's `id` |
 | `page` | composite | `blocks` (map of block → offer) | — |
 
 ### Default content (not in a block)

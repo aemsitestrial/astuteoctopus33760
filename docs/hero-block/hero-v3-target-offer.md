@@ -12,25 +12,33 @@ mapped to the post-decoration selectors via the shared `HERO_V3_FIELDS`:
 
 ```js
 const HERO_V3_FIELDS = {
-  title:        '.hero-title',
-  heading:      '.hero-title', // back-compat alias for `title`
-  subtitle:     '.hero-subtitle',
-  primaryCta:   '.hero-actions a.hero-action-primary',
-  secondaryCta: '.hero-actions a.hero-action-static-light',
+  title:            '.hero-title',
+  heading:          '.hero-title', // back-compat alias for `title`
+  subtitle:         '.hero-subtitle',
+  primaryCta:       '.hero-actions a.hero-action-primary',
+  secondaryCta:     '.hero-actions a.hero-action-static-light',
+  primaryCtaLink:   { selector: '.hero-actions a.hero-action-primary', attr: 'href' },
+  secondaryCtaLink: { selector: '.hero-actions a.hero-action-static-light', attr: 'href' },
+  image:            { selector: '.hero-media img', apply: setPictureImage },
 };
 'hero-v3': blockHandler('hero-v3', HERO_V3_FIELDS),
 ```
 
-| `set` field | Model property | Anchor |
+| `set` field | Model property | Sets |
 |---|---|---|
-| `title` (alias `heading`) | Title | `.hero-title` |
-| `subtitle` | Subtitle | `.hero-subtitle` |
-| `primaryCta` | Primary action text | `.hero-actions a.hero-action-primary` |
-| `secondaryCta` | Secondary action text | `.hero-actions a.hero-action-static-light` |
+| `title` (alias `heading`) | Title | text of `.hero-title` |
+| `subtitle` | Subtitle | text of `.hero-subtitle` |
+| `primaryCta` | Primary action text | label of the primary button |
+| `secondaryCta` | Secondary action text | label of the secondary button |
+| `primaryCtaLink` | Primary action link | `href` of the primary button |
+| `secondaryCtaLink` | Secondary action link | `href` of the secondary button |
+| `image` | Background image | `src` of the hero `<picture>` image |
 
-> Fields set **text only** (via `textContent`), preserving instrumentation and the CTA `href`.
-> To change a CTA destination, use a VEC/dom-action offer or extend the handler — Target-authored
-> text does not run through the block's `isSafeUrl` check.
+> **Text fields** set `textContent` (preserving instrumentation). **Link/image fields** are
+> URL-safety-checked: `href`/`src` values must be `http(s)` or a same-origin relative URL;
+> `javascript:`, `data:`, `vbscript:` and protocol-relative (`//…`) values are rejected. The
+> `image` field swaps the `<picture>` background (its `<source>`s are dropped so the new URL wins
+> at every breakpoint).
 
 ## Sample offers
 
