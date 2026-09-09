@@ -61,8 +61,9 @@ Every **Intent Section** that has an authored **Section ID** is automatically of
 its **own decision scope** (the scope name *is* the section id). So you can pick the section just
 by naming the location/scope, and the JSON offer only needs `blocks` — no `id`/`name` inside it.
 
-> Only sections that have an id **and** contain a personalizable block (a `hero-v3`) get a
-> per-id scope — a plain section with just an id is not exposed as a scope.
+> Only **Intent Sections** get a per-id scope. The scope is keyed off the section's `id`
+> attribute, and only the intent-section model exposes an id field — so a plain section is never
+> exposed as a scope, regardless of what blocks it contains.
 
 Decision scope: **`hero-intent`** (the section's id). Offer:
 

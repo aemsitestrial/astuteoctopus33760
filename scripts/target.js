@@ -331,31 +331,19 @@ function sectionScopeHandler(scopeName) {
   };
 }
 
-// A section is treated as an Intent Section (and gets its own per-id scope)
-// when it has an `id` and contains at least one personalizable block. The
-// section model name is not emitted to the DOM, so this content signal — not a
-// class — is what identifies one. Selector matching any INTENT_SECTION_BLOCKS
-// block, e.g. ".hero-v3, .hero".
-const INTENT_SECTION_SELECTOR = Object.values(INTENT_SECTION_BLOCKS)
-  .map((spec) => spec.selector)
-  .filter((sel, i, arr) => arr.indexOf(sel) === i)
-  .join(', ');
-
 /**
  * Section ids offered to Target as their own decision scope — capped to
- * Intent Sections: a top-level section that has an `id` AND contains a
- * personalizable block (see INTENT_SECTION_SELECTOR). Read after decoration
- * (decorateSectionIds in scripts.js promotes the authored `id` field to a real
- * id attribute), so an author can point a Target activity at scope = the
- * section id and ship a blocks-only offer.
+ * Intent Sections. Only the intent-section model (models/_intent-section.json)
+ * exposes an `id` field, so a top-level section that carries an `id` attribute
+ * is definitionally an Intent Section (decorateSectionIds in scripts.js
+ * promotes that authored `id` to a real id attribute). No dependency on which
+ * child blocks are present. An author can then point a Target activity at
+ * scope = the section id and ship a blocks-only offer.
  */
 function getSectionScopes() {
   const main = document.querySelector('main');
   if (!main) return [];
-  return [...main.querySelectorAll(':scope > .section[id]')]
-    .filter((s) => s.querySelector(INTENT_SECTION_SELECTOR))
-    .map((s) => s.id)
-    .filter(Boolean);
+  return [...main.querySelectorAll(':scope > .section[id]')].map((s) => s.id).filter(Boolean);
 }
 
 // Scope names that resolve to a composite handler — skipped when a composite

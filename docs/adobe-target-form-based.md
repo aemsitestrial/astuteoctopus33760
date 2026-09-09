@@ -222,9 +222,10 @@ Point a Target activity at scope = the section id and the offer only needs `bloc
 ```
 
 These scopes are discovered from the decorated page at request time (see `getSectionScopes` /
-`resolveScopeHandler` in `scripts/target.js`) and capped to Intent Sections — a section only gets a
-per-id scope when it has an id *and* contains a personalizable block (a `hero-v3`). Adding such a
-section needs no code change. A bare `blocks` array as the offer content also works.
+`resolveScopeHandler` in `scripts/target.js`) and capped to Intent Sections — only the
+intent-section model exposes an `id` field, so a section carrying an `id` attribute is
+definitionally an Intent Section (plain sections never get a per-id scope). Adding an Intent
+Section needs no code change. A bare `blocks` array as the offer content also works.
 
 ### Composite offers — several blocks in one scope
 
