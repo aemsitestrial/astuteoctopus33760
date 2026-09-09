@@ -340,11 +340,33 @@ prevents this:
   returns no offer is never hidden, so unpersonalized content paints immediately.
 - **No layout shift.** Hiding uses `opacity:0` (via an injected
   `.target-flicker-hide` rule), so the box keeps its size — CLS is unaffected.
-- **Reveal on apply.** Each container is revealed the moment its offer applies.
+- **Reveal with a fade.** When an offer applies, the container swaps to a
+  `.target-flicker-reveal` class that fades it in (~300ms), so the switch to
+  personalized copy reads as a smooth transition rather than a text flicker. The
+  class is removed on `animationend`. Under `prefers-reduced-motion: reduce` the
+  reveal is instant (no animation).
 - **Failsafe.** A hard timeout (`FLICKER_TIMEOUT_MS`, 3s) reveals everything
   regardless, so content is never stuck hidden if Target is slow or errors.
 
 No authoring step is required — this is automatic for every handled scope.
+
+### EDS load phasing (Eager / Lazy / Delayed)
+
+The integration follows the EDS ELD sequence so personalization never delays
+first paint:
+
+- **Eager** — `loadEager` awaits `alloyLoadedPromise` (alloy *configuration*
+  only), and the decision request fires as soon as config resolves, so decisions
+  are in flight as early as possible. First paint is **not** blocked on the
+  Target round-trip (`renderDecisions: false`; offers applied asynchronously).
+- **Eager → Lazy** — offers are applied progressively as each section/block
+  decorates (`onDecoratedElement`): the first section during eager, the rest in
+  lazy.
+- **Deferred** — `propositionDisplay` reporting is pushed off the critical path
+  via `setTimeout`.
+
+> Never `await` the decision response inside `loadEager` — that stalls first
+> paint on the network. The flicker control covers the gap instead.
 
 ## Verifying
 

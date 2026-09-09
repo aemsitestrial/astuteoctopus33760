@@ -14,7 +14,20 @@ import { getMetadata } from './aem.js';
  * / sectionScopeHandler).
  *
  * Flicker is handled by pre-hiding the containers a scope may replace and
- * revealing each once its offer applies (see the Flicker control section).
+ * revealing each (with a short fade-in) once its offer applies (see the Flicker
+ * control section).
+ *
+ * EDS load phasing (Eager / Lazy / Delayed):
+ *  - Eager: alloy is CONFIGURED (loadEager awaits alloyLoadedPromise) and the
+ *    decision request is fired immediately — decisions must be in flight as
+ *    early as possible to minimize flicker. We never block first paint on the
+ *    Target round-trip (renderDecisions:false; offers applied asynchronously).
+ *  - Eager → Lazy: offers are applied progressively via onDecoratedElement as
+ *    each section/block decorates (first section in eager, the rest in lazy).
+ *  - Deferred: proposition-display reporting is pushed off the critical path
+ *    with setTimeout so it never competes with LCP work.
+ * Do NOT `await` the decision response inside loadEager — that would stall
+ * first paint on the network; the flicker control covers the gap instead.
  *
  * See docs/adobe-target-form-based.md for the JSON offer contract, the
  * multi-instance `items`/`match`/`set` model, and how to add new experiences.
@@ -454,9 +467,15 @@ const FORM_BASED_SCOPES = Object.keys(FORM_BASED_HANDLERS);
 // its size so there is no layout shift/CLS while hidden. A hard timeout reveals
 // everything as a failsafe, so content is never stuck hidden if Target is slow
 // or errors.
+//
+// On reveal, a short fade-in animation replaces the abrupt swap so the
+// transition from hidden → personalized copy reads smoothly instead of as a
+// flicker. The animation is disabled under prefers-reduced-motion.
 
 const FLICKER_HIDE_CLASS = 'target-flicker-hide';
+const FLICKER_REVEAL_CLASS = 'target-flicker-reveal';
 const FLICKER_TIMEOUT_MS = 3000;
+const FLICKER_FADE_MS = 300;
 
 // Resolves the container element(s) a scope will modify, so only those are
 // hidden. Section-id scopes hide their section; block/section-type scopes hide
@@ -471,21 +490,42 @@ function elementsForScope(scope, sectionScopes) {
   return getBlocks(scope); // block-type scope, e.g. "hero-v3", "metrics"
 }
 
-// Injects the pre-hiding style once and hides the given elements.
+// Injects the pre-hiding + reveal-animation styles once.
+function ensureFlickerStyle() {
+  if (document.getElementById('target-flicker-style')) return;
+  const style = document.createElement('style');
+  style.id = 'target-flicker-style';
+  // Hide with opacity (not display/visibility) so layout is reserved — no CLS.
+  // Reveal fades in so the swap to personalized copy is smooth, not a flicker.
+  // forced-colors / reduced-motion users get an instant, animation-free reveal.
+  style.textContent = `
+    .${FLICKER_HIDE_CLASS}{opacity:0 !important;}
+    .${FLICKER_REVEAL_CLASS}{animation:target-flicker-fade ${FLICKER_FADE_MS}ms ease-out;}
+    @keyframes target-flicker-fade{from{opacity:0;}to{opacity:1;}}
+    @media (prefers-reduced-motion:reduce){.${FLICKER_REVEAL_CLASS}{animation:none;}}
+  `;
+  document.head.appendChild(style);
+}
+
+// Hides the given elements ahead of personalization.
 function hideForFlicker(elements) {
   if (!elements.length) return;
-  if (!document.getElementById('target-flicker-style')) {
-    const style = document.createElement('style');
-    style.id = 'target-flicker-style';
-    // Opacity (not display/visibility) so layout is reserved — no CLS.
-    style.textContent = `.${FLICKER_HIDE_CLASS}{opacity:0 !important;transition:none !important;}`;
-    document.head.appendChild(style);
-  }
+  ensureFlickerStyle();
   elements.forEach((el) => el.classList.add(FLICKER_HIDE_CLASS));
 }
 
+// Reveals elements with a short fade-in. Removing the hide class restores
+// opacity; the reveal class runs the fade, then is cleaned up when the
+// animation ends so nothing lingers on the element.
 function revealAfterFlicker(elements) {
-  elements.forEach((el) => el.classList.remove(FLICKER_HIDE_CLASS));
+  elements.forEach((el) => {
+    if (!el.classList.contains(FLICKER_HIDE_CLASS)) return; // already revealed
+    el.classList.remove(FLICKER_HIDE_CLASS);
+    el.classList.add(FLICKER_REVEAL_CLASS);
+    el.addEventListener('animationend', () => el.classList.remove(FLICKER_REVEAL_CLASS), {
+      once: true,
+    });
+  });
 }
 
 // --- Orchestration -----------------------------------------------------------
