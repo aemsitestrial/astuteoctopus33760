@@ -24,6 +24,11 @@ while the `.metrics` and `.feature-cards` experiences did not.
 **decision scope**, and *our code* decides where it goes — anchored to stable
 elements (ids, block classes, label text). Nothing structural to break.
 
+> **Form-based is the only supported path.** `scripts/target.js` does not render
+> VEC / `dom-action` offers — those propositions are ignored. Author every
+> experience as a JSON offer against a decision scope. (The VEC comparison below
+> is kept only to explain why.)
+
 ## Part 1 — Rebuild the activity in Adobe Target
 
 1. **Create the JSON offers** (Offers → Create → JSON Offer), one per experience.
@@ -73,7 +78,9 @@ await window.alloy('sendEvent', {
 ```
 
 No datastream change is required beyond having Adobe Target enabled on the
-datastream (it already is — VEC offers are being delivered).
+datastream. `renderDecisions: false` means alloy never auto-renders anything —
+form-based offers are applied by our handlers, and VEC / `dom-action`
+propositions are simply not processed.
 
 ## Part 3 — Code (`scripts/target.js`)
 
@@ -321,13 +328,32 @@ block instance an explicit key that authors control:
 This keeps personalization stable across reordering, added/removed instances, and
 copy edits — the failure modes that break VEC selectors and positional matching.
 
+## Flicker control (FOOC)
+
+Because offers are applied client-side after decoration, the default copy could
+flash before personalization replaces it (flash of original content). The code
+prevents this:
+
+- **Targeted pre-hiding.** Only the container(s) a *returned* offer will modify
+  are hidden — never the whole page. A section-id scope hides its section; a
+  block scope hides that block's instances; `page` hides `<main>`. A scope that
+  returns no offer is never hidden, so unpersonalized content paints immediately.
+- **No layout shift.** Hiding uses `opacity:0` (via an injected
+  `.target-flicker-hide` rule), so the box keeps its size — CLS is unaffected.
+- **Reveal on apply.** Each container is revealed the moment its offer applies.
+- **Failsafe.** A hard timeout (`FLICKER_TIMEOUT_MS`, 3s) reveals everything
+  regardless, so content is never stuck hidden if Target is slow or errors.
+
+No authoring step is required — this is automatic for every handled scope.
+
 ## Verifying
 
 - Load the page with the `target` metadata flag set.
 - In DevTools → Network, confirm the `…/ee/v1/interact` call returns a
   `personalization:decisions` handle containing your scopes with
   `json-content-item` schema.
-- Confirm each targeted element updates on load.
+- Confirm each targeted element updates on load, without a flash of the original
+  copy first.
 
 ## VEC vs Form-Based — quick reference
 

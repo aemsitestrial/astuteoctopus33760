@@ -3,13 +3,18 @@ import { getMetadata } from './aem.js';
 /*
  * Adobe Target integration for AEM Edge Delivery Services.
  *
- * Supports two experience styles:
- *  - VEC / dom-action  — rendered by alloy against captured selectors.
- *  - Form-Based / JSON — applied here to stable anchors (see FORM_BASED_HANDLERS).
+ * Form-Based / JSON offers only: Target returns a JSON blob per decision scope
+ * and this module applies it to stable, post-decoration anchors (see
+ * FORM_BASED_HANDLERS). There is no VEC / dom-action support — VEC selectors are
+ * captured against a single DOM snapshot and do not survive EDS decoration, so
+ * form-based offers are the supported path on EDS.
  *
  * Intent Sections get their own decision scope named after the section id, so
  * one section can be personalized with a blocks-only offer (see getSectionScopes
  * / sectionScopeHandler).
+ *
+ * Flicker is handled by pre-hiding the containers a scope may replace and
+ * revealing each once its offer applies (see the Flicker control section).
  *
  * See docs/adobe-target-form-based.md for the JSON offer contract, the
  * multi-instance `items`/`match`/`set` model, and how to add new experiences.
@@ -22,7 +27,6 @@ const WEBSDK_CONFIG = {
   orgId: '0CEB60F754C7E06B0A4C98A2@AdobeOrg',
 };
 
-const DOM_ACTION_SCHEMA = 'https://ns.adobe.com/personalization/dom-action';
 const JSON_CONTENT_ITEM_SCHEMA = 'https://ns.adobe.com/personalization/json-content-item';
 
 // --- WebSDK (alloy) bootstrap ------------------------------------------------
@@ -47,7 +51,7 @@ function initWebSDK(path, config) {
   });
 }
 
-// --- Decoration observer (shared by VEC + Form-Based) ------------------------
+// --- Decoration observer ------------------------------------------------------
 
 function onDecoratedElement(fn) {
   // Apply propositions to all already decorated blocks/sections
@@ -70,18 +74,6 @@ function onDecoratedElement(fn) {
   });
   // Watch anything else added to the body
   observer.observe(document.querySelector('body'), { childList: true });
-}
-
-// --- VEC / dom-action helpers ------------------------------------------------
-
-function toCssSelector(selector) {
-  return selector.replace(/(\.\S+)?:eq\((\d+)\)/g, (_, clss, i) => `:nth-child(${Number(i) + 1}${clss ? ` of ${clss})` : ''}`);
-}
-
-function getElementForProposition(proposition) {
-  const selector = proposition.data.prehidingSelector
-    || toCssSelector(proposition.data.selector);
-  return document.querySelector(selector);
 }
 
 // --- Form-Based / JSON offer helpers -----------------------------------------
@@ -453,6 +445,49 @@ const FORM_BASED_HANDLERS = {
 // Request only the scopes we can actually handle. Extend by adding a handler above.
 const FORM_BASED_SCOPES = Object.keys(FORM_BASED_HANDLERS);
 
+// --- Flicker control ----------------------------------------------------------
+//
+// Personalized content is applied client-side after decoration, which can flash
+// the default copy first (FOOC — flash of original content). To avoid it we
+// pre-hide only the containers a scope may replace (never the whole page), then
+// reveal each once its offer has applied. Hiding uses opacity — the box keeps
+// its size so there is no layout shift/CLS while hidden. A hard timeout reveals
+// everything as a failsafe, so content is never stuck hidden if Target is slow
+// or errors.
+
+const FLICKER_HIDE_CLASS = 'target-flicker-hide';
+const FLICKER_TIMEOUT_MS = 3000;
+
+// Resolves the container element(s) a scope will modify, so only those are
+// hidden. Section-id scopes hide their section; block/section-type scopes hide
+// every instance of that block on the page.
+function elementsForScope(scope, sectionScopes) {
+  if (sectionScopes.includes(scope)) {
+    const section = getIntentSections().find((s) => s.id === scope);
+    return section ? [section] : [];
+  }
+  if (scope === 'page') return [document.querySelector('main')].filter(Boolean);
+  if (scope === 'default-content') return getBlocks('default-content-wrapper');
+  return getBlocks(scope); // block-type scope, e.g. "hero-v3", "metrics"
+}
+
+// Injects the pre-hiding style once and hides the given elements.
+function hideForFlicker(elements) {
+  if (!elements.length) return;
+  if (!document.getElementById('target-flicker-style')) {
+    const style = document.createElement('style');
+    style.id = 'target-flicker-style';
+    // Opacity (not display/visibility) so layout is reserved — no CLS.
+    style.textContent = `.${FLICKER_HIDE_CLASS}{opacity:0 !important;transition:none !important;}`;
+    document.head.appendChild(style);
+  }
+  elements.forEach((el) => el.classList.add(FLICKER_HIDE_CLASS));
+}
+
+function revealAfterFlicker(elements) {
+  elements.forEach((el) => el.classList.remove(FLICKER_HIDE_CLASS));
+}
+
 // --- Orchestration -----------------------------------------------------------
 
 /**
@@ -474,40 +509,55 @@ async function getAndApplyRenderDecisions() {
   // activity can target a section by naming the scope after its id.
   const sectionScopes = getSectionScopes();
 
-  // Get the decisions, but don't render them automatically so we can hook into
-  // the AEM EDS page load sequence. decisionScopes requests the Form-Based
-  // (JSON offer) experiences alongside the default __view__ scope used by VEC.
+  // Get the decisions, but don't render them automatically — form-based offers
+  // are applied manually to stable anchors below.
   const response = await window.alloy('sendEvent', {
     renderDecisions: false,
     personalization: {
       decisionScopes: [...FORM_BASED_SCOPES, ...sectionScopes],
     },
   });
-  const { propositions } = response;
+  const { propositions = [] } = response;
 
-  // Track which Form-Based scopes have already been applied so a handler runs once.
+  // Offers keyed by the scope they target (only scopes we can handle).
+  const offers = new Map();
+  propositions.forEach((p) => {
+    if (!resolveScopeHandler(p.scope, sectionScopes) || offers.has(p.scope)) return;
+    const jsonItem = (p.items || []).find((i) => i.schema === JSON_CONTENT_ITEM_SCHEMA);
+    const content = jsonItem?.data?.content;
+    if (content) offers.set(p.scope, content);
+  });
+
+  // Pre-hide only the containers a returned offer will replace, so the default
+  // copy never flashes before personalization applies (FOOC). Elements resolved
+  // now (decoration is complete) and again as the failsafe reveals them.
+  const pendingScopes = [...offers.keys()];
+  const hidden = new Map(
+    pendingScopes.map((scope) => [scope, elementsForScope(scope, sectionScopes)]),
+  );
+  hidden.forEach((elements) => hideForFlicker(elements));
+
+  // Failsafe: never leave content hidden. Reveal everything after a hard cap
+  // regardless of whether Target/handlers finished.
+  const revealTimer = window.setTimeout(() => {
+    hidden.forEach((elements) => revealAfterFlicker(elements));
+    hidden.clear();
+  }, FLICKER_TIMEOUT_MS);
+
   const appliedScopes = new Set();
 
-  onDecoratedElement(async () => {
-    // 1) VEC / dom-action offers: let alloy render them against their selectors.
-    await window.alloy('applyPropositions', { propositions });
-    // keep track of propositions that were applied
-    propositions.forEach((p) => {
-      p.items = p.items.filter(
-        (i) => i.schema !== DOM_ACTION_SCHEMA || !getElementForProposition(i),
-      );
-    });
-
-    // 2) Form-Based / JSON offers: apply manually to stable anchors.
-    propositions.forEach((p) => {
-      const handler = resolveScopeHandler(p.scope, sectionScopes);
-      if (!handler || appliedScopes.has(p.scope)) return;
-      const jsonItem = (p.items || []).find((i) => i.schema === JSON_CONTENT_ITEM_SCHEMA);
-      const content = jsonItem?.data?.content;
-      if (content && handler(content)) {
-        appliedScopes.add(p.scope);
+  onDecoratedElement(() => {
+    offers.forEach((content, scope) => {
+      if (appliedScopes.has(scope)) return;
+      const handler = resolveScopeHandler(scope, sectionScopes);
+      if (handler && handler(content)) {
+        appliedScopes.add(scope);
+        // Reveal this scope's container now that its offer has applied.
+        revealAfterFlicker(hidden.get(scope) || []);
+        hidden.delete(scope);
       }
     });
+    if (!hidden.size) window.clearTimeout(revealTimer);
   });
 
   // Reporting is deferred to avoid long tasks
