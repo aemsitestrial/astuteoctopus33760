@@ -212,7 +212,7 @@ survive copy edits.
 Scoped to `<main>` and to the matched section, so header/footer and other sections are never
 touched. See `docs/hero-block/intent-section-hero-v3-target-offer.md` for more examples.
 
-**Simpler: a scope per section id.** Every top-level section that has an authored **Section ID**
+**Simpler: a scope per section id.** Every **Intent Section** that has an authored **Section ID**
 is *also* offered to Target as its own decision scope (the scope name equals the section id).
 Point a Target activity at scope = the section id and the offer only needs `blocks` — no
 `intent-section` scope, no `id` field in the JSON:
@@ -222,8 +222,9 @@ Point a Target activity at scope = the section id and the offer only needs `bloc
 ```
 
 These scopes are discovered from the decorated page at request time (see `getSectionScopes` /
-`resolveScopeHandler` in `scripts/target.js`), so adding a section id needs no code change. A bare
-`blocks` array as the offer content also works.
+`resolveScopeHandler` in `scripts/target.js`) and capped to Intent Sections — a section only gets a
+per-id scope when it has an id *and* contains a personalizable block (a `hero-v3`). Adding such a
+section needs no code change. A bare `blocks` array as the offer content also works.
 
 ### Composite offers — several blocks in one scope
 

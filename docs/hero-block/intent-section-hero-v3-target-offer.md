@@ -57,9 +57,12 @@ named sections; use `hero-v3` when picking by instance/key is enough.
 
 ## Option A (simplest) — scope named after the section id
 
-Every top-level section that has an authored **Section ID** is automatically offered to Target as
+Every **Intent Section** that has an authored **Section ID** is automatically offered to Target as
 its **own decision scope** (the scope name *is* the section id). So you can pick the section just
 by naming the location/scope, and the JSON offer only needs `blocks` — no `id`/`name` inside it.
+
+> Only sections that have an id **and** contain a personalizable block (a `hero-v3`) get a
+> per-id scope — a plain section with just an id is not exposed as a scope.
 
 Decision scope: **`hero-intent`** (the section's id). Offer:
 
