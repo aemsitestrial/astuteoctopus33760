@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Developer Guide — EDS &amp; Adobe Target (Form-Based)</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #ffffff;
+    --fg: #1b1b1b;
+    --muted: #5b6470;
+    --border: #e2e6ea;
+    --accent: #0b6e4f;
+    --accent-2: #0b3d91;
+    --code-bg: #f5f7f9;
+    --code-fg: #1b1b1b;
+    --warn-bg: #fff8e6;
+    --warn-border: #f5c518;
+    --note-bg: #eef4ff;
+    --note-border: #0b3d91;
+    --ok-bg: #eafaf0;
+    --ok-border: #0b6e4f;
+    --sidebar-w: 18rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171a; --fg: #e8eaed; --muted: #9aa4af; --border: #2a2f35;
+      --code-bg: #1d2126; --code-fg: #e8eaed; --warn-bg: #2a2410; --note-bg: #131c2e; --ok-bg: #10241a;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: -apple-system, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+    line-height: 1.6;
+  }
+  a { color: var(--accent-2); }
+  code, pre { font-family: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace; }
+  code { background: var(--code-bg); padding: 0.12em 0.4em; border-radius: 0.25rem; font-size: 0.88em; }
+  pre {
+    background: var(--code-bg); color: var(--code-fg); padding: 1rem 1.15rem;
+    border-radius: 0.5rem; overflow-x: auto; border: 1px solid var(--border);
+    font-size: 0.85rem; line-height: 1.5;
+  }
+  pre code { background: none; padding: 0; }
+
+  .layout { display: flex; min-height: 100vh; }
+  nav.toc {
+    width: var(--sidebar-w); flex-shrink: 0; border-right: 1px solid var(--border);
+    padding: 1.5rem 1rem; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    background: var(--bg);
+  }
+  nav.toc h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 1.2rem 0 0.4rem; }
+  nav.toc h2:first-child { margin-top: 0; }
+  nav.toc a { display: block; padding: 0.28rem 0.5rem; border-radius: 0.35rem; text-decoration: none; color: var(--fg); font-size: 0.9rem; }
+  nav.toc a:hover { background: var(--code-bg); }
+  main { flex: 1; min-width: 0; padding: 2.5rem clamp(1rem, 4vw, 4rem); max-width: 60rem; }
+
+  header.hero {
+    border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 2rem;
+  }
+  header.hero .eyebrow { color: var(--accent); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; font-size: 0.78rem; }
+  header.hero h1 { margin: 0.3rem 0 0.5rem; font-size: 2rem; line-height: 1.15; }
+  header.hero p { color: var(--muted); margin: 0; max-width: 44rem; }
+
+  section { scroll-margin-top: 1rem; margin-bottom: 2.75rem; }
+  section > h2 {
+    font-size: 1.5rem; border-bottom: 2px solid var(--accent); display: inline-block;
+    padding-bottom: 0.2rem; margin: 0 0 1rem;
+  }
+  h3 { font-size: 1.15rem; margin: 1.6rem 0 0.5rem; }
+  h4 { font-size: 1rem; margin: 1.2rem 0 0.4rem; }
+
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+  th, td { border: 1px solid var(--border); padding: 0.5rem 0.7rem; text-align: left; vertical-align: top; }
+  th { background: var(--code-bg); font-weight: 600; }
+
+  .callout { border-radius: 0.5rem; padding: 0.85rem 1.1rem; margin: 1rem 0; border: 1px solid; }
+  .callout p:first-child { margin-top: 0; } .callout p:last-child { margin-bottom: 0; }
+  .callout.note { background: var(--note-bg); border-color: var(--note-border); }
+  .callout.warn { background: var(--warn-bg); border-color: var(--warn-border); }
+  .callout.ok { background: var(--ok-bg); border-color: var(--ok-border); }
+  .callout .label { font-weight: 700; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.05em; display: block; margin-bottom: 0.25rem; }
+
+  .pill { display: inline-block; background: var(--code-bg); border: 1px solid var(--border); border-radius: 999px; padding: 0.05rem 0.6rem; font-size: 0.78rem; }
+  .steps { counter-reset: step; list-style: none; padding-left: 0; }
+  .steps > li { counter-increment: step; position: relative; padding-left: 2.4rem; margin-bottom: 0.9rem; }
+  .steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 0;
+    width: 1.7rem; height: 1.7rem; border-radius: 50%; background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700;
+  }
+  .flow { border: 1px dashed var(--border); border-radius: 0.5rem; padding: 1rem 1.2rem; background: var(--code-bg); font-size: 0.85rem; overflow-x: auto; }
+  footer.docfoot { border-top: 1px solid var(--border); margin-top: 3rem; padding-top: 1.2rem; color: var(--muted); font-size: 0.85rem; }
+  .filetree { white-space: pre; }
+  @media (max-width: 900px) {
+    nav.toc { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc" aria-label="Table of contents">
+    <h2>Getting started</h2>
+    <a href="#intro">1. What this is</a>
+    <a href="#mental-model">2. EDS mental model</a>
+    <a href="#repo">3. Repo layout</a>
+    <a href="#eld">4. The ELD sequence</a>
+    <h2>Building blocks</h2>
+    <a href="#block-anatomy">5. Block anatomy</a>
+    <a href="#authoring">6. Authoring &amp; models</a>
+    <a href="#hero-v3">7. Worked example: hero-v3</a>
+    <a href="#intent-section">8. Intent Sections</a>
+    <h2>Adobe Target</h2>
+    <a href="#target-why">9. Why form-based</a>
+    <a href="#target-flow">10. How offers apply</a>
+    <a href="#target-scopes">11. Scopes &amp; offers</a>
+    <a href="#target-flicker">12. Flicker control</a>
+    <a href="#target-dm">13. Images &amp; Dynamic Media</a>
+    <a href="#target-author">14. Authoring in Target</a>
+    <h2>Reference</h2>
+    <a href="#add-handler">15. Add a new experience</a>
+    <a href="#checklist">16. PR checklist</a>
+    <a href="#glossary">17. Glossary</a>
+  </nav>
+
+  <main>
+    <header class="hero">
+      <div class="eyebrow">Developer Onboarding</div>
+      <h1>AEM Edge Delivery Services &amp; Adobe Target (Form-Based)</h1>
+      <p>A practical guide for developers new to this project: how the site is built on Edge Delivery Services, how blocks and sections work, and how client-side personalization is wired through Adobe Target using JSON (form-based) offers.</p>
+    </header>
+
+    <section id="intro">
+      <h2>1. What this is</h2>
+      <p>This project is an <strong>Adobe Edge Delivery Services (EDS)</strong> site (also called Franklin / Helix / "aem.live"). Content is authored as documents or in the Universal Editor, served as plain HTML, then progressively enhanced in the browser by JavaScript "blocks". On top of that, <strong>Adobe Target</strong> personalizes content client-side using JSON offers applied to stable DOM anchors.</p>
+      <p>By the end of this guide you should be able to: read the load sequence, build or modify a block, understand Intent Sections, and author + wire a Target experience without breaking Core Web Vitals.</p>
+      <div class="callout note"><span class="label">Prerequisites</span>Comfortable with modern vanilla JavaScript (ES modules), the DOM API, and CSS. No framework knowledge needed — EDS is intentionally framework-free.</div>
+    </section>
+
+    <section id="mental-model">
+      <h2>2. EDS mental model</h2>
+      <p>EDS optimizes for speed and simplicity. Keep these principles in mind:</p>
+      <ul>
+        <li><strong>Content is HTML first.</strong> A page is delivered as semantic HTML (from a document or the Universal Editor). JavaScript only <em>enhances</em> it — the page is readable and crawlable before any JS runs.</li>
+        <li><strong>Blocks are the unit of interactivity.</strong> A block is a folder under <code>/blocks/&lt;name&gt;/</code> with a <code>&lt;name&gt;.js</code> and <code>&lt;name&gt;.css</code>. The loader finds them by the block's first CSS class.</li>
+        <li><strong>Progressive enhancement.</strong> Each block's <code>decorate()</code> function rearranges the delivered markup into its final structure.</li>
+        <li><strong>Performance is a feature.</strong> Work is split across three phases (Eager / Lazy / Delayed) so the largest content paints fast and nothing blocks it.</li>
+      </ul>
+      <div class="flow">Author (doc / Universal Editor)
+   │  published as plain HTML
+   ▼
+Browser loads page  →  scripts.js runs  →  decorateMain() finds blocks
+   │                                          │  each block's decorate() enhances it
+   ▼                                          ▼
+Semantic HTML visible immediately     Fully rendered, interactive UI</div>
+    </section>
+
+    <section id="repo">
+      <h2>3. Repo layout</h2>
+      <p>The parts you will touch most:</p>
+      <pre class="filetree">/blocks/&lt;name&gt;/
+  &lt;name&gt;.js          block decoration logic (default export: decorate(block))
+  &lt;name&gt;.css         block-scoped styles
+  _&lt;name&gt;.json       Universal Editor model + definition + filters (xwalk)
+/models/
+  _component-definition.json   groups (Default Content / Sections / Blocks)
+  _component-models.json       aggregates block models
+  _component-filters.json      allowed nesting
+  _section.json                the default Section
+  _intent-section.json         a personalization-friendly Section (has an id field)
+/scripts/
+  aem.js             EDS boilerplate (loader, decorateSections, createOptimizedPicture…)
+  scripts.js         page lifecycle: loadEager / loadLazy / loadDelayed
+  target.js          Adobe Target integration (form-based JSON offers)
+/styles/             global + lazy styles
+/config.json         environment config sheet (endpoints, etc.)
+/docs/               guides (you are reading one)</pre>
+      <div class="callout note"><span class="label">Build step</span>The root <code>component-*.json</code> files are <em>generated</em> from the <code>models/_*.json</code> and each block's <code>_&lt;name&gt;.json</code> by <code>npm run build:json</code>. Edit the underscore-prefixed sources, then rebuild — never hand-edit the generated files.</div>
+    </section>
+
+    <section id="eld">
+      <h2>4. The ELD sequence (Eager / Lazy / Delayed)</h2>
+      <p>The whole page lifecycle lives in <code>scripts/scripts.js</code> → <code>loadPage()</code>. Understanding it is essential, because getting phasing wrong is the most common way to hurt performance.</p>
+      <table>
+        <tr><th>Phase</th><th>Function</th><th>What belongs here</th></tr>
+        <tr><td><strong>Eager</strong></td><td><code>loadEager</code></td><td>Everything needed for the Largest Contentful Paint: decorate main, load the first (above-the-fold) section, configure Target's SDK. Keep this lean.</td></tr>
+        <tr><td><strong>Lazy</strong></td><td><code>loadLazy</code></td><td>The rest of the sections, header, footer, fonts, lazy styles. Runs right after the page is interactive.</td></tr>
+        <tr><td><strong>Delayed</strong></td><td><code>loadDelayed</code></td><td>Anything non-essential (analytics, third-party widgets), deferred ~3s so it never competes with the user experience.</td></tr>
+      </table>
+      <div class="callout warn"><span class="label">Golden rule</span>Never block first paint on a network round-trip in the eager phase. In this project, <code>loadEager</code> awaits only alloy <em>configuration</em> (<code>alloyLoadedPromise</code>), <strong>not</strong> the Target decision response. The decision request is fired in parallel and applied asynchronously as blocks decorate.</div>
+    </section>
+
+    <section id="block-anatomy">
+      <h2>5. Block anatomy</h2>
+      <p>A block's JS exports a default <code>decorate(block)</code>. The loader (in <code>aem.js</code>) resolves the folder and files from the block's <em>first CSS class</em>, so the folder name must equal the block name.</p>
+      <pre><code>// blocks/example/example.js
+export default function decorate(block) {
+  // `block` is the &lt;div class="example block"&gt; element.
+  // Its children are the authored rows/cells. Read them, then
+  // rebuild into the final structure.
+  const rows = [...block.children];
+  // ...transform...
+  block.textContent = '';        // clear
+  block.append(/* new structure */);
+}</code></pre>
+      <div class="callout note"><span class="label">Versioning tip</span>To ship a new variant without breaking pages that use the old one, create a <em>sibling</em> block folder (e.g. <code>hero-v3</code>), not a nested <code>hero/v3</code> — the loader only resolves <code>blocks/&lt;name&gt;/&lt;name&gt;.js</code>.</div>
+      <h3>Defensive rendering</h3>
+      <p>Author content is untrusted input. Follow the patterns used across this repo:</p>
+      <ul>
+        <li>Set text with <code>textContent</code>, never <code>innerHTML</code>, for authored strings.</li>
+        <li>Validate any URL before writing it to <code>href</code>/<code>src</code> (see <code>isSafeUrl</code>): block <code>javascript:</code>, <code>data:</code>, <code>vbscript:</code>, and protocol-relative (<code>//…</code>) URLs.</li>
+        <li>Null-check every DOM read — assume any row/field may be missing.</li>
+        <li>Reserve layout (min-height, aspect ratio) so async images don't cause CLS.</li>
+      </ul>
+    </section>
+
+    <section id="authoring">
+      <h2>6. Authoring &amp; models (Universal Editor)</h2>
+      <p>Each block ships a <code>_&lt;name&gt;.json</code> with three parts consumed by the Universal Editor:</p>
+      <table>
+        <tr><th>Key</th><th>Purpose</th></tr>
+        <tr><td><code>definitions</code></td><td>Registers the component (title, id, resource type, template).</td></tr>
+        <tr><td><code>models</code></td><td>The authoring dialog: the fields an author fills in (text, richtext, reference, aem-content, select…).</td></tr>
+        <tr><td><code>filters</code></td><td>What can be nested inside (e.g. which blocks a section allows).</td></tr>
+      </table>
+      <p>Field names in the model become the authored data the block reads. Keeping them meaningful (e.g. <code>title</code>, <code>primaryCtaLink</code>) pays off later — Target offers reference the same names.</p>
+      <div class="callout note"><span class="label">Lint gate</span>The <code>xwalk/max-cells</code> rule caps a block's authoring fields (grouped) at 4 by default. Group related fields with a shared prefix (e.g. <code>cta_link</code>, <code>cta_text</code>) or add a per-model override in <code>.eslintrc.js</code> as the project already does for a few blocks.</div>
+    </section>
+
+    <section id="hero-v3">
+      <h2>7. Worked example: the <code>hero-v3</code> block</h2>
+      <p><code>hero-v3</code> is a clean, inline-authored hero: a full-bleed background image, title, optional subtitle, up to two positional CTAs, and six locked layout variants. It's a good reference for the patterns above.</p>
+      <h3>Data flow</h3>
+      <div class="flow">Authored rows (image, title, subtitle, actions)
+   ▼  readInlineData()  → normalized { imageSrc, imageAlt, headingEl/titleText, subtitle, actions[] }
+   ▼  renderHero()      → builds .hero-media (picture) + .hero-content (title/subtitle/actions)
+   ▼  resolveLayoutConfig() → applies height / alignment / image-position (locked variant wins)</div>
+      <h3>Post-decoration structure</h3>
+      <p>These class names are the stable anchors Target keys off — do not rename them without updating <code>target.js</code>.</p>
+      <pre><code>&lt;div class="hero-v3 block hero-height-standard hero-align-center …" data-block-name="hero-v3"&gt;
+  &lt;div class="hero-media"&gt;&lt;picture&gt;…&lt;img …&gt;&lt;/picture&gt;&lt;/div&gt;
+  &lt;div class="hero-content"&gt;
+    &lt;h2 class="hero-title"&gt;…&lt;/h2&gt;
+    &lt;p class="hero-subtitle"&gt;…&lt;/p&gt;
+    &lt;div class="hero-actions"&gt;
+      &lt;a class="hero-action hero-action-primary" href="…"&gt;…&lt;/a&gt;
+      &lt;a class="hero-action hero-action-static-light" href="…"&gt;…&lt;/a&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+      <div class="callout ok"><span class="label">Variants</span>Selecting a <em>Variant</em> in the model adds a class (e.g. <code>tall-center-with-action</code>); <code>VARIANT_PRESETS</code> maps it to locked height/alignment/image-position so the layout is fixed regardless of authored data.</div>
+    </section>
+
+    <section id="intent-section">
+      <h2>8. Intent Sections</h2>
+      <p>A normal Section is a layout container. An <strong>Intent Section</strong> (<code>models/_intent-section.json</code>) is the same idea plus two things that make it a first-class personalization target:</p>
+      <ul>
+        <li>It exposes an authored <strong><code>id</code></strong> field. During decoration this is promoted to a real DOM <code>id</code> attribute (a normalized token like <code>hero-intent</code>), usable as a CSS hook, a <code>#anchor</code> target, <em>and</em> a Target decision scope.</li>
+        <li>Its filter allows only <code>text</code> and <code>hero-v3</code>, keeping it focused.</li>
+      </ul>
+      <div class="callout note"><span class="label">Why it matters for Target</span>Because only the intent-section model has an <code>id</code> field, a top-level section that carries an <code>id</code> attribute is <em>definitionally</em> an Intent Section. The Target integration uses that to expose each one as its own decision scope — see §11.</div>
+    </section>
+
+    <section id="target-why">
+      <h2>9. Adobe Target — why form-based (and not VEC)</h2>
+      <p>Adobe Target supports two authoring styles. This project uses <strong>only form-based (JSON) offers</strong>.</p>
+      <table>
+        <tr><th></th><th>VEC / dom-action</th><th>Form-Based / JSON <span class="pill">used here</span></th></tr>
+        <tr><td>Carries a CSS selector?</td><td>Yes — captured against one DOM snapshot</td><td>No — returns a JSON blob per scope</td></tr>
+        <tr><td>Survives EDS decoration?</td><td>Rarely — decoration injects wrappers, so positional selectors break</td><td>Yes — our code anchors to stable classes/ids</td></tr>
+        <tr><td>Applied by</td><td><code>alloy('applyPropositions')</code></td><td>Handlers in <code>scripts/target.js</code></td></tr>
+      </table>
+      <div class="callout warn"><span class="label">Important</span>VEC / <code>dom-action</code> offers are <strong>not processed</strong> by this project. Author every experience as a JSON offer against a decision scope. Attempting a VEC activity will silently do nothing.</div>
+    </section>
+
+    <section id="target-flow">
+      <h2>10. How offers apply</h2>
+      <p><code>scripts/target.js</code> orchestrates everything. Simplified flow of <code>getAndApplyRenderDecisions()</code>:</p>
+      <ol class="steps">
+        <li>Collect the decision scopes we can handle: the static <code>FORM_BASED_SCOPES</code> (block/section types) plus one scope per Intent Section id (<code>getSectionScopes()</code>).</li>
+        <li>Fire a single <code>alloy('sendEvent', …)</code> with <code>renderDecisions: false</code> — we render manually, and this never blocks paint.</li>
+        <li>Keep only the JSON (<code>json-content-item</code>) offers, keyed by scope.</li>
+        <li>Pre-hide the <em>text</em> those offers will replace (flicker control, §12).</li>
+        <li>As each block/section decorates (<code>onDecoratedElement</code>), run the matching handler; on success, reveal that scope with a fade.</li>
+        <li>A hard timeout reveals everything as a failsafe; proposition reporting is deferred off the critical path.</li>
+      </ol>
+      <p>A <strong>handler</strong> takes the offer JSON and writes it to stable anchors. Two factories cover most cases:</p>
+      <pre><code>// block-level fields
+hero-v3: blockHandler('hero-v3', HERO_V3_FIELDS)
+// repeated items matched by label text
+metrics: itemHandler('metrics', '.metrics-item', '.metrics-label', { value: '.metrics-value', … })</code></pre>
+    </section>
+
+    <section id="target-scopes">
+      <h2>11. Scopes &amp; offer shapes</h2>
+      <p>A <strong>decision scope</strong> is the name you give a location in Target; our code maps it to a handler.</p>
+      <h3>Block-type scope</h3>
+      <p>Scope = block name (e.g. <code>hero-v3</code>). The offer's <code>set</code> carries the model-property field names.</p>
+      <pre><code>// scope: hero-v3
+{ "set": { "title": "Welcome back", "subtitle": "Your plan is ready", "primaryCta": "Resume" } }</code></pre>
+      <h3>Intent Section scope (recommended for section personalization)</h3>
+      <p>Scope = the section's <code>id</code>. The offer only needs <code>blocks</code> — a list of single-key objects naming the blocks inside that section to personalize. Because it's scoped to one section, an identical block elsewhere is untouched.</p>
+      <pre><code>// scope: hero-intent   (the Intent Section's id)
+{
+  "blocks": [
+    { "hero": {
+        "title": "Winter sale — up to 30% off",
+        "subtitle": "Fixed rates until spring",
+        "primaryCta": "Shop the sale",
+        "primaryCtaLink": "/sale",
+        "image": "https://s7d1.scene7.com/is/image/acme/winter-hero"
+    } }
+  ]
+}</code></pre>
+      <h3>hero-v3 personalizable fields</h3>
+      <p>Field names match the block model, so an offer reads the way an author thinks and survives copy edits (no fragile text matching):</p>
+      <table>
+        <tr><th>Field</th><th>Sets</th></tr>
+        <tr><td><code>title</code> <span class="pill">alias: heading</span></td><td>headline text</td></tr>
+        <tr><td><code>subtitle</code></td><td>subtitle text</td></tr>
+        <tr><td><code>primaryCta</code> / <code>secondaryCta</code></td><td>CTA button labels</td></tr>
+        <tr><td><code>primaryCtaLink</code> / <code>secondaryCtaLink</code></td><td>CTA <code>href</code> (URL-safety-checked)</td></tr>
+        <tr><td><code>image</code></td><td>background image <code>src</code> (URL-safety-checked; DM-aware)</td></tr>
+      </table>
+      <div class="callout note"><span class="label">Multi-instance matching</span>For a scope that matches several block instances, use an <code>items</code> array with a <code>match</code>: <code>{ "key": "hero-top" }</code> (a <code>data-target-key</code> authored per instance — preferred), <code>{ "item": "…" }</code> (label text, for item collections), or <code>{ "instance": 1 }</code> (positional fallback).</div>
+    </section>
+
+    <section id="target-flicker">
+      <h2>12. Flicker control (FOOC)</h2>
+      <p>Because offers apply client-side after decoration, the default copy could flash before personalization (flash of original content). The integration prevents this automatically — no authoring step required.</p>
+      <ul>
+        <li><strong>Text-only hide.</strong> Only the text a returned offer will replace is hidden (<code>h1</code>–<code>h6</code>, <code>p</code>, <code>li</code>, <code>a</code>, cells…). Never the container — so background images, media and scrims stay fully visible (hiding a whole container dimmed the background, which looked wrong).</li>
+        <li><strong>No CLS.</strong> Hiding uses <code>opacity:0</code>, so each text box keeps its size.</li>
+        <li><strong>Fade on reveal.</strong> When an offer applies, the text fades in (~300ms) instead of snapping, so the swap reads smoothly. Disabled under <code>prefers-reduced-motion</code>.</li>
+        <li><strong>Failsafe.</strong> A 3s timeout reveals everything regardless, so content is never stuck hidden if Target is slow or errors.</li>
+        <li><strong>No offer, no hide.</strong> A scope that returns nothing is never hidden — unpersonalized content paints immediately.</li>
+      </ul>
+    </section>
+
+    <section id="target-dm">
+      <h2>13. Images &amp; Dynamic Media</h2>
+      <p>Image handling in <code>hero-v3</code> depends on the URL:</p>
+      <table>
+        <tr><th>Image URL</th><th>Rendered how</th></tr>
+        <tr><td>Same-origin DAM path (<code>/content/dam/…</code>, <code>./media_…</code>)</td><td>EDS media pipeline via <code>createOptimizedPicture</code> (responsive <code>&lt;source&gt;</code>s + optimize params)</td></tr>
+        <tr><td><strong>Dynamic Media / Scene7</strong> (<code>/is/image/…</code>, <code>scene7.com</code>, <code>adobedynamicmedia</code>)</td><td>Rendered directly at its own origin with a <code>wid</code>-based responsive <code>srcset</code> + <code>sizes=100vw</code></td></tr>
+        <tr><td>Any other absolute URL</td><td>Rendered directly, <code>src</code> as-is</td></tr>
+      </table>
+      <div class="callout warn"><span class="label">Why the distinction</span><code>createOptimizedPicture</code> keeps only the URL <em>pathname</em> (dropping the host) and appends EDS-pipeline params. For a Dynamic Media URL that means the Scene7 host is lost (→ 404) and the params are meaningless to Scene7. So absolute/DM URLs must bypass the optimizer and render directly — which the block does.</div>
+      <p>This applies both to images authored inline and to images swapped in by a Target <code>image</code> offer. To use a DM background, author (or offer) the full Scene7 delivery URL, e.g. <code>https://s7d1.scene7.com/is/image/yourtenant/hero-banner</code>.</p>
+    </section>
+
+    <section id="target-author">
+      <h2>14. Authoring an experience in Adobe Target</h2>
+      <ol class="steps">
+        <li><strong>Create a JSON Offer</strong> (Offers → Create → JSON Offer). Shape it to match the scope's fields (see §11).</li>
+        <li><strong>Create an activity</strong> (A/B or Experience Targeting) using the <strong>Form-Based</strong> Experience Composer — not Visual.</li>
+        <li><strong>Add a location / decision scope.</strong> Name it either after a block type (<code>hero-v3</code>) or after an Intent Section id (<code>hero-intent</code>).</li>
+        <li><strong>Assign the JSON offer</strong> to the experience for that scope.</li>
+        <li>Set audiences/goals and <strong>activate</strong>. The page requests the scope automatically.</li>
+      </ol>
+      <h3>Verifying</h3>
+      <ul>
+        <li>Load the page with the <code>target</code> metadata flag set.</li>
+        <li>DevTools → Network: the <code>…/ee/v1/interact</code> response should include your scope with a <code>json-content-item</code> schema.</li>
+        <li>Confirm the element updates on load — with a smooth fade, no flash of the original copy.</li>
+      </ul>
+    </section>
+
+    <section id="add-handler">
+      <h2>15. Adding a new form-based experience</h2>
+      <ol class="steps">
+        <li>Add an entry to <code>FORM_BASED_HANDLERS</code> in <code>scripts/target.js</code> (the scope is requested automatically — it's derived from the handler keys). Use <code>blockHandler</code> or <code>itemHandler</code> so multi-instance support comes for free.</li>
+        <li>Anchor to something stable — best is a <code>data-target-key</code> or an element <code>id</code>; good is a block class + content match; avoid <code>:nth-child</code> positional paths.</li>
+        <li>Shape the Target JSON offer's fields to match your field map.</li>
+        <li>Run <code>npm run lint</code>; add unit coverage for the field mapping if it's non-trivial.</li>
+      </ol>
+      <pre><code>myblock: blockHandler('myblock', {
+  heading: '.myblock-title',
+  cta: '.myblock-actions a.primary',
+  ctaLink: { selector: '.myblock-actions a.primary', attr: 'href' }, // sets an attribute (URL-checked)
+}),</code></pre>
+    </section>
+
+    <section id="checklist">
+      <h2>16. Pull-request checklist</h2>
+      <ul>
+        <li><span class="pill">Lint</span> <code>npm run lint</code> passes (JS + CSS).</li>
+        <li><span class="pill">Build</span> If you touched a model, ran <code>npm run build:json</code> and committed the regenerated <code>component-*.json</code>.</li>
+        <li><span class="pill">Perf</span> Nothing new added to the eager path that blocks paint; LCP image stays eager + <code>fetchpriority=high</code>; no CLS.</li>
+        <li><span class="pill">A11y</span> Real headings, focus-visible states, 44px touch targets, <code>prefers-reduced-motion</code> respected, contrast checked.</li>
+        <li><span class="pill">Security</span> Authored strings via <code>textContent</code>; URLs pass <code>isSafeUrl</code>; no secrets in code or <code>config.json</code>.</li>
+        <li><span class="pill">Target</span> New anchors documented; offer field names match the handler; verified on preview with the <code>target</code> flag.</li>
+        <li><span class="pill">Branch</span> Work on a feature branch and open a PR (don't push straight to <code>main</code> for code).</li>
+      </ul>
+    </section>
+
+    <section id="glossary">
+      <h2>17. Glossary</h2>
+      <table>
+        <tr><th>Term</th><th>Meaning</th></tr>
+        <tr><td>EDS / Franklin / Helix</td><td>Adobe Edge Delivery Services — the document/HTML-first delivery platform this site runs on.</td></tr>
+        <tr><td>Block</td><td>A self-contained UI component: <code>/blocks/&lt;name&gt;/</code> with JS + CSS, enhanced by <code>decorate()</code>.</td></tr>
+        <tr><td>Decoration</td><td>The client-side step that turns delivered markup into a block's final structure.</td></tr>
+        <tr><td>ELD</td><td>Eager / Lazy / Delayed — the three-phase page load sequence.</td></tr>
+        <tr><td>Section</td><td>A top-level layout container grouping blocks and default content.</td></tr>
+        <tr><td>Intent Section</td><td>A Section with an authored <code>id</code>, used as a personalization scope.</td></tr>
+        <tr><td>Universal Editor</td><td>The in-context WYSIWYG authoring tool; driven by the <code>_&lt;name&gt;.json</code> models.</td></tr>
+        <tr><td>alloy / WebSDK</td><td>Adobe's client library that talks to the Experience Platform Edge (delivers Target decisions).</td></tr>
+        <tr><td>Decision scope</td><td>A named location Target returns an offer for; mapped to a handler in <code>target.js</code>.</td></tr>
+        <tr><td>Offer</td><td>The JSON payload Target returns for a scope; applied to stable anchors.</td></tr>
+        <tr><td>FOOC</td><td>Flash of original content — the flicker of default copy before personalization; prevented by the flicker control.</td></tr>
+        <tr><td>Dynamic Media (Scene7)</td><td>Adobe's image delivery/CDN; URLs use <code>/is/image/</code> and a <code>wid</code> width param.</td></tr>
+      </table>
+    </section>
+
+    <footer class="docfoot">
+      <p>Related in-repo docs: <code>docs/adobe-target-form-based.md</code> (full offer contract), <code>docs/hero-block/hero-v3.md</code>, <code>docs/hero-block/hero-v3-target-offer.md</code>, <code>docs/hero-block/intent-section-hero-v3-target-offer.md</code>. Source of truth is always the code in <code>scripts/target.js</code> and the block folders — this guide summarizes it.</p>
+    </footer>
+  </main>
+</div>
+</body>
+</html>
