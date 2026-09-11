@@ -95,20 +95,14 @@
     {
       "id": "xe-footer",
       "components": [
-        "xe-footer-banner"
+        "xe-footer-banner",
+        "xe-footer-columns"
       ]
     },
     {
       "id": "xe-footer-columns",
       "components": [
         "column"
-      ]
-    },
-    {
-      "id": "column",
-      "components": [
-        "text",
-        "title"
       ]
     }
   ]
