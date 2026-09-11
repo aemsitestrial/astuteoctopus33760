@@ -1,3 +1,14 @@
+/*
+ * Full-width footer. The section's default max-width:1200px cap is applied on
+ * `main > .section > div` (i.e. the .xe-footer-wrapper). Match that selector's
+ * specificity to override it so the wrapper — and the footer background —
+ * spans the full viewport width.
+ */
+main > .section > .xe-footer-wrapper {
+    max-width: none;
+    padding: 0;
+}
+
 .xe-footer {
     background-color: #2f0c09;
     color: #fff;
@@ -6,4 +17,26 @@
 .xe-footer .icon-xcel-logo-white {
     width: 200px;
     height: auto;
+}
+
+/*
+ * Only the banner row extends edge to edge; its inner content is left for the
+ * banner's own styling. Every other row is re-constrained to the standard
+ * 1200px reading width so copyright and columns line up with the rest of the
+ * page.
+ */
+.xe-footer .xe-footer-content {
+    max-width: 1200px;
+    margin-inline: auto;
+    padding-inline: 24px;
+}
+
+.xe-footer .xe-footer-banner {
+    width: 100%;
+}
+
+@media (width >= 900px) {
+    .xe-footer .xe-footer-content {
+        padding-inline: 32px;
+    }
 }
