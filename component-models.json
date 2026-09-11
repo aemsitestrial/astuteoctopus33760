@@ -463,27 +463,6 @@
         "valueType": "string"
       },
       {
-        "component": "container",
-        "name": "actions",
-        "label": "Actions",
-        "description": "Add up to 2 actions. The first renders as the primary button, the second as the secondary — any beyond two are ignored.",
-        "multi": true,
-        "fields": [
-          {
-            "component": "aem-content",
-            "valueType": "string",
-            "name": "link",
-            "label": "Action link"
-          },
-          {
-            "component": "text",
-            "valueType": "string",
-            "name": "linkText",
-            "label": "Action text"
-          }
-        ]
-      },
-      {
         "component": "select",
         "name": "classes",
         "label": "Variant",
@@ -519,6 +498,23 @@
             "value": "compact-left-with-actions"
           }
         ]
+      }
+    ]
+  },
+  {
+    "id": "hero-action",
+    "fields": [
+      {
+        "component": "aem-content",
+        "valueType": "string",
+        "name": "link",
+        "label": "Action link"
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "linkText",
+        "label": "Action text"
       }
     ]
   },
