@@ -979,5 +979,55 @@
         "valueType": "string"
       }
     ]
+  },
+  {
+    "id": "xe-footer",
+    "fields": [
+      {
+        "component": "reference",
+        "valueType": "string",
+        "name": "logo",
+        "label": "Logo",
+        "multi": false
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "copyright",
+        "label": "Copyright",
+        "value": ""
+      }
+    ]
+  },
+  {
+    "id": "xe-footer-columns",
+    "fields": [
+      {
+        "component": "text",
+        "valueType": "number",
+        "name": "columns",
+        "value": "",
+        "label": "Columns"
+      }
+    ]
+  },
+  {
+    "id": "xe-footer-banner",
+    "fields": [
+      {
+        "component": "reference",
+        "valueType": "string",
+        "name": "background",
+        "label": "Background",
+        "multi": false
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "tagline",
+        "label": "Tagline",
+        "value": "Our Energy, Your Power"
+      }
+    ]
   }
 ]

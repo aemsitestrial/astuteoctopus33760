@@ -130,5 +130,24 @@
     "components": [
       "value-item"
     ]
+  },
+  {
+    "id": "xe-footer",
+    "components": [
+      "xe-footer-banner"
+    ]
+  },
+  {
+    "id": "xe-footer-columns",
+    "components": [
+      "column"
+    ]
+  },
+  {
+    "id": "column",
+    "components": [
+      "text",
+      "title"
+    ]
   }
 ]
