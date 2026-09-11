@@ -432,7 +432,7 @@
         "valueType": "string",
         "name": "contentFragment",
         "label": "Content Fragment (optional)",
-        "description": "Pick a Hero Content Fragment to drive this block from AEM. When set, leave the fields below empty — the block fetches title, image, subtitle, and actions from the fragment. Leave this empty to author the hero inline instead."
+        "description": "Pick a Hero Content Fragment to drive this block from AEM. When set, leave the fields below empty — the block fetches title, image, subtitle, and actions from the fragment. Leave this empty to author the hero inline instead. Add up to 2 Actions: the first renders as the primary button, the second as the secondary — any beyond two are ignored."
       },
       {
         "component": "reference",
@@ -461,30 +461,6 @@
         "value": "",
         "label": "Subtitle",
         "valueType": "string"
-      },
-      {
-        "component": "aem-content",
-        "valueType": "string",
-        "name": "cta_primaryLink",
-        "label": "Primary action link"
-      },
-      {
-        "component": "text",
-        "valueType": "string",
-        "name": "cta_primaryLinkText",
-        "label": "Primary action text"
-      },
-      {
-        "component": "aem-content",
-        "valueType": "string",
-        "name": "cta_secondaryLink",
-        "label": "Secondary action link"
-      },
-      {
-        "component": "text",
-        "valueType": "string",
-        "name": "cta_secondaryLinkText",
-        "label": "Secondary action text"
       },
       {
         "component": "select",
@@ -522,6 +498,23 @@
             "value": "compact-left-with-actions"
           }
         ]
+      }
+    ]
+  },
+  {
+    "id": "hero-action",
+    "fields": [
+      {
+        "component": "aem-content",
+        "valueType": "string",
+        "name": "link",
+        "label": "Action link"
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "linkText",
+        "label": "Action text"
       }
     ]
   },
