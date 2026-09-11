@@ -51,18 +51,11 @@
       "id": "xe-footer",
       "fields": [
         {
-          "component": "reference",
-          "valueType": "string",
-          "name": "logo",
-          "label": "Logo",
-          "multi": false
-        },
-        {
-          "component": "text",
-          "valueType": "string",
+          "component": "richtext",
           "name": "copyright",
+          "value": "",
           "label": "Copyright",
-          "value": ""
+          "valueType": "string"
         }
       ]
     },
