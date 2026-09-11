@@ -1,3 +1,9 @@
 .xe-footer {
     background-color: #2f0c09;
+    color: #ffffff;
+}
+
+.xe-footer .icon-xcel-logo-white {
+    width: 200px;
+    height: auto;
 }
