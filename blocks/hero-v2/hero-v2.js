@@ -126,10 +126,12 @@ function readInlineData(block) {
   const paragraphs = [...block.querySelectorAll('p')];
   const subtitleParagraph = paragraphs.find((p) => !p.querySelector('a') && safeText(p.textContent));
 
-  // Actions come from the "Actions" multifield (each item = one link), capped
-  // at 2 and styled positionally: first = primary, second = static-light. The
-  // <strong>/<em> rich-text convention is still honored as an override for
-  // document-authored / imported content that encodes emphasis inline.
+  // Actions come from the "Actions" composite multi-field (each item = one
+  // link + text, delivered as <a> elements separated by <hr>). We collect the
+  // anchors in document order, cap at 2, and style positionally: first =
+  // primary, second = static-light. The <strong>/<em> rich-text convention is
+  // still honored as an override for document-authored / imported content that
+  // encodes emphasis inline.
   const actions = [...block.querySelectorAll('a')].slice(0, 2).map((anchor, index) => {
     let style;
     if (anchor.closest('strong')) style = 'primary';

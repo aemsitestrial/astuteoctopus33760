@@ -78,12 +78,6 @@
     ]
   },
   {
-    "id": "hero-v2",
-    "components": [
-      "hero-action"
-    ]
-  },
-  {
     "id": "job-listings",
     "components": [
       "job"
