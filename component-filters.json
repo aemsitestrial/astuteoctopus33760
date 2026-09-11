@@ -22,7 +22,8 @@
       "metrics",
       "stats",
       "feature-cards",
-      "usage-dashboard"
+      "usage-dashboard",
+      "xe-footer"
     ]
   },
   {
