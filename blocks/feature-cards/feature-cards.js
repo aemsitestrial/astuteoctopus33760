@@ -33,7 +33,7 @@ export default function decorate(block) {
 
   const ul = document.createElement('ul');
 
-  cardRows.forEach((row) => {
+  cardRows.slice(0, 2).forEach((row) => {
     const li = document.createElement('li');
     moveInstrumentation(row, li);
     li.className = 'feature-card';
