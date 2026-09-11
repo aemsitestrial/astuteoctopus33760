@@ -110,9 +110,18 @@ function resolveLayoutConfig(block) {
 function buildAction({
   text, href, style, sourceEl,
 }, index) {
-  if (!isSafeUrl(href)) return null;
   const label = safeText(text);
-  if (!label) return null;
+  const validLink = isSafeUrl(href) && !!label;
+  const instrumented = !!sourceEl
+    && [...sourceEl.attributes].some((attr) => attr.name.startsWith('data-aue-'));
+
+  // Render only when there is something to show OR something for the editor to
+  // track. A still-empty item that carries Universal Editor instrumentation
+  // (a freshly added Hero Action) must render a placeholder so its data-aue-*
+  // survives the block rebuild below — otherwise its overlay appears for an
+  // instant and then vanishes when decorate() wipes the block, and the author
+  // can never fill it in.
+  if (!validLink && !instrumented) return null;
 
   let resolvedStyle = style;
   if (!ACTION_STYLES.includes(resolvedStyle)) {
@@ -121,8 +130,10 @@ function buildAction({
 
   const action = document.createElement('a');
   action.className = `hero-action hero-action-${resolvedStyle}`;
-  action.href = href;
-  action.textContent = label;
+  if (validLink) {
+    action.href = href;
+    action.textContent = label;
+  }
   if (sourceEl) moveInstrumentation(sourceEl, action);
   return action;
 }
@@ -138,22 +149,36 @@ function readInlineData(block) {
   const subtitleParagraph = paragraphs.find((p) => !p.querySelector('a') && safeText(p.textContent));
 
   // Actions come from the "Actions" multifield (block/item + filter: each
-  // Hero Action item delivers one link + text as an <a>). We collect the
-  // anchors in document order, cap at 2, and style positionally: first =
-  // primary, second = static-light. The <strong>/<em> rich-text convention is
-  // still honored as an override for document-authored / imported content that
-  // encodes emphasis inline.
-  const actions = [...block.querySelectorAll('a')].slice(0, 2).map((anchor, index) => {
+  // Hero Action item is a direct child row of the block that delivers one
+  // link + text, collapsed to a single <a>). We must key off the item ROWS,
+  // not the anchors: a freshly added item is still empty (no <a> yet), and if
+  // we only looked at anchors it would be invisible here and then wiped by the
+  // block rebuild in renderHero — its Universal Editor overlay would flash and
+  // vanish, so the author could never fill it in.
+  //
+  // In the editor each item row carries data-aue instrumentation identifying
+  // it as a hero-action; on the published site there is no instrumentation, so
+  // we fall back to any direct-child row that contains an anchor. Cap at 2 and
+  // style positionally (first = primary, second = static-light). The
+  // <strong>/<em> rich-text convention is still honored as an override.
+  const rows = [...block.children];
+  const instrumentedItems = rows.filter((row) => {
+    const model = row.getAttribute('data-aue-model') || row.getAttribute('data-aue-component');
+    return model === 'hero-action';
+  });
+  const itemRows = (instrumentedItems.length ? instrumentedItems : rows.filter((row) => row.querySelector('a')))
+    .slice(0, 2);
+  const actions = itemRows.map((row, index) => {
+    const anchor = row.querySelector('a');
     let style;
-    if (anchor.closest('strong')) style = 'primary';
-    else if (anchor.closest('em')) style = 'static-light';
+    if (anchor?.closest('strong')) style = 'primary';
+    else if (anchor?.closest('em')) style = 'static-light';
     else style = index === 0 ? 'primary' : 'static-light';
-    // The Universal Editor instrumentation for a Hero Action item lives on the
-    // block's direct child row that wraps this anchor — carry that element so
-    // renderHero can move it onto the rendered button.
-    const sourceEl = [...block.children].find((child) => child.contains(anchor));
     return {
-      text: anchor.textContent, href: anchor.getAttribute('href'), style, sourceEl,
+      text: anchor ? anchor.textContent : '',
+      href: anchor ? anchor.getAttribute('href') : '',
+      style,
+      sourceEl: row,
     };
   });
 
