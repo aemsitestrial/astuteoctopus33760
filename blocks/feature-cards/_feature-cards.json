@@ -49,6 +49,7 @@
           "valueType": "string",
           "name": "title",
           "label": "Title",
+          "description": "Note: this block displays a maximum of 2 feature cards. Any additional cards are ignored on the published page.",
           "value": "",
           "required": true
         },
