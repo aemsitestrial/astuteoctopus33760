@@ -21,7 +21,11 @@
 import { createOptimizedPicture } from '../../scripts/aem.js';
 // getSiteConfig reads environment-specific values from /config.json so nothing
 // environment-specific is hardcoded (used here for the hero's query name).
-import { getSiteConfig } from '../../scripts/scripts.js';
+// moveInstrumentation carries the Universal Editor's data-aue-*/data-richtext-*
+// attributes from an authored source element onto the element we render in its
+// place — required so the editor keeps its mapping to each authored resource
+// (e.g. the repeatable Hero Action items) after the block is rebuilt.
+import { getSiteConfig, moveInstrumentation } from '../../scripts/scripts.js';
 // Shared Content Fragment GraphQL service — endpoint resolution, persisted
 // query fetching, and asset-URL resolution, reusable across CF-backed blocks.
 import { fetchFragmentByPath, getCfImageUrl, getCfAssetHost } from '../../scripts/cf-graphql.js';
@@ -98,8 +102,14 @@ function resolveLayoutConfig(block) {
  * Builds one <a> action element from normalized action data. actionStyle
  * defaults to the spec-defined positional rule (first = primary, second =
  * static-light) when the style is missing or invalid.
+ *
+ * When present, sourceEl is the authored element this action was read from;
+ * its Universal Editor instrumentation is moved onto the rendered anchor so
+ * the editor keeps tracking the underlying Hero Action item.
  */
-function buildAction({ text, href, style }, index) {
+function buildAction({
+  text, href, style, sourceEl,
+}, index) {
   if (!isSafeUrl(href)) return null;
   const label = safeText(text);
   if (!label) return null;
@@ -113,6 +123,7 @@ function buildAction({ text, href, style }, index) {
   action.className = `hero-action hero-action-${resolvedStyle}`;
   action.href = href;
   action.textContent = label;
+  if (sourceEl) moveInstrumentation(sourceEl, action);
   return action;
 }
 
@@ -137,7 +148,13 @@ function readInlineData(block) {
     if (anchor.closest('strong')) style = 'primary';
     else if (anchor.closest('em')) style = 'static-light';
     else style = index === 0 ? 'primary' : 'static-light';
-    return { text: anchor.textContent, href: anchor.getAttribute('href'), style };
+    // The Universal Editor instrumentation for a Hero Action item lives on the
+    // block's direct child row that wraps this anchor — carry that element so
+    // renderHero can move it onto the rendered button.
+    const sourceEl = [...block.children].find((child) => child.contains(anchor));
+    return {
+      text: anchor.textContent, href: anchor.getAttribute('href'), style, sourceEl,
+    };
   });
 
   return {
