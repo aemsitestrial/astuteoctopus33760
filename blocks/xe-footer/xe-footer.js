@@ -18,45 +18,65 @@ export default function decorate(block) {
   const rows = [...block.children];
 
   // Container-level fields (logo, copyright, social, legal) render first, in
-  // model order, followed by the item rows (banner, columns). Classify from
-  // both ends so the logo — which also contains an image — is never mistaken
-  // for the banner:
-  //   - the columns item is the row built from the columns component
-  //     (multiple headings / a nested columns block);
-  //   - the banner item is the LAST remaining image-bearing row (the logo is
-  //     row 0, a leading field, so it is excluded here);
+  // model order, followed by the item rows (banner, one or more columns).
+  // Classify structurally rather than by content so empty authored blocks are
+  // still recognized (and not silently dropped):
+  //   - a columns row is built from the columns component: its cell holds
+  //     multiple direct child <div> columns (or a .columns block / several
+  //     headings). Every container-field row, by contrast, has a single cell.
+  //   - the banner is the LAST remaining image-bearing row (the logo, row 0,
+  //     is a leading field, so it is excluded here).
   //   - the leading rows that are left are the container fields, tagged by
   //     their model order.
-  const columnsRow = rows.find((row) => row.querySelector('.columns')
-    || row.querySelectorAll('h2, h3').length > 1);
+  const isColumnsRow = (row) => row.querySelector('.columns')
+    || row.querySelectorAll('h2, h3').length > 1
+    || row.querySelectorAll(':scope > div').length > 1;
+
+  const columnsRows = rows.filter(isColumnsRow);
 
   const bannerRow = [...rows]
     .reverse()
-    .find((row) => row !== columnsRow && row.querySelector('picture, img'));
+    .find((row) => !columnsRows.includes(row) && row.querySelector('picture, img'));
 
-  // Container-field rows, in model order. Skip empty rows (e.g. an unused
-  // columns component authored with no content) so they don't inject stray
-  // empty cells into the brand column.
-  const fieldRows = rows.filter((row) => row !== bannerRow && row !== columnsRow
-    && (row.textContent.trim() || row.querySelector('img, picture, svg')));
+  // Container-field rows, in model order. Keep the FULL positional list (do not
+  // filter empties out first) so the model-order → field-name mapping stays
+  // stable: dropping an empty row before indexing would shift every later field
+  // onto the wrong name.
+  const fieldRows = rows.filter((row) => row !== bannerRow && !columnsRows.includes(row));
   fieldRows.forEach((row, index) => {
     const name = CONTAINER_FIELDS[index];
     if (name) row.classList.add(`xe-footer-${name}`);
   });
 
   // Brand column = logo + copyright + social + legal, grouped so it sits beside
-  // the link columns in the content zone.
+  // the link columns. Only append rows that actually have content, so an unused
+  // field does not leave a blank gap — but the naming above already used the
+  // stable positional index.
   const brand = document.createElement('div');
   brand.className = 'xe-footer-brand';
-  fieldRows.forEach((row) => brand.append(row));
+  fieldRows
+    .filter((row) => row.textContent.trim() || row.querySelector('img, picture, svg'))
+    .forEach((row) => brand.append(row));
 
   // Content zone wraps the brand column and the link columns side by side.
   const content = document.createElement('div');
   content.className = 'xe-footer-content';
   content.append(brand);
-  if (columnsRow) {
-    columnsRow.classList.add('xe-footer-columns');
-    content.append(columnsRow);
+
+  // Flatten every columns row's cells into a single grid, so the link columns
+  // form one row whether authored as one block with N columns or as several
+  // columns blocks. Empty cells are dropped so they don't leave gaps.
+  if (columnsRows.length) {
+    const columns = document.createElement('div');
+    columns.className = 'xe-footer-columns';
+    columnsRows.forEach((row) => {
+      [...row.children].forEach((cell) => {
+        if (cell.textContent.trim() || cell.querySelector('img, picture, svg')) {
+          columns.append(cell);
+        }
+      });
+    });
+    if (columns.children.length) content.append(columns);
   }
 
   // Banner zone: full-bleed image with centered tagline overlay. The banner's
