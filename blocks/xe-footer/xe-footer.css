@@ -32,7 +32,33 @@ main > .section > .xe-footer-wrapper {
 }
 
 .xe-footer .xe-footer-banner {
+    position: relative;
     width: 100%;
+    overflow: hidden;
+    height: 200px;
+    margin: auto;
+}
+
+/* Full-bleed banner image, fully visible (letterboxed rather than cropped). */
+.xe-footer .xe-footer-banner .xe-footer-banner-image,
+.xe-footer .xe-footer-banner .xe-footer-banner-image img {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.xe-footer .xe-footer-banner .xe-footer-banner-image img {
+    object-fit: contain;
+}
+
+/* Tagline centered over the banner. */
+.xe-footer .xe-footer-banner .xe-footer-banner-tagline {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
 @media (width >= 900px) {
