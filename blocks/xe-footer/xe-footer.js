@@ -67,10 +67,19 @@ export default function decorate(block) {
   // when empty). Dropping it would remove the block from the DOM entirely — so
   // in the Universal Editor there would be nothing to select or fill, and the
   // block's data-aue-* instrumentation would be lost. Tag each row so the
-  // stylesheet lays its cells out as a grid; empty columns simply render as
-  // empty grid cells the author can populate.
+  // stylesheet lays its cells out as a grid.
+  //
+  // Drive the grid off the ACTUAL number of authored column cells (the "number
+  // of columns" the author set on the component) rather than a fixed count, so
+  // the children render across exactly that many tracks. Mirror the core
+  // columns block convention with a columns-{n}-cols class.
   columnsRows.forEach((row) => {
     row.classList.add('xe-footer-columns');
+    const count = row.querySelectorAll(':scope > div').length;
+    if (count) {
+      row.classList.add(`xe-footer-columns-${count}-cols`);
+      row.style.setProperty('--xe-footer-column-count', count);
+    }
     content.append(row);
   });
 

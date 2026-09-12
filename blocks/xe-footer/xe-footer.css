@@ -134,21 +134,25 @@ main > .section > .xe-footer-wrapper {
 }
 
 /* --- Link columns grid --------------------------------------------------- */
+
+/* Column count is driven by --xe-footer-column-count (set by the decorator to
+   the number of columns the author added). Stacks on narrow screens, wraps to
+   two on tablet, then honors the authored count on desktop. */
 .xe-footer .xe-footer-columns {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
     gap: 32px 24px;
 }
 
 @media (width >= 700px) {
     .xe-footer .xe-footer-columns {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
 @media (width >= 900px) {
     .xe-footer .xe-footer-columns {
-        grid-template-columns: repeat(5, 1fr);
+        grid-template-columns: repeat(var(--xe-footer-column-count, 1), 1fr);
     }
 }
 
