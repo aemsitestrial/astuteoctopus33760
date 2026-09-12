@@ -37,11 +37,7 @@
       "plugins": {
         "xwalk": {
           "page": {
-            "resourceType": "core/franklin/components/columns/v1/columns",
-            "template": {
-              "columns": "2",
-              "rows": "1"
-            }
+            "resourceType": "core/franklin/components/columns/v1/columns"
           }
         }
       }
@@ -78,14 +74,14 @@
         {
           "component": "reference",
           "valueType": "string",
-          "name": "background",
+          "name": "banner_background",
           "label": "Background",
           "multi": false
         },
         {
           "component": "text",
           "valueType": "string",
-          "name": "tagline",
+          "name": "banner_tagline",
           "label": "Tagline",
           "value": "Our Energy, Your Power"
         }

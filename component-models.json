@@ -1010,14 +1010,14 @@
       {
         "component": "reference",
         "valueType": "string",
-        "name": "background",
+        "name": "banner_background",
         "label": "Background",
         "multi": false
       },
       {
         "component": "text",
         "valueType": "string",
-        "name": "tagline",
+        "name": "banner_tagline",
         "label": "Tagline",
         "value": "Our Energy, Your Power"
       }
