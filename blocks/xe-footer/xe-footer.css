@@ -45,6 +45,17 @@ main > .section > .xe-footer-wrapper {
         gap: 48px;
         padding: 56px 32px;
     }
+
+    /* Keep the brand column in the first track; every link-columns row sits in
+       the second track (and stacks there if more than one block is added). */
+    .xe-footer .xe-footer-brand {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .xe-footer .xe-footer-columns {
+        grid-column: 2;
+    }
 }
 
 /* --- Brand column: logo, copyright, social, legal ------------------------ */

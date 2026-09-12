@@ -63,21 +63,16 @@ export default function decorate(block) {
   content.className = 'xe-footer-content';
   content.append(brand);
 
-  // Flatten every columns row's cells into a single grid, so the link columns
-  // form one row whether authored as one block with N columns or as several
-  // columns blocks. Empty cells are dropped so they don't leave gaps.
-  if (columnsRows.length) {
-    const columns = document.createElement('div');
-    columns.className = 'xe-footer-columns';
-    columnsRows.forEach((row) => {
-      [...row.children].forEach((cell) => {
-        if (cell.textContent.trim() || cell.querySelector('img, picture, svg')) {
-          columns.append(cell);
-        }
-      });
-    });
-    if (columns.children.length) content.append(columns);
-  }
+  // Move each columns row INTACT into the content zone (never drop it, even
+  // when empty). Dropping it would remove the block from the DOM entirely — so
+  // in the Universal Editor there would be nothing to select or fill, and the
+  // block's data-aue-* instrumentation would be lost. Tag each row so the
+  // stylesheet lays its cells out as a grid; empty columns simply render as
+  // empty grid cells the author can populate.
+  columnsRows.forEach((row) => {
+    row.classList.add('xe-footer-columns');
+    content.append(row);
+  });
 
   // Banner zone: full-bleed image with centered tagline overlay. The banner's
   // background and tagline are grouped fields sharing one cell, but the exact
