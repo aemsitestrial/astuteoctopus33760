@@ -677,7 +677,11 @@
           "plugins": {
             "xwalk": {
               "page": {
-                "resourceType": "core/franklin/components/columns/v1/columns"
+                "resourceType": "core/franklin/components/columns/v1/columns",
+                "template": {
+                  "columns": "5",
+                  "rows": "1"
+                }
               }
             }
           }

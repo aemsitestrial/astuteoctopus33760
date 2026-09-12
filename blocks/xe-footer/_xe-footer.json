@@ -31,13 +31,17 @@
         }
       }
     },
-        {
+    {
       "title": "XE Footer Columns",
       "id": "xe-footer-columns",
       "plugins": {
         "xwalk": {
           "page": {
-            "resourceType": "core/franklin/components/columns/v1/columns"
+            "resourceType": "core/franklin/components/columns/v1/columns",
+            "template": {
+              "columns": "5",
+              "rows": "1"
+            }
           }
         }
       }
@@ -93,6 +97,13 @@
           "name": "columns",
           "value": "",
           "label": "Columns"
+        },
+        {
+          "component": "text",
+          "valueType": "number",
+          "name": "rows",
+          "value": "",
+          "label": "Rows"
         }
       ]
     },
