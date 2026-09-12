@@ -70,15 +70,20 @@ main > .section > .xe-footer-wrapper {
     margin: 0;
 }
 
-/* Social links rendered as a horizontal icon row. */
-.xe-footer .xe-footer-social {
+/* Social links rendered as a horizontal icon row. Handles both authoring
+   shapes: inline links (:facebook:) and a bulleted <ul> list. */
+.xe-footer .xe-footer-social p,
+.xe-footer .xe-footer-social ul {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 20px;
-    margin-top: 8px;
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
 }
 
-.xe-footer .xe-footer-social p {
+.xe-footer .xe-footer-social li {
     margin: 0;
 }
 
@@ -101,6 +106,19 @@ main > .section > .xe-footer-wrapper {
 }
 
 .xe-footer .xe-footer-legal p {
+    margin: 0;
+}
+
+.xe-footer .xe-footer-legal ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.xe-footer .xe-footer-legal li {
     margin: 0;
 }
 

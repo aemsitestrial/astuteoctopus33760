@@ -34,7 +34,11 @@ export default function decorate(block) {
     .reverse()
     .find((row) => row !== columnsRow && row.querySelector('picture, img'));
 
-  const fieldRows = rows.filter((row) => row !== bannerRow && row !== columnsRow);
+  // Container-field rows, in model order. Skip empty rows (e.g. an unused
+  // columns component authored with no content) so they don't inject stray
+  // empty cells into the brand column.
+  const fieldRows = rows.filter((row) => row !== bannerRow && row !== columnsRow
+    && (row.textContent.trim() || row.querySelector('img, picture, svg')));
   fieldRows.forEach((row, index) => {
     const name = CONTAINER_FIELDS[index];
     if (name) row.classList.add(`xe-footer-${name}`);
@@ -56,27 +60,36 @@ export default function decorate(block) {
   }
 
   // Banner zone: full-bleed image with centered tagline overlay. The banner's
-  // background and tagline are grouped fields sharing one cell (a <picture>
-  // followed by tagline text), so tag the image and wrap the tagline text.
+  // background and tagline are grouped fields sharing one cell, but the exact
+  // markup varies: the tagline may sit beside the <picture> in the same
+  // element, or in a sibling <p>. Tag the image, then find the first
+  // text-bearing node in the cell that is not the picture's wrapper and turn
+  // its text into the overlay tagline.
   let banner = null;
   if (bannerRow) {
     bannerRow.classList.add('xe-footer-banner');
     const picture = bannerRow.querySelector('picture');
     if (picture) picture.classList.add('xe-footer-banner-image');
 
-    const cell = picture ? picture.parentElement : bannerRow.firstElementChild;
-    [...(cell?.childNodes || [])].forEach((node) => {
-      const isText = node.nodeType === Node.TEXT_NODE && node.textContent.trim();
-      const isInline = node.nodeType === Node.ELEMENT_NODE
-        && !node.matches('picture, img')
-        && node.textContent.trim();
-      if (isText || isInline) {
-        const tagline = document.createElement('span');
-        tagline.className = 'xe-footer-banner-tagline';
-        tagline.textContent = node.textContent.trim();
-        node.replaceWith(tagline);
-      }
-    });
+    const cell = bannerRow.querySelector(':scope > div') || bannerRow;
+    const holdsPicture = (node) => picture && node.contains && node.contains(picture);
+    const taglineText = [...cell.childNodes]
+      .filter((node) => !holdsPicture(node))
+      .map((node) => node.textContent.trim())
+      .find((text) => text);
+
+    if (taglineText) {
+      // Remove the original tagline node so only the image + overlay remain.
+      [...cell.childNodes].forEach((node) => {
+        if (!holdsPicture(node) && node.textContent.trim()) node.remove();
+      });
+      // Append to the banner row itself so the overlay (position:absolute;
+      // inset:0) covers the whole full-bleed banner, not just the image cell.
+      const tagline = document.createElement('span');
+      tagline.className = 'xe-footer-banner-tagline';
+      tagline.textContent = taglineText;
+      bannerRow.appendChild(tagline);
+    }
     banner = bannerRow;
   }
 
