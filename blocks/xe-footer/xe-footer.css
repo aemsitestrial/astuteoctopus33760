@@ -63,6 +63,7 @@ main > .section > .xe-footer-wrapper {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    justify-content: space-between;
 }
 
 .xe-footer .xe-footer-logo img,
@@ -94,6 +95,12 @@ main > .section > .xe-footer-wrapper {
     list-style: none;
 }
 
+.xe-footer .xe-footer-social-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
 .xe-footer .xe-footer-social li {
     margin: 0;
 }
@@ -112,7 +119,7 @@ main > .section > .xe-footer-wrapper {
 .xe-footer .xe-footer-legal {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 6px;
     font-size: 14px;
 }
 
@@ -126,7 +133,7 @@ main > .section > .xe-footer-wrapper {
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 6px;
 }
 
 .xe-footer .xe-footer-legal li {

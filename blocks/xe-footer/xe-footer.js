@@ -28,15 +28,16 @@ export default function decorate(block) {
   //     is a leading field, so it is excluded here).
   //   - the leading rows that are left are the container fields, tagged by
   //     their model order.
-  const isColumnsRow = (row) => row.querySelector('.columns')
-    || row.querySelectorAll('h2, h3').length > 1
-    || row.querySelectorAll(':scope > div').length > 1;
 
-  const columnsRows = rows.filter(isColumnsRow);
+  const logoGroup = document.createElement('div');
+  logoGroup.className = 'xe-footer-logo-wrapper';
+
+  const socialGroup = document.createElement('div');
+  socialGroup.className = 'xe-footer-social-wrapper';
 
   const bannerRow = [...rows]
     .reverse()
-    .find((row) => !columnsRows.includes(row) && row.querySelector('picture, img'));
+    .find((row) => row.querySelector('picture, img'));
 
   const links = document.createElement('div');
   links.className = 'xe-footer-links-wrapper';
@@ -45,14 +46,21 @@ export default function decorate(block) {
   // filter empties out first) so the model-order → field-name mapping stays
   // stable: dropping an empty row before indexing would shift every later field
   // onto the wrong name.
-  const fieldRows = rows.filter((row) => row !== bannerRow && !columnsRows.includes(row));
-  fieldRows.forEach((row, index) => {
+  const fieldRows = rows.filter((row) => row !== bannerRow);
+  const hasContent = (row) => row.textContent.trim() || row.querySelector('img, picture, svg');
+
+  for (let index = 0; index < fieldRows.length; index += 1) {
+    const row = fieldRows[index];
     const name = CONTAINER_FIELDS[index];
+
     if (name === 'links') {
       links.append(row);
     }
-    if (name) row.classList.add(`xe-footer-${name}`);
-  });
+
+    if (name) {
+      row.classList.add(`xe-footer-${name}`);
+    }
+  }
 
   // Brand column = logo + copyright + social + legal, grouped so it sits beside
   // the link columns. Only append rows that actually have content, so an unused
@@ -60,10 +68,29 @@ export default function decorate(block) {
   // stable positional index.
   const brand = document.createElement('div');
   brand.className = 'xe-footer-brand';
-  fieldRows
-    .filter((row) => !row.classList.contains('xe-footer-links')
-      && (row.textContent.trim() || row.querySelector('img, picture, svg')))
-    .forEach((row) => brand.append(row));
+
+  const brandRows = fieldRows.filter((row) => !row.classList.contains('xe-footer-links') && hasContent(row));
+
+  const appendBrandRow = (row) => {
+    if (row.classList.contains('xe-footer-logo') || row.classList.contains('xe-footer-copyright')) {
+      logoGroup.append(row);
+      return;
+    }
+
+    if (row.classList.contains('xe-footer-social') || row.classList.contains('xe-footer-legal')) {
+      socialGroup.append(row);
+      return;
+    }
+
+    brand.append(row);
+  };
+
+  for (const row of brandRows) {
+    appendBrandRow(row);
+  }
+
+  if (logoGroup.children.length) brand.append(logoGroup);
+  if (socialGroup.children.length) brand.append(socialGroup);
 
   // The footer-links field is authored as one cell holding a flat sequence of
   // heading (<p>) + link list (<ul>) pairs. Group each heading with the list
