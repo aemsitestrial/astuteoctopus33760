@@ -140,6 +140,23 @@ main > .section > .xe-footer-wrapper {
     margin: 0;
 }
 
+/* Legal links carry an external-link glyph, matching the design. The icon is
+   an inline white SVG so it needs no extra asset and inherits no fill issues. */
+.xe-footer .xe-footer-legal a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.xe-footer .xe-footer-legal a::after {
+    content: "";
+    width: 12px;
+    height: 12px;
+    flex: none;
+    background-color: currentcolor;
+    mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 3h7v7h-2V6.41l-9.29 9.3-1.42-1.42 9.3-9.29H14V3z"/><path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2v7z"/></svg>') no-repeat center / contain;
+}
+
 /* --- Link columns grid --------------------------------------------------- */
 
 /* The footer-links field is grouped by the decorator into one column per
