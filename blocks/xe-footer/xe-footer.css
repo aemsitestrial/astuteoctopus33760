@@ -186,14 +186,17 @@ main > .section > .xe-footer-wrapper {
 .xe-footer .xe-footer-links-col {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
 }
 
-.xe-footer .xe-footer-links-title {
+/* Scope to the column so this wins over the generic `.xe-footer-links-col p`
+   rule below (same <p> element, so specificity must be higher). Headings are
+   larger, bolder, and get extra space before their links. */
+.xe-footer .xe-footer-links-col .xe-footer-links-title {
     font-size: 17px;
     font-weight: 700;
     line-height: 1.3;
-    margin: 0 0 4px;
+    margin: 0 0 8px;
     color: #fff;
 }
 
