@@ -30,21 +30,6 @@
           }
         }
       }
-    },
-    {
-      "title": "XE Footer Columns",
-      "id": "xe-footer-columns",
-      "plugins": {
-        "xwalk": {
-          "page": {
-            "resourceType": "core/franklin/components/columns/v1/columns",
-            "template": {
-              "columns": "5",
-              "rows": "1"
-            }
-          }
-        }
-      }
     }
   ],
   "models": [
@@ -85,25 +70,13 @@
           "value": "",
           "label": "Legal links",
           "valueType": "string"
-        }
-      ]
-    },
-    {
-      "id": "xe-footer-columns",
-      "fields": [
-        {
-          "component": "text",
-          "valueType": "number",
-          "name": "columns",
-          "value": "",
-          "label": "Columns"
         },
         {
-          "component": "text",
-          "valueType": "number",
-          "name": "rows",
+          "component": "richtext",
+          "name": "footerlinks",
           "value": "",
-          "label": "Rows"
+          "label": "Footer links",
+          "valueType": "string"
         }
       ]
     },
@@ -131,14 +104,7 @@
     {
       "id": "xe-footer",
       "components": [
-        "xe-footer-banner",
-        "xe-footer-columns"
-      ]
-    },
-    {
-      "id": "xe-footer-columns",
-      "components": [
-        "column"
+        "xe-footer-banner"
       ]
     }
   ]
