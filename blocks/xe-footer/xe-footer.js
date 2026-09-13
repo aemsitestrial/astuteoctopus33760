@@ -38,7 +38,6 @@ export default function decorate(block) {
     .reverse()
     .find((row) => !columnsRows.includes(row) && row.querySelector('picture, img'));
 
-
   const links = document.createElement('div');
   links.className = 'xe-footer-links-wrapper';
 
@@ -49,7 +48,7 @@ export default function decorate(block) {
   const fieldRows = rows.filter((row) => row !== bannerRow && !columnsRows.includes(row));
   fieldRows.forEach((row, index) => {
     const name = CONTAINER_FIELDS[index];
-    if (name === "links") {
+    if (name === 'links') {
       links.append(row);
     }
     if (name) row.classList.add(`xe-footer-${name}`);
@@ -65,6 +64,46 @@ export default function decorate(block) {
     .filter((row) => !row.classList.contains('xe-footer-links')
       && (row.textContent.trim() || row.querySelector('img, picture, svg')))
     .forEach((row) => brand.append(row));
+
+  // The footer-links field is authored as one cell holding a flat sequence of
+  // heading (<p>) + link list (<ul>) pairs. Group each heading with the list
+  // that follows it into a column so the stylesheet can lay them out as a grid
+  // (one column per heading), matching the design's row of link columns.
+  //
+  // Drill through the row/cell wrapper divs to the element that actually holds
+  // the heading/list sequence (the deepest single-child <div> whose children
+  // are the <p>/<ul> content).
+  let linksCell = links;
+  while (linksCell.children.length === 1 && linksCell.firstElementChild.matches('div')) {
+    linksCell = linksCell.firstElementChild;
+  }
+  const nodes = [...linksCell.children];
+  if (nodes.length) {
+    const grid = document.createElement('div');
+    grid.className = 'xe-footer-links';
+    let column = null;
+    nodes.forEach((node) => {
+      const isHeading = node.matches('p, h2, h3, h4') && !node.querySelector('ul, ol');
+      if (isHeading) {
+        column = document.createElement('div');
+        column.className = 'xe-footer-links-col';
+        const heading = document.createElement('p');
+        heading.className = 'xe-footer-links-title';
+        heading.textContent = node.textContent.trim();
+        column.append(heading);
+        grid.append(column);
+      } else if (column) {
+        column.append(node);
+      } else {
+        // Content before any heading: start an untitled column so it is kept.
+        column = document.createElement('div');
+        column.className = 'xe-footer-links-col';
+        column.append(node);
+        grid.append(column);
+      }
+    });
+    linksCell.replaceWith(grid);
+  }
 
   // Content zone wraps the brand column and the link columns side by side.
   const content = document.createElement('div');
