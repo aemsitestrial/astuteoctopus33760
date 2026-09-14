@@ -57,7 +57,8 @@
         "stats",
         "feature-cards",
         "usage-dashboard",
-        "xe-footer"
+        "xe-footer",
+        "xe-feature-cards"
       ]
     }
   ]
