@@ -82,6 +82,12 @@ main > .section > .xe-footer-wrapper {
     margin: 0;
 }
 
+.xe-footer .xe-footer-logo-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
 /* Social links rendered as a horizontal icon row. Handles both authoring
    shapes: inline links (:facebook:) and a bulleted <ul> list. */
 .xe-footer .xe-footer-social p,
