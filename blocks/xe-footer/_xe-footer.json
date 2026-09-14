@@ -15,21 +15,6 @@
           }
         }
       }
-    },
-    {
-      "title": "XE Footer Banner",
-      "id": "xe-footer-banner",
-      "plugins": {
-        "xwalk": {
-          "page": {
-            "resourceType": "core/franklin/components/block/v1/block/item",
-            "template": {
-              "name": "XE Footer Banner",
-              "model": "xe-footer-banner"
-            }
-          }
-        }
-      }
     }
   ],
   "models": [
@@ -77,12 +62,7 @@
           "value": "",
           "label": "Footer links",
           "valueType": "string"
-        }
-      ]
-    },
-    {
-      "id": "xe-footer-banner",
-      "fields": [
+        },
         {
           "component": "reference",
           "valueType": "string",
@@ -100,12 +80,5 @@
       ]
     }
   ],
-  "filters": [
-    {
-      "id": "xe-footer",
-      "components": [
-        "xe-footer-banner"
-      ]
-    }
-  ]
+  "filters": []
 }

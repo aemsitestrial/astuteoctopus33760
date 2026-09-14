@@ -131,11 +131,5 @@
     "components": [
       "value-item"
     ]
-  },
-  {
-    "id": "xe-footer",
-    "components": [
-      "xe-footer-banner"
-    ]
   }
 ]

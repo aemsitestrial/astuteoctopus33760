@@ -655,21 +655,6 @@
               }
             }
           }
-        },
-        {
-          "title": "XE Footer Banner",
-          "id": "xe-footer-banner",
-          "plugins": {
-            "xwalk": {
-              "page": {
-                "resourceType": "core/franklin/components/block/v1/block/item",
-                "template": {
-                  "name": "XE Footer Banner",
-                  "model": "xe-footer-banner"
-                }
-              }
-            }
-          }
         }
       ]
     }

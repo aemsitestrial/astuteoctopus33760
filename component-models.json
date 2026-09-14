@@ -1024,12 +1024,7 @@
         "value": "",
         "label": "Footer links",
         "valueType": "string"
-      }
-    ]
-  },
-  {
-    "id": "xe-footer-banner",
-    "fields": [
+      },
       {
         "component": "reference",
         "valueType": "string",
