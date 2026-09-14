@@ -70,24 +70,20 @@ export default function decorate(block) {
   brand.className = 'xe-footer-brand';
 
   const brandRows = fieldRows.filter((row) => !row.classList.contains('xe-footer-links') && hasContent(row));
+  const brandGroupMap = new Map([
+    ['xe-footer-logo', logoGroup],
+    ['xe-footer-copyright', logoGroup],
+    ['xe-footer-social', socialGroup],
+    ['xe-footer-legal', socialGroup],
+  ]);
 
   const appendBrandRow = (row) => {
-    if (row.classList.contains('xe-footer-logo') || row.classList.contains('xe-footer-copyright')) {
-      logoGroup.append(row);
-      return;
-    }
-
-    if (row.classList.contains('xe-footer-social') || row.classList.contains('xe-footer-legal')) {
-      socialGroup.append(row);
-      return;
-    }
-
-    brand.append(row);
+    const target = [...brandGroupMap.keys()].find((className) => row.classList.contains(className));
+    const container = target ? brandGroupMap.get(target) : brand;
+    container.append(row);
   };
 
-  for (const row of brandRows) {
-    appendBrandRow(row);
-  }
+  brandRows.forEach(appendBrandRow);
 
   if (logoGroup.children.length) brand.append(logoGroup);
   if (socialGroup.children.length) brand.append(socialGroup);
