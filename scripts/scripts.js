@@ -11,6 +11,7 @@ import {
   loadSections,
   loadCSS,
   toClassName,
+  getMetadata,
 } from './aem.js';
 import { alloyLoadedPromise } from './target.js';
 
@@ -188,8 +189,25 @@ async function loadLazy(doc) {
   const element = hash ? doc.getElementById(hash.substring(1)) : false;
   if (hash && element) element.scrollIntoView();
 
-  loadHeader(doc.querySelector('header'));
-  loadFooter(doc.querySelector('footer'));
+  // When the page being viewed/edited IS the header or footer fragment itself
+  // (e.g. authoring the footer document in the Universal Editor), don't also
+  // inject that fragment into the chrome — it would render the content twice
+  // and confuse the author. Skip if the current path matches the resolved
+  // fragment path, OR just its basename (covers language-master variants like
+  // /language-masters/en/xe-footer where per-page metadata may be absent).
+  const currentPath = window.location.pathname.replace(/\.html$/, '');
+  const basename = currentPath.split('/').pop();
+  const resolvePath = (meta, fallback) => (
+    meta ? new URL(meta, window.location).pathname : fallback
+  );
+  const isFragmentPage = (fragmentPath) => currentPath === fragmentPath
+    || basename === fragmentPath.split('/').pop();
+
+  const footerPath = resolvePath(getMetadata('footer'), '/xe-footer');
+  const headerPath = resolvePath(getMetadata('nav'), '/nav');
+
+  if (!isFragmentPage(headerPath)) loadHeader(doc.querySelector('header'));
+  if (!isFragmentPage(footerPath)) loadFooter(doc.querySelector('footer'));
 
   loadCSS(`${window.hlx.codeBasePath}/styles/lazy-styles.css`);
   loadFonts();
