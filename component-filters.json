@@ -131,5 +131,11 @@
     "components": [
       "value-item"
     ]
+  },
+  {
+    "id": "xe-feature-cards",
+    "components": [
+      "xe-feature-card"
+    ]
   }
 ]
