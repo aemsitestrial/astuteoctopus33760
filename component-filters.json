@@ -22,7 +22,9 @@
       "metrics",
       "stats",
       "feature-cards",
-      "usage-dashboard"
+      "usage-dashboard",
+      "xe-footer",
+      "xe-feature-cards"
     ]
   },
   {
@@ -129,6 +131,12 @@
     "id": "values",
     "components": [
       "value-item"
+    ]
+  },
+  {
+    "id": "xe-feature-cards",
+    "components": [
+      "xe-feature-card"
     ]
   }
 ]

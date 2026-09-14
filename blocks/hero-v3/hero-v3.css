@@ -4,6 +4,11 @@
  * A clean inline-authored hero (no Content Fragment dependency).
  */
 
+  main > .section > div.hero-v3-wrapper {
+    max-width: unset;
+    padding: 0;
+  }
+
 .hero-v3 {
   --hero-min-height-responsive: clamp(18rem, 55vw, 32rem);
   --hero-min-height-tall: 34rem;
