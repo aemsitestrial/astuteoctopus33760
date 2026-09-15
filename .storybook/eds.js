@@ -25,14 +25,26 @@
 
 const loadedStyles = new Set();
 
+// Resolve every block stylesheet through Vite (as an asset URL) at build time.
+// This is deliberately NOT a `/blocks/...` static path: the story modules live
+// under `blocks/`, and mapping that dir as a staticDir would shadow Vite's
+// module transform for the stories themselves (serving them raw, so bare
+// imports like `storybook/test` reach the browser unrewritten and the story
+// renders empty). Going through Vite keeps stories on the real shipped CSS in
+// both dev and build without that collision.
+const blockCSS = import.meta.glob('/blocks/*/*.css', {
+  query: '?url',
+  import: 'default',
+  eager: true,
+});
+
 /**
- * Inject a block's real stylesheet by URL. `staticDirs: ['../']` in main.js
- * serves the repo root, so `/blocks/<name>/<name>.css` is the same file the
- * site loads — stories can never drift from the shipped CSS.
+ * Inject a block's real stylesheet — the same file the site ships — via a
+ * Vite-resolved URL.
  */
 function loadBlockCSS(name) {
-  const href = `/blocks/${name}/${name}.css`;
-  if (loadedStyles.has(href)) return;
+  const href = blockCSS[`/blocks/${name}/${name}.css`];
+  if (!href || loadedStyles.has(href)) return;
   loadedStyles.add(href);
   const link = document.createElement('link');
   link.rel = 'stylesheet';
