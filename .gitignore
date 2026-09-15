@@ -12,3 +12,6 @@ helix-importer-ui
 .sf
 .mcp.json
 .claude
+
+storybook-static
+*storybook.log

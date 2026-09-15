@@ -3,3 +3,4 @@ dompurify.min.js
 tools/*
 scripts/alloy.js
 docs/*
+storybook-static/*
