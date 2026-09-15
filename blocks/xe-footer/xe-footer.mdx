@@ -1,0 +1,67 @@
+import { Meta, Canvas, Controls, Story } from '@storybook/addon-docs/blocks';
+import * as XeFooterStories from './xe-footer.stories.js';
+
+<Meta of={XeFooterStories} />
+
+# XE Footer
+
+The **XE Footer** recreates the Xcel footer: a dark maroon content zone (a brand
+column beside the link columns) sitting above a full-bleed banner image with a
+large centered tagline.
+
+## Authoring model
+
+The controls below map one-to-one to the block's authoring model
+(`blocks/xe-footer/_xe-footer.json`), so this page mirrors what an author edits
+in the Universal Editor.
+
+<table>
+  <thead>
+    <tr><th>Field</th><th>Model type</th><th>Purpose</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>logo</code></td><td>reference</td><td>Footer logo image</td></tr>
+    <tr><td><code>logoAlt</code></td><td>text</td><td>Logo alt text</td></tr>
+    <tr><td><code>copyright</code></td><td>richtext</td><td>Copyright line</td></tr>
+    <tr><td><code>social</code></td><td>richtext</td><td>Social icon links</td></tr>
+    <tr><td><code>legal</code></td><td>richtext</td><td>Legal links</td></tr>
+    <tr><td><code>footerlinks</code></td><td>richtext</td><td>Heading + link-list pairs; each heading becomes a column</td></tr>
+    <tr><td><code>banner_background</code></td><td>reference</td><td>Full-bleed banner image</td></tr>
+    <tr><td><code>banner_tagline</code></td><td>text</td><td>Centered banner overlay text</td></tr>
+  </tbody>
+</table>
+
+## Live example
+
+Edit any control to see the footer re-render, exactly as changing the field
+would in authoring.
+
+<Canvas of={XeFooterStories.Default} />
+
+<Controls of={XeFooterStories.Default} />
+
+## Variants
+
+### Single link column
+
+<Canvas of={XeFooterStories.SingleLinkColumn} />
+
+### Two link columns
+
+<Canvas of={XeFooterStories.TwoLinkColumns} />
+
+## How it renders
+
+The block's decorator classifies each authored row by position and structure,
+then regroups them into a brand column, a link-columns grid (one column per
+heading in `footerlinks`), and a banner overlay. Stories run that real
+`decorate()` against the shipped `xe-footer.css`, so what you see here matches
+production.
+
+## Testing
+
+- **Interaction tests** — each story's `play` function asserts the decorated
+  structure (link-column count, banner tagline). Run headless with
+  `npm run test:storybook`.
+- **Visual tests** — Chromatic snapshots each story and flags pixel diffs.
+- **Accessibility** — the a11y panel runs axe checks on every story.

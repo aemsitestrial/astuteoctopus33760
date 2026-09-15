@@ -15,3 +15,4 @@ helix-importer-ui
 
 storybook-static
 *storybook.log
+.vitest

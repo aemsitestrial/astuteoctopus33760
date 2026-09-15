@@ -9,16 +9,39 @@
  * same absolute asset paths the site uses at runtime (`/icons/...`,
  * `/styles/styles.css`, `/blocks/<name>/<name>.css`). This keeps stories
  * rendering against the real CSS instead of a copy that can drift.
+ *
+ * Addons cover the four Storybook feature areas:
+ *   - Documentation:      addon-docs (autodocs + MDX pages)
+ *   - Interaction testing: addon-vitest (runs each story's `play` fn)
+ *   - Visual testing:      @chromatic-com/storybook (snapshot diffing)
+ *   - Accessibility:       addon-a11y (axe checks in the a11y panel)
  */
 
 /** @type { import('@storybook/html-vite').StorybookConfig } */
 const config = {
-  stories: ['../blocks/**/*.stories.@(js|mjs)'],
-  addons: [],
+  stories: [
+    '../blocks/**/*.mdx',
+    '../blocks/**/*.stories.@(js|mjs)',
+  ],
+  addons: [
+    '@storybook/addon-docs',
+    '@storybook/addon-a11y',
+    '@storybook/addon-vitest',
+    '@chromatic-com/storybook',
+  ],
   framework: {
     name: '@storybook/html-vite',
     options: {},
   },
+  // `storybook/test` (used by story `play` functions) is a bare specifier the
+  // browser can't resolve on its own; have Vite pre-bundle it for dev mode.
+  viteFinal: async (viteConfig) => ({
+    ...viteConfig,
+    optimizeDeps: {
+      ...viteConfig.optimizeDeps,
+      include: [...(viteConfig.optimizeDeps?.include || []), 'storybook/test'],
+    },
+  }),
   // Map the asset dirs blocks reference to their production URL paths, so
   // stories use the same absolute paths as the live site (`/icons/...`,
   // `/blocks/<name>/<name>.css`, ...). Mapping individual dirs (rather than the

@@ -22,4 +22,26 @@ module.exports = {
       job: 5, 'pricing-plan': 6, 'hero-v2': 6, 'hero-v3': 5, 'xe-footer': 6,
     }],
   },
+  overrides: [
+    {
+      // Storybook stories import dev-only packages (e.g. the `storybook/test`
+      // subpath export) that the import resolver can't follow but that resolve
+      // fine at runtime and under Vitest. These files never ship to the site.
+      files: ['**/*.stories.js', '**/*.stories.mjs'],
+      rules: {
+        'import/no-unresolved': ['error', { ignore: ['^storybook/'] }],
+        'import/no-extraneous-dependencies': 'off',
+        camelcase: 'off', // model field names (banner_tagline, etc.) match the JSON model
+      },
+    },
+    {
+      // Storybook/Vitest config files import dev-only tooling whose subpath
+      // exports the import resolver can't follow; they never ship to the site.
+      files: ['vitest.config.mjs', '.storybook/**/*.js'],
+      rules: {
+        'import/no-unresolved': 'off',
+        'import/no-extraneous-dependencies': 'off',
+      },
+    },
+  ],
 };
