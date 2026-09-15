@@ -18,6 +18,13 @@
  *   - Visual testing:      @chromatic-com/storybook (snapshot diffing)
  *   - Accessibility:       addon-a11y (axe checks in the a11y panel)
  */
+import { fileURLToPath } from 'node:url';
+
+// Absolute path to the side-effect-free scripts.js stand-in. Blocks that import
+// helpers (e.g. `moveInstrumentation`) from `scripts/scripts.js` would otherwise
+// pull in the real module, which runs `loadPage()` at import time and boots the
+// whole page runtime inside a story. See .storybook/mocks/scripts.js.
+const scriptsMock = fileURLToPath(new URL('./mocks/scripts.js', import.meta.url));
 
 /** @type { import('@storybook/html-vite').StorybookConfig } */
 const config = {
@@ -35,6 +42,19 @@ const config = {
     name: '@storybook/html-vite',
     options: {},
   },
+  // Redirect the site's scripts.js to a side-effect-free stub so blocks can
+  // import its helpers without booting the page runtime. Matches both the
+  // block's relative specifier and the eds.js re-export path.
+  viteFinal: async (viteConfig) => ({
+    ...viteConfig,
+    resolve: {
+      ...viteConfig.resolve,
+      alias: [
+        ...(viteConfig.resolve?.alias || []),
+        { find: /^.*\/scripts\/scripts\.js$/, replacement: scriptsMock },
+      ],
+    },
+  }),
   // Map the non-code asset dirs to their production URL paths so stories use the
   // same absolute paths as the live site. `blocks/` is deliberately excluded
   // (see the note above) — its CSS is resolved through Vite in eds.js.
