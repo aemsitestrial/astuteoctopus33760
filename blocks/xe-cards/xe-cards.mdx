@@ -1,0 +1,101 @@
+import { Meta, Canvas, Controls } from '@storybook/addon-docs/blocks';
+import * as XeCardsStories from './xe-cards.stories.js';
+
+<Meta of={XeCardsStories} />
+
+# XE Cards
+
+The **XE Cards** block shows a section heading and subheading above a responsive
+grid of [Ignite UI Web Components](https://www.infragistics.com/products/ignite-ui-web-components/web-components/components/layouts/card)
+cards (`igc-card`). Each card has an image, a title, a subtitle, a description,
+and an optional call-to-action button.
+
+## Ignite composition
+
+Each card is built from the Ignite card sub-components:
+
+<table>
+  <thead>
+    <tr><th>Tag</th><th>Role</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>igc-card</code></td><td>Card container</td></tr>
+    <tr><td><code>igc-card-media</code></td><td>Image (keeps aspect ratio)</td></tr>
+    <tr><td><code>igc-card-header</code></td><td>Title + subtitle (slotted spans)</td></tr>
+    <tr><td><code>igc-card-content</code></td><td>Description text</td></tr>
+    <tr><td><code>igc-card-actions</code></td><td>CTA button (<code>igc-button</code>)</td></tr>
+  </tbody>
+</table>
+
+The block loads the `igniteui-webcomponents` ESM build from a CDN on demand and
+registers only the components it uses. Cards are authored as slotted light-DOM
+elements, so content stays visible even before the custom elements upgrade
+(progressive enhancement); if the CDN is unreachable, the slotted fallback
+still renders.
+
+## Authoring model
+
+The controls map to the block's authoring model
+(`blocks/xe-cards/_xe-cards.json`), mirroring Universal Editor authoring.
+
+### Container — `xe-cards`
+
+<table>
+  <thead>
+    <tr><th>Field</th><th>Model type</th><th>Purpose</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>top-heading</code></td><td>text</td><td>Section heading</td></tr>
+    <tr><td><code>top-subheading</code></td><td>richtext</td><td>Subheading under the heading</td></tr>
+  </tbody>
+</table>
+
+### Card item — `xe-card` (repeatable)
+
+<table>
+  <thead>
+    <tr><th>Field</th><th>Model type</th><th>Purpose</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>card-image</code></td><td>reference</td><td>Card image (igc-card-media)</td></tr>
+    <tr><td><code>card-imageAlt</code></td><td>text</td><td>Image alt text</td></tr>
+    <tr><td><code>card-title</code></td><td>text</td><td>Card title</td></tr>
+    <tr><td><code>card-subtitle</code></td><td>text</td><td>Card subtitle</td></tr>
+    <tr><td><code>card-text</code></td><td>richtext</td><td>Card description</td></tr>
+    <tr><td><code>card-ctaLink</code></td><td>aem-content</td><td>CTA link target</td></tr>
+    <tr><td><code>card-ctaLinkText</code></td><td>text</td><td>CTA link label</td></tr>
+  </tbody>
+</table>
+
+In Storybook the repeatable cards are surfaced as a multifield: each card's
+fields are grouped under a **Card N** section in the Controls panel. A fixed set
+of card slots is shown; a slot left blank (no image, title, or description) is
+not rendered.
+
+## Live example
+
+<Canvas of={XeCardsStories.Default} />
+
+<Controls of={XeCardsStories.Default} />
+
+## Variants
+
+### Two cards
+
+<Canvas of={XeCardsStories.TwoCards} />
+
+### Without CTA links
+
+<Canvas of={XeCardsStories.WithoutLinks} />
+
+### Single card
+
+<Canvas of={XeCardsStories.SingleCard} />
+
+## Testing
+
+- **Interaction tests** — each story's `play` function asserts the decorated
+  structure (card count, media, CTA) and that Ignite upgrades the `igc-card`
+  custom element. Run headless with `npm run test:storybook`.
+- **Visual tests** — Chromatic snapshots each story and flags pixel diffs.
+- **Accessibility** — the a11y panel runs axe checks on every story.

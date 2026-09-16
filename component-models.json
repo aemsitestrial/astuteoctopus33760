@@ -981,6 +981,80 @@
     ]
   },
   {
+    "id": "xe-cards",
+    "fields": [
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "top-heading",
+        "label": "Heading",
+        "value": "Our Services",
+        "required": true
+      },
+      {
+        "component": "richtext",
+        "valueType": "string",
+        "name": "top-subheading",
+        "label": "Subheading",
+        "description": "",
+        "value": "Everything you need, all in one place",
+        "required": true
+      }
+    ]
+  },
+  {
+    "id": "xe-card",
+    "fields": [
+      {
+        "component": "reference",
+        "valueType": "string",
+        "name": "card-image",
+        "label": "Image",
+        "multi": false
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "card-imageAlt",
+        "label": "Image alt text",
+        "value": ""
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "card-title",
+        "label": "Title",
+        "value": ""
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "card-subtitle",
+        "label": "Subtitle",
+        "value": ""
+      },
+      {
+        "component": "richtext",
+        "name": "card-text",
+        "value": "",
+        "label": "Description",
+        "valueType": "string"
+      },
+      {
+        "component": "aem-content",
+        "valueType": "string",
+        "name": "card-ctaLink",
+        "label": "Link"
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "card-ctaLinkText",
+        "label": "Link text"
+      }
+    ]
+  },
+  {
     "id": "xe-feature-cards",
     "fields": [
       {

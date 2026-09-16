@@ -59,7 +59,8 @@
         "usage-dashboard",
         "xe-footer",
         "xe-feature-cards",
-        "xe-ignite-feature-cards"
+        "xe-ignite-feature-cards",
+        "xe-cards"
       ]
     }
   ]

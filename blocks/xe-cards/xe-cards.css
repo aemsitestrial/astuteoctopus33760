@@ -1,0 +1,140 @@
+/*
+ * XE Cards — heading/subheading above a responsive grid of Ignite UI Web
+ * Components cards (igc-card). Ignite renders each card's chrome in shadow DOM;
+ * we style the block layout and header here, plus a few Ignite CSS custom
+ * properties (--ig-*) for card shape/elevation, and the slotted button.
+ */
+
+.xe-cards-container {
+  padding: 72px 0;
+}
+
+/* header */
+.xe-cards .xe-cards-header {
+  margin-bottom: 32px;
+}
+
+.xe-cards .xe-cards-heading {
+  font-family: var(--heading-font-family);
+  font-size: clamp(40px, 5vw, 56px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -1px;
+  color: var(--brand-text-primary, #1a1a1a);
+  margin: 0 0 16px;
+}
+
+.xe-cards .xe-cards-subheading {
+  font-size: 18px;
+  color: var(--brand-text-secondary, #4b5563);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.xe-cards .xe-cards-subheading p {
+  margin: 0;
+}
+
+/* cards grid */
+.xe-cards .xe-cards-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+/* Each Ignite card. `--ig-*` custom properties feed Ignite's internal theming;
+   the plain properties style the host element before/independently of upgrade. */
+.xe-cards .xe-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 8%), 0 8px 24px rgb(0 0 0 / 6%);
+
+  /* Ignite theming hooks */
+  --ig-elevation-1: 0 1px 3px rgb(0 0 0 / 8%);
+  --ig-shape-medium: 12px;
+}
+
+/* Media: keep a consistent aspect ratio and cover-fit the image. */
+.xe-cards .xe-card-media {
+  display: block;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+}
+
+.xe-cards .xe-card-media picture,
+.xe-cards .xe-card-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Title / subtitle (slotted spans in igc-card-header). */
+.xe-cards .xe-card-title {
+  font-family: var(--heading-font-family);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+  color: var(--brand-text-primary, #1a1a1a);
+}
+
+.xe-cards .xe-card-subtitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--brand-text-secondary, #6b7280);
+}
+
+.xe-cards .xe-card-content {
+  font-size: 16px;
+  color: var(--brand-text-secondary, #4b5563);
+  line-height: 1.55;
+}
+
+.xe-cards .xe-card-content p {
+  margin: 0 0 12px;
+}
+
+.xe-cards .xe-card-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* Push the actions to the bottom so cards of unequal height align their CTAs. */
+.xe-cards .xe-card-actions {
+  margin-top: auto;
+}
+
+/* The CTA button. Style both the Ignite host and its slotted-link fallback. */
+.xe-cards .xe-card-link {
+  --ig-button-border-radius: 8px;
+
+  font-family: var(--heading-font-family);
+  font-weight: 700;
+}
+
+/* Fallback styling when the CTA is still a plain <a> (pre-upgrade or CDN fail). */
+.xe-cards a.xe-card-link {
+  display: inline-block;
+  padding: 12px 24px;
+  border: 2px solid #9d1c26;
+  border-radius: 8px;
+  color: #9d1c26;
+  font-size: 15px;
+  line-height: 1;
+  text-decoration: none;
+}
+
+@media (width <= 1024px) {
+  .xe-cards .xe-cards-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (width <= 768px) {
+  .xe-cards .xe-cards-list {
+    grid-template-columns: 1fr;
+  }
+}
