@@ -4,3 +4,4 @@ tools/*
 scripts/alloy.js
 docs/*
 storybook-static/*
+blocks/xe-cards/vendor/igniteui-webcomponents.js

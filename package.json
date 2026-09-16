@@ -12,6 +12,7 @@
     "build:json:models": "merge-json-cli -i \"models/_component-models.json\" -o \"component-models.json\"",
     "build:json:definitions": "merge-json-cli -i \"models/_component-definition.json\" -o \"component-definition.json\"",
     "build:json:filters": "merge-json-cli -i \"models/_component-filters.json\" -o \"component-filters.json\"",
+    "build:xe-cards-vendor": "node blocks/xe-cards/vendor/build.mjs",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test:storybook": "vitest --project=storybook",
@@ -36,6 +37,7 @@
     "@storybook/html-vite": "^10.6.0",
     "@vitest/browser": "^4.1.11",
     "@vitest/browser-playwright": "^4.1.11",
+    "esbuild": "^0.28.2",
     "eslint": "8.57.1",
     "eslint-config-airbnb-base": "15.0.0",
     "eslint-plugin-import": "2.32.0",
@@ -50,5 +52,8 @@
     "stylelint-config-standard": "38.0.0",
     "vite": "^8.3.0",
     "vitest": "^4.1.11"
+  },
+  "dependencies": {
+    "igniteui-webcomponents": "^7.3.2"
   }
 }

@@ -13,21 +13,21 @@ import { moveInstrumentation } from '../../scripts/scripts.js';
  *   igc-card-content    body text
  *   igc-card-actions    action buttons (igc-button)
  *
- * Ignite ships as the `igniteui-webcomponents` npm package. It isn't bundled
- * with this project, so we load its ESM build from a CDN on demand and register
- * only the components this block uses. The card is built from slotted light-DOM
- * elements, so the content stays visible even before the custom elements
- * upgrade (progressive enhancement); once the library loads, Ignite adds the
- * card chrome.
+ * Ignite ships as the `igniteui-webcomponents` npm package. Rather than pull it
+ * from a CDN at runtime, the card components this block uses are pre-bundled and
+ * vendored into ./vendor/igniteui-webcomponents.js (a single self-contained ESM
+ * file), so the library is served from our own origin. Regenerate it with
+ * `npm run build:xe-cards-vendor` after bumping the package. The card is built
+ * from slotted light-DOM elements, so content stays visible even before the
+ * custom elements upgrade (progressive enhancement); once the module loads,
+ * Ignite adds the card chrome.
  */
-
-const IGNITE_CDN = 'https://cdn.jsdelivr.net/npm/igniteui-webcomponents@5/+esm';
 
 // Load + register the Ignite card components once, shared across all instances.
 let ignitePromise;
 function loadIgnite() {
   if (!ignitePromise) {
-    ignitePromise = import(/* @vite-ignore */ IGNITE_CDN)
+    ignitePromise = import('./vendor/igniteui-webcomponents.js')
       .then((mod) => {
         const {
           defineComponents,
@@ -48,8 +48,8 @@ function loadIgnite() {
         );
       })
       .catch(() => {
-        // Network/CDN failure: the slotted fallback content still renders, so
-        // swallow the error rather than break the page.
+        // Load failure: the slotted fallback content still renders, so swallow
+        // the error rather than break the page.
       });
   }
   return ignitePromise;

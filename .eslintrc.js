@@ -43,5 +43,13 @@ module.exports = {
         'import/no-extraneous-dependencies': 'off',
       },
     },
+    {
+      // Build scripts that generate vendored assets; they use dev-only tooling
+      // (esbuild) and never ship to the site.
+      files: ['blocks/*/vendor/build.mjs'],
+      rules: {
+        'import/no-extraneous-dependencies': 'off',
+      },
+    },
   ],
 };
