@@ -13,6 +13,7 @@
     "build:json:definitions": "merge-json-cli -i \"models/_component-definition.json\" -o \"component-definition.json\"",
     "build:json:filters": "merge-json-cli -i \"models/_component-filters.json\" -o \"component-filters.json\"",
     "build:xe-cards-vendor": "node blocks/xe-cards/vendor/build.mjs",
+    "build:xe-ignite-feature-cards-npm-vendor": "node blocks/xe-ignite-feature-cards-npm/vendor/build.mjs",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test:storybook": "vitest --project=storybook",

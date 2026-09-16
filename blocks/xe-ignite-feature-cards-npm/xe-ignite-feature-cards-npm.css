@@ -1,0 +1,114 @@
+/*
+ * XE Ignite Feature Cards (npm) — heading/subheading above a responsive grid of
+ * Ignite UI Web Components cards (igc-card), sourced from the
+ * `igniteui-webcomponents` npm package. Ignite renders each card's chrome in
+ * shadow DOM; we style the block layout and header here, plus a few Ignite CSS
+ * custom properties (--ig-*) for card shape, and the slotted CTA button.
+ */
+
+.xe-ignite-feature-cards-npm-container {
+  padding: 72px 0;
+}
+
+/* header */
+.xe-ignite-feature-cards-npm .xe-ignite-feature-cards-npm-header {
+  margin-bottom: 32px;
+}
+
+.xe-ignite-feature-cards-npm .xe-ignite-feature-cards-npm-heading {
+  font-family: var(--heading-font-family);
+  font-size: clamp(40px, 5vw, 56px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -1px;
+  color: var(--brand-text-primary, #1a1a1a);
+  margin: 0 0 16px;
+}
+
+.xe-ignite-feature-cards-npm .xe-ignite-feature-cards-npm-subheading {
+  font-size: 18px;
+  color: var(--brand-text-secondary, #4b5563);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.xe-ignite-feature-cards-npm .xe-ignite-feature-cards-npm-subheading p {
+  margin: 0;
+}
+
+/* cards grid */
+.xe-ignite-feature-cards-npm .xe-ignite-feature-cards-npm-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+/* Each Ignite card. `--ig-*` custom properties feed Ignite's internal theming;
+   the plain properties style the host element before/independently of upgrade. */
+.xe-ignite-feature-cards-npm .xe-ignite-feature-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  border-radius: 8px;
+  padding: 32px;
+  background: #f4efe9;
+
+  /* Ignite theming hooks */
+  --ig-shape-medium: 8px;
+}
+
+/* Title (slotted <h3> in igc-card-header). */
+.xe-ignite-feature-cards-npm .xe-ignite-feature-card-title {
+  font-family: var(--heading-font-family);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+  color: var(--brand-text-primary, #1a1a1a);
+  margin: 0 0 12px;
+}
+
+.xe-ignite-feature-cards-npm .xe-ignite-feature-card-body {
+  font-size: 17px;
+  color: var(--brand-text-secondary, #4b5563);
+  line-height: 1.55;
+}
+
+.xe-ignite-feature-cards-npm .xe-ignite-feature-card-body p {
+  margin: 0 0 24px;
+}
+
+.xe-ignite-feature-cards-npm .xe-ignite-feature-card-body p:last-child {
+  margin-bottom: 24px;
+}
+
+/* Push the actions to the bottom so cards of unequal height align their CTAs. */
+.xe-ignite-feature-cards-npm .xe-ignite-feature-card-cta {
+  margin-top: auto;
+}
+
+/* The CTA button — style the Ignite host. */
+.xe-ignite-feature-cards-npm .xe-ignite-feature-card-link {
+  --ig-button-border-radius: 8px;
+
+  font-family: var(--heading-font-family);
+  font-weight: 700;
+}
+
+/* Fallback styling when the CTA is still a plain <a> (pre-upgrade or load fail). */
+.xe-ignite-feature-cards-npm a.xe-ignite-feature-card-link {
+  display: inline-block;
+  padding: 12px 24px;
+  border: 2px solid #9d1c26;
+  border-radius: 8px;
+  color: #9d1c26;
+  font-size: 15px;
+  line-height: 1;
+  text-decoration: none;
+}
+
+@media (width <= 768px) {
+  .xe-ignite-feature-cards-npm .xe-ignite-feature-cards-npm-list {
+    grid-template-columns: 1fr;
+  }
+}
