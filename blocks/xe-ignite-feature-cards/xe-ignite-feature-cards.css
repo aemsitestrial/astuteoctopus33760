@@ -38,7 +38,7 @@
   gap: 24px;
 }
 
-.xe-ignite-feature-cards .xe-feature-card {
+.xe-ignite-feature-cards .xe-ignite-feature-card {
   background: #f4efe9;
   border-radius: 8px;
   padding: 32px;
@@ -47,7 +47,7 @@
   align-items: flex-start;
 }
 
-.xe-ignite-feature-cards .xe-feature-card-title {
+.xe-ignite-feature-cards .xe-ignite-feature-card-title {
   font-family: var(--heading-font-family);
   font-size: 26px;
   font-weight: 700;
@@ -57,22 +57,22 @@
   margin: 0 0 12px;
 }
 
-.xe-ignite-feature-cards .xe-feature-card-body {
+.xe-ignite-feature-cards .xe-ignite-feature-card-body {
   font-size: 17px;
   color: var(--brand-text-secondary, #4b5563);
   line-height: 1.55;
   margin: 0 0 24px;
 }
 
-.xe-ignite-feature-cards .xe-feature-card-body p {
+.xe-ignite-feature-cards .xe-ignite-feature-card-body p {
   margin: 0;
 }
 
-.xe-ignite-feature-cards .xe-feature-card-cta {
+.xe-ignite-feature-cards .xe-ignite-feature-card-cta {
   margin-top: auto;
 }
 
-.xe-ignite-feature-cards a.xe-feature-card-link {
+.xe-ignite-feature-cards a.xe-ignite-feature-card-link {
   display: inline-block;
   padding: 12px 24px;
   border: 2px solid #9d1c26;
@@ -87,8 +87,8 @@
   transition: background 0.2s, color 0.2s;
 }
 
-.xe-ignite-feature-cards a.xe-feature-card-link:hover,
-.xe-ignite-feature-cards a.xe-feature-card-link:focus {
+.xe-ignite-feature-cards a.xe-ignite-feature-card-link:hover,
+.xe-ignite-feature-cards a.xe-ignite-feature-card-link:focus {
   background: #9d1c26;
   color: #fff;
   text-decoration: none;
