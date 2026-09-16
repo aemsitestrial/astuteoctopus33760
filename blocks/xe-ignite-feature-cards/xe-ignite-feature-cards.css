@@ -1,101 +1,16 @@
+/*
+ * XE Ignite Feature Cards
+ *
+ * The block now renders web components (<xe-featured-cards>, <xe-card-grid>,
+ * <xe-card>, <xe-button>) whose visual styling lives in their own shadow DOM
+ * (see xe-ignite-feature-cards.js). This stylesheet only handles the light-DOM
+ * section spacing; component internals are styled inside their shadow roots.
+ */
+
 .xe-ignite-feature-cards-container {
   padding: 72px 0;
 }
 
-/* header */
-.xe-ignite-feature-cards .xe-ignite-feature-cards-header {
-  margin-bottom: 32px;
-}
-
-.xe-ignite-feature-cards .xe-ignite-feature-cards-heading {
-  font-family: var(--heading-font-family);
-  font-size: clamp(40px, 5vw, 56px);
-  font-weight: 700;
-  line-height: 1.05;
-  letter-spacing: -1px;
-  color: var(--brand-text-primary, #1a1a1a);
-  margin: 0 0 16px;
-}
-
-.xe-ignite-feature-cards .xe-ignite-feature-cards-subheading {
-  font-size: 18px;
-  color: var(--brand-text-secondary, #4b5563);
-  line-height: 1.6;
-  margin: 0;
-}
-
-.xe-ignite-feature-cards .xe-ignite-feature-cards-subheading p {
-  margin: 0;
-}
-
-/* cards grid */
-.xe-ignite-feature-cards .xe-ignite-feature-cards-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
-}
-
-.xe-ignite-feature-cards .xe-ignite-feature-card {
-  background: #f4efe9;
-  border-radius: 8px;
-  padding: 32px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.xe-ignite-feature-cards .xe-ignite-feature-card-title {
-  font-family: var(--heading-font-family);
-  font-size: 26px;
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.5px;
-  color: var(--brand-text-primary, #1a1a1a);
-  margin: 0 0 12px;
-}
-
-.xe-ignite-feature-cards .xe-ignite-feature-card-body {
-  font-size: 17px;
-  color: var(--brand-text-secondary, #4b5563);
-  line-height: 1.55;
-  margin: 0 0 24px;
-}
-
-.xe-ignite-feature-cards .xe-ignite-feature-card-body p {
-  margin: 0;
-}
-
-.xe-ignite-feature-cards .xe-ignite-feature-card-cta {
-  margin-top: auto;
-}
-
-.xe-ignite-feature-cards a.xe-ignite-feature-card-link {
-  display: inline-block;
-  padding: 12px 24px;
-  border: 2px solid #9d1c26;
-  border-radius: 8px;
-  background: transparent;
-  color: #9d1c26;
-  font-family: var(--heading-font-family);
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1;
-  text-decoration: none;
-  transition: background 0.2s, color 0.2s;
-}
-
-.xe-ignite-feature-cards a.xe-ignite-feature-card-link:hover,
-.xe-ignite-feature-cards a.xe-ignite-feature-card-link:focus {
-  background: #9d1c26;
-  color: #fff;
-  text-decoration: none;
-}
-
-@media (width <= 768px) {
-  .xe-ignite-feature-cards .xe-ignite-feature-cards-list {
-    grid-template-columns: 1fr;
-  }
+.xe-ignite-feature-cards .xe-ignite-feature-cards-featured {
+  display: block;
 }
