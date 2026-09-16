@@ -24,7 +24,8 @@
       "feature-cards",
       "usage-dashboard",
       "xe-footer",
-      "xe-feature-cards"
+      "xe-feature-cards",
+      "xe-ignite-feature-cards"
     ]
   },
   {
@@ -137,6 +138,12 @@
     "id": "xe-feature-cards",
     "components": [
       "xe-feature-card"
+    ]
+  },
+  {
+    "id": "xe-ignite-feature-cards",
+    "components": [
+      "xe-ignite-feature-card"
     ]
   }
 ]
