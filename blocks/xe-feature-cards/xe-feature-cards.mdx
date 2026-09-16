@@ -42,8 +42,11 @@ repeatable card item.
   </tbody>
 </table>
 
-In Storybook the repeatable cards are edited through the `cards` object control
-as an array of `{ title, text, ctaLink, ctaLinkText }` objects.
+In Storybook the repeatable cards are surfaced as a multifield: each card's
+fields (Title, Description, Link text, Link) are grouped under a **Card N**
+section in the Controls panel, mirroring how a multifield appears in the
+Universal Editor. A fixed set of card slots is shown; a slot left blank (no
+title and no description) is simply not rendered.
 
 ## Live example
 
