@@ -96,6 +96,23 @@ Block CSS is resolved through Vite (`import.meta.glob('/blocks/*/*.css', …)`),
   `<link>` tags (not ESM imports, which would collide with the `/styles` static
   mapping) so blocks inherit the site's design tokens and typography. It also
   sets `layout: 'fullscreen'` because blocks like the footer are full-bleed.
+- **`body.appear`**: `preview.js` adds the `appear` class to `<body>`. `styles.css`
+  ships `body { display: none }` and the live site only reveals it once
+  `scripts.js` adds `appear` after load; Storybook never runs that boot, so
+  without this every story would render at 0×0 — which also makes axe treat all
+  elements as hidden and silently skip every accessibility rule.
+
+## Accessibility testing (WCAG 2.2 AA)
+
+- `preview.js` sets the global `a11y` parameter to run only the WCAG A + AA tags
+  through 2.2 with `test: 'error'`, so axe violations **fail**
+  `npm run test:storybook`.
+- `.storybook/vitest.setup.js` registers the a11y addon's preview annotations
+  via `setProjectAnnotations` so the addon's axe `afterEach` actually runs under
+  Vitest (it is not auto-applied), and `vitest.config.mjs` wires that file in via
+  `setupFiles`. Without both the a11y wiring **and** `body.appear` above, the
+  a11y checks pass vacuously (axe runs on a hidden, unlaid-out body and finds
+  nothing).
 
 ## Authoring-model controls (the core pattern)
 

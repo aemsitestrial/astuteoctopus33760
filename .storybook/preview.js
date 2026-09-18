@@ -20,6 +20,14 @@
   document.head.append(link);
 });
 
+// styles.css ships `body { display: none }` and only reveals the page once
+// `scripts.js` adds the `appear` class after load (an anti-FOUC guard on the
+// live site). Storybook never runs that boot sequence, so without this the body
+// stays `display: none` — every story renders with 0x0 layout, which also makes
+// axe treat all elements as hidden and silently skip every accessibility rule.
+// Add the class up front so stories lay out (and get audited) as they do live.
+document.body.classList.add('appear');
+
 /** @type { import('@storybook/html-vite').Preview } */
 const preview = {
   parameters: {

@@ -24,7 +24,9 @@ export default defineConfig({
       headless: true,
       instances: [{ browser: 'chromium' }],
     },
-    // addon-vitest (SB >= 10.3) applies the preview.js project annotations
-    // automatically, so no setup file is needed here.
+    // Register the a11y addon's test hook (+ preview.js) so axe-core actually
+    // runs per story and the WCAG 2.2 AA config is enforced. addon-vitest does
+    // not auto-apply the a11y annotations, so this setup file is required.
+    setupFiles: ['./.storybook/vitest.setup.js'],
   },
 });
