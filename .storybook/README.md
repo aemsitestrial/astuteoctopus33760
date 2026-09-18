@@ -20,7 +20,7 @@ npm run test:storybook   # run every story's interaction (play) test headless
 | **Interaction Testing** | `@storybook/addon-vitest` runs each story's `play` function in a real browser (Playwright/Chromium). Run in the UI or via `npm run test:storybook`. |
 | **Visual Testing** | `@chromatic-com/storybook` snapshots each story and flags pixel diffs. |
 | **Documentation** | `@storybook/addon-docs` renders per-block MDX pages (`blocks/<name>/<name>.mdx`) with a live Controls table. |
-| **Accessibility** | `@storybook/addon-a11y` runs axe checks on every story (a11y panel). |
+| **Accessibility** | `@storybook/addon-a11y` runs axe checks on every story (a11y panel), configured in `preview.js` to enforce **WCAG 2.2 AA**; violations fail `npm run test:storybook`. |
 
 ## How it works
 

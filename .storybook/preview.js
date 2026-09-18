@@ -31,6 +31,29 @@ const preview = {
     },
     // Blocks like the footer are full-bleed; give them the whole canvas.
     layout: 'fullscreen',
+    // Accessibility: enforce WCAG 2.2 AA on every story (all blocks).
+    // addon-a11y runs axe-core; restricting `runOnly` to the WCAG A + AA tags
+    // up to 2.2 makes the a11y panel and the automated test run check exactly
+    // that conformance level (the tags are cumulative — 2.2 AA includes the
+    // 2.0/2.1 success criteria). `test: 'error'` promotes any violation to a
+    // failure, so `npm run test:storybook` fails on non-compliant blocks
+    // instead of only flagging them in the UI panel.
+    a11y: {
+      test: 'error',
+      options: {
+        runOnly: {
+          type: 'tag',
+          values: [
+            'wcag2a',
+            'wcag2aa',
+            'wcag21a',
+            'wcag21aa',
+            'wcag22a',
+            'wcag22aa',
+          ],
+        },
+      },
+    },
   },
 };
 
