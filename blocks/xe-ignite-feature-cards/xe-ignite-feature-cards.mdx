@@ -1,0 +1,80 @@
+import { Meta, Canvas, Controls } from '@storybook/addon-docs/blocks';
+import * as XeIgniteFeatureCardsStories from './xe-ignite-feature-cards.stories.js';
+
+<Meta of={XeIgniteFeatureCardsStories} />
+
+# XE Ignite Feature Cards
+
+A section heading and subheading above a responsive grid of feature cards, each
+with a title, description, and optional CTA link. The block rebuilds the
+authored content into web-component markup — `<xe-featured-cards>` >
+`<xe-card-grid>` > `<xe-card>` with slotted title/body/actions and an
+`<xe-button>` CTA — defining those custom elements on first run.
+
+## Authoring model
+
+The controls below map one-to-one to the block's authoring model
+(`blocks/xe-ignite-feature-cards/_xe-ignite-feature-cards.json`), so this page
+mirrors what an author edits in the Universal Editor. The container holds a
+heading and subheading; each feature card is a repeatable item.
+
+<table>
+  <thead>
+    <tr><th>Field</th><th>Model type</th><th>Purpose</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>top-heading</code></td><td>text</td><td>Section heading</td></tr>
+    <tr><td><code>top-subheading</code></td><td>richtext</td><td>Subheading under the heading</td></tr>
+    <tr><td><code>card-title</code></td><td>text</td><td>Card title (per card)</td></tr>
+    <tr><td><code>card-text</code></td><td>richtext</td><td>Card description (per card)</td></tr>
+    <tr><td><code>card-ctaLink</code></td><td>aem-content</td><td>CTA link href (per card)</td></tr>
+    <tr><td><code>card-ctaLinkText</code></td><td>text</td><td>CTA link text (per card)</td></tr>
+  </tbody>
+</table>
+
+Each card is surfaced as a multifield in the Controls panel (grouped as
+"Card N"). Empty card slots — no title and no description — are not rendered.
+
+## Live example
+
+Edit any control to see the section re-render, exactly as changing the field
+would in authoring.
+
+<Canvas of={XeIgniteFeatureCardsStories.Default} />
+
+<Controls of={XeIgniteFeatureCardsStories.Default} />
+
+## Variants
+
+### Two cards
+
+<Canvas of={XeIgniteFeatureCardsStories.TwoCards} />
+
+### Without CTA links
+
+When a card's Link and Link text are left blank, no CTA renders.
+
+<Canvas of={XeIgniteFeatureCardsStories.WithoutLinks} />
+
+### Single card
+
+<Canvas of={XeIgniteFeatureCardsStories.SingleCard} />
+
+## How it renders
+
+The decorator reads the authored rows (heading, subheading, then one
+`[title, body, link]` row per card) and rebuilds them into the web-component
+markup above. The four custom elements (`xe-featured-cards`, `xe-card-grid`,
+`xe-card`, `xe-button`) are small shadow-DOM components defined by the block on
+first run: the heading/subheading render from attributes, and each card's title,
+body, and CTA are distributed through named slots. Stories run that real
+`decorate()` against the shipped CSS, so what you see here matches production.
+
+## Testing
+
+- **Interaction tests** — each story's `play` function asserts the decorated
+  structure (card count, slotted titles, CTA buttons) and waits for the custom
+  elements to upgrade. Run headless with `npm run test:storybook`.
+- **Visual tests** — Chromatic snapshots each story and flags pixel diffs.
+- **Accessibility** — the a11y panel runs axe checks on every story, enforcing
+  WCAG 2.2 AA conformance.

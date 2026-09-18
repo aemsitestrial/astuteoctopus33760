@@ -1,0 +1,83 @@
+import { Meta, Canvas, Controls } from '@storybook/addon-docs/blocks';
+import * as XeIgniteFeatureCardsNpmStories from './xe-ignite-feature-cards-npm.stories.js';
+
+<Meta of={XeIgniteFeatureCardsNpmStories} />
+
+# XE Ignite Feature Cards (npm)
+
+Same authoring model and layout as **XE Ignite Feature Cards**, but the cards are
+built from real Ignite UI Web Components (`igc-card`, `igc-button`) sourced from
+the `igniteui-webcomponents` npm package. Because a browser can't resolve the
+bare package specifier at runtime, the components are pre-bundled into
+`vendor/igniteui-webcomponents.js` (regenerate with
+`npm run build:xe-ignite-feature-cards-npm-vendor`) and loaded from there.
+
+## Authoring model
+
+The controls below map one-to-one to the block's authoring model
+(`blocks/xe-ignite-feature-cards-npm/_xe-ignite-feature-cards-npm.json`), so this
+page mirrors what an author edits in the Universal Editor. The container holds a
+heading and subheading; each feature card is a repeatable item.
+
+<table>
+  <thead>
+    <tr><th>Field</th><th>Model type</th><th>Purpose</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>top-heading</code></td><td>text</td><td>Section heading</td></tr>
+    <tr><td><code>top-subheading</code></td><td>richtext</td><td>Subheading under the heading</td></tr>
+    <tr><td><code>card-title</code></td><td>text</td><td>Card title (per card)</td></tr>
+    <tr><td><code>card-text</code></td><td>richtext</td><td>Card description (per card)</td></tr>
+    <tr><td><code>card-ctaLink</code></td><td>aem-content</td><td>CTA link href (per card)</td></tr>
+    <tr><td><code>card-ctaLinkText</code></td><td>text</td><td>CTA link text (per card)</td></tr>
+  </tbody>
+</table>
+
+Each card is surfaced as a multifield in the Controls panel (grouped as
+"Card N"). Empty card slots — no title and no description — are not rendered.
+
+## Live example
+
+Edit any control to see the section re-render, exactly as changing the field
+would in authoring.
+
+<Canvas of={XeIgniteFeatureCardsNpmStories.Default} />
+
+<Controls of={XeIgniteFeatureCardsNpmStories.Default} />
+
+## Variants
+
+### Two cards
+
+<Canvas of={XeIgniteFeatureCardsNpmStories.TwoCards} />
+
+### Without CTA links
+
+When a card's Link and Link text are left blank, no action button renders.
+
+<Canvas of={XeIgniteFeatureCardsNpmStories.WithoutLinks} />
+
+### Single card
+
+<Canvas of={XeIgniteFeatureCardsNpmStories.SingleCard} />
+
+## How it renders
+
+The decorator reads the authored rows (heading, subheading, then one
+`[title, body, link]` row per card) and builds each card from slotted light-DOM
+elements: `igc-card` > `igc-card-header` (slotted `<h3>` title) +
+`igc-card-content` (body) + `igc-card-actions` (an `igc-button` CTA). It then
+imports the vendored Ignite bundle and registers the components, which upgrade
+the slotted content into cards. Because the content is authored as plain light
+DOM, it stays visible even before the custom elements upgrade (progressive
+enhancement). Stories run that real `decorate()` against the shipped CSS, so what
+you see here matches production.
+
+## Testing
+
+- **Interaction tests** — each story's `play` function asserts the decorated
+  structure (`igc-card` count, `igc-button` CTAs) and waits for Ignite to
+  upgrade the custom elements. Run headless with `npm run test:storybook`.
+- **Visual tests** — Chromatic snapshots each story and flags pixel diffs.
+- **Accessibility** — the a11y panel runs axe checks on every story, enforcing
+  WCAG 2.2 AA conformance.
