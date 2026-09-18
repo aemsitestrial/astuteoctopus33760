@@ -347,16 +347,36 @@ function toBlockEntries(blocks) {
   return [];
 }
 
+// Resolves one `blocks` entry key to a { block, fields } pair within a section.
+// The key is either:
+//   - a block-name / alias in INTENT_SECTION_BLOCKS (e.g. "hero", "hero-v3") →
+//     the FIRST instance of that block in the section, or
+//   - an auto-generated child-block id (decorateIntentSectionBlockIds in
+//     scripts.js: "<section>-<block>-<iteration>", e.g. "hero-intent-hero-v3-2")
+//     → that specific block instance. The field map is looked up from the
+//     resolved block's own data-block-name so a full id addresses one iteration.
+function resolveSectionBlock(section, key) {
+  const spec = INTENT_SECTION_BLOCKS[key];
+  if (spec) return { block: section.querySelector(spec.selector), fields: spec.fields };
+  // Treat the key as a generated block id (sits directly on the block element).
+  // Scope to this section so an id from another section is never matched.
+  const block = document.getElementById(key);
+  if (!block || !section.contains(block)) return { block: null, fields: null };
+  const byName = INTENT_SECTION_BLOCKS[block.dataset.blockName];
+  return { block, fields: byName ? byName.fields : null };
+}
+
 // Applies a `blocks` composite to the blocks inside one section. Returns true
-// only when every listed block applied; an unknown/unpersonalizable block name
-// or a not-yet-decorated block yields false, so the scope keeps retrying.
+// only when every listed block applied; an unknown/unpersonalizable block name,
+// an id that resolves to no personalizable block, or a not-yet-decorated block
+// yields false, so the scope keeps retrying.
 function applyBlocksToSection(section, blocks) {
   const entries = toBlockEntries(blocks);
   if (!section || !entries.length) return false;
-  const applied = entries.filter(([name, fields]) => {
-    const spec = INTENT_SECTION_BLOCKS[name];
-    if (!spec) return false; // block not personalizable in this section
-    return applyFields(section.querySelector(spec.selector), fields, spec.fields);
+  const applied = entries.filter(([key, fields]) => {
+    const { block, fields: fieldMap } = resolveSectionBlock(section, key);
+    if (!block || !fieldMap) return false; // not personalizable / not found
+    return applyFields(block, fields, fieldMap);
   }).length;
   return applied === entries.length;
 }

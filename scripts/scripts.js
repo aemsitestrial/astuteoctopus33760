@@ -121,6 +121,55 @@ function decorateSectionIds(main) {
 }
 
 /**
+ * Auto-generates a stable `id` on every child block of a top-level section,
+ * following the pattern `[section-id-or-name]-[block-name]-[iteration]`:
+ *
+ *   hero-intent-hero-v3          (first hero-v3 in section "hero-intent")
+ *   hero-intent-feature-cards    (first feature-cards in the same section)
+ *   hero-intent-hero-v3-2        (a second hero-v3 in the same section)
+ *
+ * The iteration suffix only appears when a block type repeats inside the same
+ * section (the first occurrence is left unsuffixed for clean ids). The prefix is
+ * the section's real `id` (set by decorateSectionIds for Intent Sections) when
+ * present, otherwise its normalized Section Name (section.dataset.name) — so
+ * sections that only carry a name still get stable block ids.
+ *
+ * These ids give Adobe Target (and CSS/anchors) a position-independent handle on
+ * an individual block inside a section — see applyBlocksToSection in target.js,
+ * which can address a specific iteration by its generated id. Runs AFTER
+ * decorateBlocks() so `data-block-name` is populated. Never overwrites an id an
+ * author or other code already set, and de-duplicates against every id on the
+ * page.
+ * @param {Element} main The main element
+ */
+function decorateIntentSectionBlockIds(main) {
+  const used = new Set([...document.querySelectorAll('[id]')].map((el) => el.id));
+  main.querySelectorAll(':scope > .section').forEach((section) => {
+    // Prefer the section's real id; fall back to its normalized name.
+    const prefix = section.id || toClassName(section.dataset.name || '');
+    if (!prefix) return;
+    // Iteration counter per block type, scoped to this section.
+    const counts = new Map();
+    section.querySelectorAll(':scope .block[data-block-name]').forEach((block) => {
+      const { blockName } = block.dataset;
+      if (!blockName || block.id) return; // keep any id already present
+      const n = (counts.get(blockName) || 0) + 1;
+      counts.set(blockName, n);
+      // First occurrence: no suffix; repeats: -2, -3, … Bump further on any
+      // page-wide collision so generated ids stay unique.
+      let iteration = n;
+      let id = iteration === 1 ? `${prefix}-${blockName}` : `${prefix}-${blockName}-${iteration}`;
+      while (used.has(id)) {
+        iteration += 1;
+        id = `${prefix}-${blockName}-${iteration}`;
+      }
+      block.id = id;
+      used.add(id);
+    });
+  });
+}
+
+/**
  * Decorates the main element.
  * @param {Element} main The main element
  */
@@ -133,6 +182,7 @@ export function decorateMain(main) {
   decorateSections(main);
   decorateSectionIds(main);
   decorateBlocks(main);
+  decorateIntentSectionBlockIds(main);
 }
 
 // Adobe Target / WebSDK integration lives in ./target.js. Importing it configures

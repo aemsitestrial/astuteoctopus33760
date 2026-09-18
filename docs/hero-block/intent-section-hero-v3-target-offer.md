@@ -120,6 +120,44 @@ Personalizing the image and CTA links too:
 - each block's fields are its model properties (`title`, `subtitle`, `primaryCta`,
   `secondaryCta`); unknown fields are ignored.
 - Scoping is automatic: the offer only touches the section whose id matches the scope.
+- A `blocks` key is either a **block name** (`hero` / `hero-v3`, which targets the *first*
+  matching block in the section) or an **auto-generated child-block id** (see below) to target
+  one specific block when the section repeats a block type.
+
+### Addressing a specific block by its generated id
+
+Every child block of a section gets a stable, auto-generated `id`
+(`decorateIntentSectionBlockIds` in `scripts/scripts.js`) following:
+
+```
+[section-id-or-name]-[block-name]-[iteration]
+```
+
+The iteration suffix only appears when the same block type repeats inside the section — the first
+occurrence is left unsuffixed:
+
+| Blocks in section `hero-intent` | Generated id |
+|---|---|
+| first `hero-v3` | `hero-intent-hero-v3` |
+| second `hero-v3` | `hero-intent-hero-v3-2` |
+| a `feature-cards` | `hero-intent-feature-cards` |
+
+> When a section has no authored **Section ID** but has a **Section Name**, the normalized name is
+> used as the prefix instead (e.g. Section Name `Promo Zone` → `promo-zone-hero-v3`).
+
+Use the generated id as the `blocks` key to personalize one specific iteration — the plain block
+name always targets the first instance:
+
+```json
+{
+  "blocks": [
+    { "hero-intent-hero-v3":   { "title": "First hero — Experience A" } },
+    { "hero-intent-hero-v3-2": { "title": "Second hero — Experience A" } }
+  ]
+}
+```
+
+The id is resolved within the scoped section, so an id from another section is never matched.
 
 > Requires the section to have a **Section ID** authored (rendered as a real `id` attribute). The
 > available scopes are discovered from the page at request time, so a newly-added section id is
