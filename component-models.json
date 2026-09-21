@@ -1169,6 +1169,100 @@
     ]
   },
   {
+    "id": "xe-hero",
+    "fields": [
+      {
+        "component": "reference",
+        "valueType": "string",
+        "name": "image",
+        "label": "Background image",
+        "multi": false
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "imageAlt",
+        "label": "Image alt text",
+        "value": ""
+      },
+      {
+        "component": "richtext",
+        "name": "title",
+        "value": "",
+        "label": "Title",
+        "valueType": "string"
+      },
+      {
+        "component": "richtext",
+        "name": "subtitle",
+        "value": "",
+        "label": "Subtitle",
+        "valueType": "string"
+      },
+      {
+        "component": "aem-content",
+        "valueType": "string",
+        "name": "cta_primaryLink",
+        "label": "Primary action link"
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "cta_primaryLinkText",
+        "label": "Primary action text"
+      },
+      {
+        "component": "aem-content",
+        "valueType": "string",
+        "name": "cta_secondaryLink",
+        "label": "Secondary action link"
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "cta_secondaryLinkText",
+        "label": "Secondary action text"
+      },
+      {
+        "component": "select",
+        "name": "classes",
+        "label": "Variant",
+        "valueType": "string",
+        "value": "",
+        "options": [
+          {
+            "name": "Base (author-controlled layout)",
+            "value": ""
+          },
+          {
+            "name": "Tall Center with Action",
+            "value": "tall-center-with-action"
+          },
+          {
+            "name": "Tall Left with Actions",
+            "value": "tall-left-with-actions"
+          },
+          {
+            "name": "Standard Center with Actions",
+            "value": "standard-center-with-actions"
+          },
+          {
+            "name": "Standard Left with Actions",
+            "value": "standard-left-with-actions"
+          },
+          {
+            "name": "Compact Center with Actions",
+            "value": "compact-center-with-actions"
+          },
+          {
+            "name": "Compact Left with Actions",
+            "value": "compact-left-with-actions"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "xe-ignite-feature-cards-npm",
     "fields": [
       {
