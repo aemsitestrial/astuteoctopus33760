@@ -153,6 +153,7 @@ these field names:
 | `job-listings` | item | `title`, `description` | job title |
 | `default-content` | text | `text` | `match.text` (current text) + optional `match.wrapper` index |
 | `<section id>` (Intent Section) | section | `blocks` array (per block: text + `primaryCtaLink`, `secondaryCtaLink`, `image`) | scope name = the section's `id` |
+| `<section-id>-<block>` (Intent Section block) | block | flat block fields (`title`, `subtitle`, `primaryCta`, …) | scope name = the block's auto-generated id |
 | `page` | composite | `blocks` (map of block → offer) | — |
 
 ### Default content (not in a block)
@@ -224,6 +225,33 @@ Sections — only the intent-section model exposes an `id` field, so a top-level
 `id` attribute is definitionally an Intent Section (plain sections never get a per-id scope).
 Adding an Intent Section needs no code change. See
 `docs/hero-block/intent-section-hero-v3-target-offer.md` for more examples.
+
+#### Per-block scope inside an Intent Section
+
+Every personalizable block inside an Intent Section is *also* offered to Target as **its own
+decision scope, named after the block's auto-generated id**. `decorateIntentSectionBlockIds`
+(`scripts/scripts.js`) stamps each child block with a stable id `<section-id>-<block>[-n]` — e.g.
+`hero-intent-hero-v3` (a second `hero-v3` in the same section would be `hero-intent-hero-v3-2`).
+So an author can point an activity **directly at a single block** and ship a **flat field offer**,
+without wrapping it in the section's `blocks` list.
+
+Decision scope: **`hero-intent-hero-v3`** (the block id). Offer:
+
+```json
+{ "set": { "title": "Tea title — Experience A", "subtitle": "Start your day with a fresh brew", "primaryCta": "Order tea" } }
+```
+
+- The **scope name** equals the block's generated id (`<section-id>-<block>[-n]`).
+- The offer carries the block's **model-property fields** directly (bare fields, a `set` object,
+  or an `items` array all work — the scope already identifies the exact block, so `match` is
+  ignored). Field names are the same as the section-level offer (`title`/`subtitle`/`primaryCta`/…).
+- Only blocks whose type has a field map in `INTENT_SECTION_BLOCKS` (currently `hero-v3`/`hero`)
+  are exposed. Non-personalizable blocks get an id but no scope.
+- Choose **section scope** to personalize several blocks in one offer, or **per-block scope** to
+  target one block in isolation — both are available for every Intent Section, with no code change.
+
+Discovered at request time by `getIntentSectionBlockScopes` /`intentSectionBlockScopeHandler` /
+`resolveScopeHandler` in `scripts/target.js`.
 
 ### Composite offers — several blocks in one scope
 

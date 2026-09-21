@@ -408,6 +408,54 @@ function getSectionScopes() {
   return getIntentSections().map((s) => s.id).filter(Boolean);
 }
 
+/*
+ * Per-block Intent Section scopes.
+ *
+ * decorateIntentSectionBlockIds (scripts.js) stamps every child block of an
+ * Intent Section with a stable id `<section-id>-<block>[-n]` (e.g.
+ * `hero-intent-hero-v3`). In addition to the section-level scope, each such
+ * block is ALSO offered to Target as its own decision scope named after that
+ * block id — so an author can point an activity directly at a single block and
+ * ship a flat field offer, without wrapping it in the section's `blocks` list.
+ *
+ *   scope "hero-intent-hero-v3"  →
+ *   { "set": { "title": "…", "subtitle": "…", "primaryCta": "…" } }
+ *
+ * Only blocks whose `data-block-name` has a field map in INTENT_SECTION_BLOCKS
+ * are exposed, since those are the blocks a handler can actually personalize.
+ */
+
+// Ids of every personalizable, id-bearing block inside an Intent Section. Read
+// after decoration (decorateBlocks populates data-block-name;
+// decorateIntentSectionBlockIds populates the id).
+function getIntentSectionBlockScopes() {
+  return getIntentSections()
+    .flatMap((section) => [...section.querySelectorAll(':scope .block[id][data-block-name]')])
+    .filter((block) => INTENT_SECTION_BLOCKS[block.dataset.blockName])
+    .map((block) => block.id)
+    .filter(Boolean);
+}
+
+// Handler for a per-block decision scope: the scope name IS the block's
+// generated id. Resolves that block, confirms it lives in an Intent Section,
+// looks up its field map from data-block-name, and applies a flat field offer
+// (bare fields, `set`, or an `items` array) directly to it — the block-level
+// analogue of sectionScopeHandler.
+function intentSectionBlockScopeHandler(scopeName) {
+  return (content) => {
+    const block = document.getElementById(scopeName);
+    if (!block) return false;
+    // Guard against a same-id element outside any Intent Section.
+    const section = block.closest('.section[id]');
+    if (!section || !getIntentSections().includes(section)) return false;
+    const spec = INTENT_SECTION_BLOCKS[block.dataset.blockName];
+    if (!spec) return false;
+    // The scope already identifies the exact block, so `match` is irrelevant;
+    // applyInstructions still accepts bare fields / `set` / `items` shapes.
+    return applyInstructions(content, (match, set) => applyFields(block, set, spec.fields));
+  };
+}
+
 // Scope names that resolve to a composite handler — skipped when a composite
 // dispatches, so one composite can never recurse into another (or itself).
 const COMPOSITE_SCOPES = new Set();
@@ -579,12 +627,16 @@ const FLICKER_FADE_MS = 300;
 const FLICKER_TEXT_SELECTOR = 'h1, h2, h3, h4, h5, h6, p, li, a, span, td, th, dt, dd';
 
 // Resolves the container(s) a scope will modify. Section-id scopes → their
-// section; page → main; default-content → its wrappers; block scopes → every
-// instance of that block.
-function containersForScope(scope, sectionScopes) {
+// section; Intent Section block-id scopes → that one block element; page →
+// main; default-content → its wrappers; block scopes → every instance of that
+// block.
+function containersForScope(scope, sectionScopes, blockScopes = []) {
   if (sectionScopes.includes(scope)) {
     const section = getIntentSections().find((s) => s.id === scope);
     return section ? [section] : [];
+  }
+  if (blockScopes.includes(scope)) {
+    return [document.getElementById(scope)].filter(Boolean);
   }
   if (scope === 'page') return [document.querySelector('main')].filter(Boolean);
   if (scope === 'default-content') return getBlocks('default-content-wrapper');
@@ -593,8 +645,8 @@ function containersForScope(scope, sectionScopes) {
 
 // The text elements a scope may replace — only these are hidden/faded, so the
 // background/media of the container stays visible the whole time.
-function elementsForScope(scope, sectionScopes) {
-  return containersForScope(scope, sectionScopes)
+function elementsForScope(scope, sectionScopes, blockScopes = []) {
+  return containersForScope(scope, sectionScopes, blockScopes)
     .flatMap((container) => [...container.querySelectorAll(FLICKER_TEXT_SELECTOR)]);
 }
 
@@ -643,11 +695,14 @@ function revealAfterFlicker(elements) {
  * types) come from FORM_BASED_HANDLERS; any other scope that names a section id
  * present on the page is handled dynamically as a per-section scope, so Target
  * can drive a section with a blocks-only offer just by naming the scope after
- * the section id.
+ * the section id. Finally, a scope that names the auto-generated id of a
+ * personalizable block inside an Intent Section is handled as a per-block scope,
+ * so Target can drive a single block with a flat field offer.
  */
-function resolveScopeHandler(scope, sectionScopes) {
+function resolveScopeHandler(scope, sectionScopes, blockScopes = []) {
   if (FORM_BASED_HANDLERS[scope]) return FORM_BASED_HANDLERS[scope];
   if (sectionScopes.includes(scope)) return sectionScopeHandler(scope);
+  if (blockScopes.includes(scope)) return intentSectionBlockScopeHandler(scope);
   return null;
 }
 
@@ -656,13 +711,17 @@ async function getAndApplyRenderDecisions() {
   // scope (sections are already decorated by decorateMain at this point), so an
   // activity can target a section by naming the scope after its id.
   const sectionScopes = getSectionScopes();
+  // Each personalizable block inside an Intent Section (stamped with a stable
+  // `<section-id>-<block>` id) is ALSO offered as its own decision scope, so an
+  // activity can target a single block directly with a flat field offer.
+  const blockScopes = getIntentSectionBlockScopes();
 
   // Get the decisions, but don't render them automatically — form-based offers
   // are applied manually to stable anchors below.
   const response = await window.alloy('sendEvent', {
     renderDecisions: false,
     personalization: {
-      decisionScopes: [...FORM_BASED_SCOPES, ...sectionScopes],
+      decisionScopes: [...FORM_BASED_SCOPES, ...sectionScopes, ...blockScopes],
     },
   });
   const { propositions = [] } = response;
@@ -670,7 +729,7 @@ async function getAndApplyRenderDecisions() {
   // Offers keyed by the scope they target (only scopes we can handle).
   const offers = new Map();
   propositions.forEach((p) => {
-    if (!resolveScopeHandler(p.scope, sectionScopes) || offers.has(p.scope)) return;
+    if (!resolveScopeHandler(p.scope, sectionScopes, blockScopes) || offers.has(p.scope)) return;
     const jsonItem = (p.items || []).find((i) => i.schema === JSON_CONTENT_ITEM_SCHEMA);
     const content = jsonItem?.data?.content;
     if (content) offers.set(p.scope, content);
@@ -681,7 +740,7 @@ async function getAndApplyRenderDecisions() {
   // now (decoration is complete) and again as the failsafe reveals them.
   const pendingScopes = [...offers.keys()];
   const hidden = new Map(
-    pendingScopes.map((scope) => [scope, elementsForScope(scope, sectionScopes)]),
+    pendingScopes.map((scope) => [scope, elementsForScope(scope, sectionScopes, blockScopes)]),
   );
   hidden.forEach((elements) => hideForFlicker(elements));
 
@@ -697,7 +756,7 @@ async function getAndApplyRenderDecisions() {
   onDecoratedElement(() => {
     offers.forEach((content, scope) => {
       if (appliedScopes.has(scope)) return;
-      const handler = resolveScopeHandler(scope, sectionScopes);
+      const handler = resolveScopeHandler(scope, sectionScopes, blockScopes);
       if (handler && handler(content)) {
         appliedScopes.add(scope);
         // Reveal this scope's container now that its offer has applied.
