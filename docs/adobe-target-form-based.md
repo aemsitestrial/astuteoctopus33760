@@ -133,6 +133,7 @@ these field names:
 |---|---|---|---|
 | `hero` | block | `badge`, `heading`, `subtitle`, `primaryCta`, `secondaryCta` | — |
 | `hero-v3` | block | `title` (alias `heading`), `subtitle`, `primaryCta`, `secondaryCta`, `primaryCtaLink`, `secondaryCtaLink`, `image` | — |
+| `xe-hero` | block | `title` (alias `heading`), `subtitle`, `primaryCta`, `secondaryCta`, `primaryCtaLink`, `secondaryCtaLink`, `image` | — |
 | `feature-cards` | block | `label`, `heading`, `subtitle` | — |
 | `usage-dashboard` | block | `heading`, `label`, `cta` | — |
 | `cta-band` | block | `heading`, `subtitle`, `cta` | — |
@@ -245,8 +246,8 @@ Decision scope: **`hero-intent-hero-v3`** (the block id). Offer:
 - The offer carries the block's **model-property fields** directly (bare fields, a `set` object,
   or an `items` array all work — the scope already identifies the exact block, so `match` is
   ignored). Field names are the same as the section-level offer (`title`/`subtitle`/`primaryCta`/…).
-- Only blocks whose type has a field map in `INTENT_SECTION_BLOCKS` (currently `hero-v3`/`hero`)
-  are exposed. Non-personalizable blocks get an id but no scope.
+- Only blocks whose type has a field map in `INTENT_SECTION_BLOCKS` (currently `hero-v3`/`hero`
+  and `xe-hero`) are exposed. Non-personalizable blocks get an id but no scope.
 - Choose **section scope** to personalize several blocks in one offer, or **per-block scope** to
   target one block in isolation — both are available for every Intent Section, with no code change.
 

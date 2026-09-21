@@ -180,6 +180,20 @@ function setPictureImage(img, url) {
 }
 
 /**
+ * Sets the link on an <xe-button> (blocks/xe-hero). The button renders an <a>
+ * inside its shadow root from its `href` attribute when it first connects, so
+ * updating the attribute alone would not move an already-rendered anchor —
+ * update both the host attribute and the shadow <a>. URL is safety-checked.
+ */
+function setXeButtonHref(button, url) {
+  if (!button || !isSafeUrl(url)) return false;
+  button.setAttribute('href', url);
+  const anchor = button.shadowRoot && button.shadowRoot.querySelector('a');
+  if (anchor) anchor.setAttribute('href', url);
+  return true;
+}
+
+/**
  * Applies one field value to the element resolved by `resolver` within
  * `container`. A resolver is:
  *   - string                       → CSS selector; sets textContent
@@ -311,13 +325,35 @@ const HERO_V3_FIELDS = {
   image: { selector: '.hero-media img', apply: setPictureImage },
 };
 
+// xe-hero personalizable fields, keyed by the block's MODEL property names
+// (blocks/xe-hero/_xe-hero.json) → the post-decoration selector each maps to.
+// xe-hero renders web components (<xe-hero>/<xe-button>) but title/subtitle/
+// media/CTA are SLOTTED light-DOM children, so a normal querySelector on the
+// block resolves them. `heading` is a back-compat alias for `title`; the two
+// CTAs are the first (primary/filled) and second (secondary/outline) buttons.
+const XE_HERO_FIELDS = {
+  // Text fields (set textContent).
+  title: 'h1[slot="title"]',
+  heading: 'h1[slot="title"]',
+  subtitle: 'p[slot="subtitle"]',
+  primaryCta: 'div[slot="actions"] xe-button:nth-of-type(1)',
+  secondaryCta: 'div[slot="actions"] xe-button:nth-of-type(2)',
+  // Link fields (set the CTA href on the web component + its shadow <a>).
+  primaryCtaLink: { selector: 'div[slot="actions"] xe-button:nth-of-type(1)', apply: setXeButtonHref },
+  secondaryCtaLink: { selector: 'div[slot="actions"] xe-button:nth-of-type(2)', apply: setXeButtonHref },
+  // Image field (swap the background image; the slotted media is a bare <img>).
+  image: { selector: 'img[slot="media"]', apply: setPictureImage },
+};
+
 // Blocks that can be personalized inside an Intent Section, keyed by the name
 // used in the offer's `blocks` entries → the block's selector within the
-// section and its field map. `hero` is an author-friendly alias for `hero-v3`
-// (the only hero the section allows).
+// section and its field map. `hero` is an author-friendly alias for `hero-v3`.
+// The Intent Section filter (models/_intent-section.json) allows hero-v3 and
+// xe-hero, so both are personalizable here.
 const INTENT_SECTION_BLOCKS = {
   'hero-v3': { selector: '.hero-v3', fields: HERO_V3_FIELDS },
   hero: { selector: '.hero-v3', fields: HERO_V3_FIELDS },
+  'xe-hero': { selector: '.xe-hero', fields: XE_HERO_FIELDS },
 };
 
 /*
@@ -508,6 +544,9 @@ const FORM_BASED_HANDLERS = {
   // (title/subtitle/primaryCta/secondaryCta), mapped to the classes hero-v3.js
   // emits. See HERO_V3_FIELDS.
   'hero-v3': blockHandler('hero-v3', HERO_V3_FIELDS),
+  // xe-hero: web-component hero. Same model fields as hero-v3, anchored to the
+  // slotted light-DOM elements xe-hero.js emits. See XE_HERO_FIELDS.
+  'xe-hero': blockHandler('xe-hero', XE_HERO_FIELDS),
   'feature-cards': blockHandler('feature-cards', {
     label: '.feature-cards-label',
     heading: '.feature-cards-title',
