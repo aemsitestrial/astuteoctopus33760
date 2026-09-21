@@ -1,29 +1,42 @@
 /*
- * Flicker control (FOOC).
+ * Flicker control (FOOC — flash of original content).
  *
- * Personalized content is applied client-side after decoration, which can flash
- * the default copy first (flash of original content). To avoid it we pre-hide
- * the TEXT that a scope may replace, then reveal it once the offer has applied.
- * Only text nodes are hidden — never whole containers — so background images,
- * media and scrims stay fully visible throughout (hiding a container's opacity
- * dimmed the background, which looked wrong). Hiding uses opacity, so each text
- * box keeps its size and there is no layout shift/CLS. A hard timeout reveals
- * everything as a failsafe, so content is never stuck hidden if Target is slow
- * or errors.
+ * Personalized content is applied client-side after decoration. If the default
+ * copy is allowed to paint before the offer lands, the user sees the original
+ * text swap to the personalized text — a flicker. To prevent it we:
  *
- * On reveal, a short fade-in animation replaces the abrupt swap so the
- * transition from hidden → personalized copy reads smoothly instead of as a
- * flicker. The animation is disabled under prefers-reduced-motion.
+ *  1. Pre-hide the TEXT of every targetable region BEFORE the Target request is
+ *     even sent (see orchestration.js), so the default copy never paints first.
+ *     Only text-bearing elements are hidden — never whole containers — so
+ *     background images, media and scrims stay fully visible throughout.
+ *  2. Show a subtle skeleton shimmer in place of the hidden text, so the region
+ *     reads as intentionally "loading" rather than as a blank gap.
+ *  3. Reveal each region the moment its decision is known: immediately for
+ *     scopes Target returns no offer for, or once the offer has been applied.
+ *     Reveal fades in so the swap to personalized copy is smooth.
+ *  4. A hard failsafe timeout reveals everything regardless, so content is never
+ *     stuck hidden if Target is slow or errors.
+ *
+ * Hiding never changes an element's box size (text is made transparent, not
+ * display:none), so there is no layout shift / CLS. The shimmer and fade are
+ * disabled under prefers-reduced-motion.
  */
 
 import { getBlocks } from './dom.js';
 import { getIntentSections } from './intent-section.js';
 
-export const FLICKER_TIMEOUT_MS = 3000;
+// Failsafe cap: never leave content hidden longer than this, even if Target is
+// slow or errors. Bumped from 3s to give a slow decision request more room to
+// win before we reveal the default copy.
+export const FLICKER_TIMEOUT_MS = 4000;
 
 const FLICKER_HIDE_CLASS = 'target-flicker-hide';
 const FLICKER_REVEAL_CLASS = 'target-flicker-reveal';
-const FLICKER_FADE_MS = 300;
+// Reveal fade duration — longer than the previous 300ms so the transition from
+// skeleton → personalized copy reads as a smooth settle rather than a snap.
+const FLICKER_FADE_MS = 500;
+// Skeleton shimmer sweep duration.
+const FLICKER_SHIMMER_MS = 1400;
 
 // Text-bearing elements that Target offers replace (headings, copy, CTA labels,
 // list/table cells). Deliberately excludes img/picture/svg so backgrounds and
@@ -48,41 +61,67 @@ function containersForScope(scope, sectionScopes, blockScopes = []) {
 }
 
 // The text elements a scope may replace — only these are hidden/faded, so the
-// background/media of the container stays visible the whole time.
+// background/media of the container stays visible the whole time. Re-queried
+// on each call so late-decorating blocks (whose DOM is replaced by decorate())
+// are covered, not just the elements that existed when the scope was first hit.
 export function elementsForScope(scope, sectionScopes, blockScopes = []) {
   return containersForScope(scope, sectionScopes, blockScopes)
     .flatMap((container) => [...container.querySelectorAll(FLICKER_TEXT_SELECTOR)]);
 }
 
-// Injects the pre-hiding + reveal-animation styles once.
+// Injects the pre-hiding + skeleton + reveal-animation styles once.
 function ensureFlickerStyle() {
   if (document.getElementById('target-flicker-style')) return;
   const style = document.createElement('style');
   style.id = 'target-flicker-style';
-  // Hide with opacity (not display/visibility) so layout is reserved — no CLS.
-  // Reveal fades in so the swap to personalized copy is smooth, not a flicker.
-  // forced-colors / reduced-motion users get an instant, animation-free reveal.
+  // Hide by making text transparent (not display/visibility) so each box keeps
+  // its size — no CLS. A shimmering gradient stands in for the text as a
+  // skeleton placeholder. Reveal fades in so the swap to personalized copy is
+  // smooth. Reduced-motion / forced-colors users get a static, instant reveal.
   style.textContent = `
-    .${FLICKER_HIDE_CLASS}{opacity:0 !important;}
+    .${FLICKER_HIDE_CLASS}{
+      color:transparent !important;
+      background-image:linear-gradient(90deg,
+        rgba(0,0,0,0.06) 25%,
+        rgba(0,0,0,0.12) 37%,
+        rgba(0,0,0,0.06) 63%) !important;
+      background-size:400% 100% !important;
+      border-radius:4px;
+      animation:target-flicker-shimmer ${FLICKER_SHIMMER_MS}ms ease infinite;
+    }
+    .${FLICKER_HIDE_CLASS} *{color:transparent !important;}
     .${FLICKER_REVEAL_CLASS}{animation:target-flicker-fade ${FLICKER_FADE_MS}ms ease-out;}
+    @keyframes target-flicker-shimmer{from{background-position:100% 0;}to{background-position:0 0;}}
     @keyframes target-flicker-fade{from{opacity:0;}to{opacity:1;}}
-    @media (prefers-reduced-motion:reduce){.${FLICKER_REVEAL_CLASS}{animation:none;}}
+    @media (prefers-reduced-motion:reduce){
+      .${FLICKER_HIDE_CLASS}{animation:none;}
+      .${FLICKER_REVEAL_CLASS}{animation:none;}
+    }
+    @media (forced-colors:active){
+      .${FLICKER_HIDE_CLASS}{background-image:none !important;animation:none;}
+    }
   `;
   document.head.appendChild(style);
 }
 
-// Hides the given elements ahead of personalization.
-export function hideForFlicker(elements) {
-  if (!elements.length) return;
+// Hides a scope's current text elements ahead of personalization. Safe to call
+// repeatedly (e.g. once per decoration pass) — it re-queries so newly decorated
+// text inside the scope is hidden too, and adding the class again is a no-op for
+// already-hidden elements.
+export function hideScope(scope, sectionScopes, blockScopes = []) {
+  const elements = elementsForScope(scope, sectionScopes, blockScopes);
+  if (!elements.length) return false;
   ensureFlickerStyle();
   elements.forEach((el) => el.classList.add(FLICKER_HIDE_CLASS));
+  return true;
 }
 
-// Reveals elements with a short fade-in. Removing the hide class restores
-// opacity; the reveal class runs the fade, then is cleaned up when the
-// animation ends so nothing lingers on the element.
-export function revealAfterFlicker(elements) {
-  elements.forEach((el) => {
+// Reveals a scope's text with a short fade-in. Re-queries the scope so both the
+// originally hidden elements and any that decorated later are revealed. Removing
+// the hide class restores the color/skeleton; the reveal class runs the fade,
+// then is cleaned up on animationend so nothing lingers.
+export function revealScope(scope, sectionScopes, blockScopes = []) {
+  elementsForScope(scope, sectionScopes, blockScopes).forEach((el) => {
     if (!el.classList.contains(FLICKER_HIDE_CLASS)) return; // already revealed
     el.classList.remove(FLICKER_HIDE_CLASS);
     el.classList.add(FLICKER_REVEAL_CLASS);
