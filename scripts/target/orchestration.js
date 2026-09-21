@@ -19,9 +19,8 @@ import {
 } from './intent-section.js';
 import {
   FLICKER_TIMEOUT_MS,
-  elementsForScope,
-  hideForFlicker,
-  revealAfterFlicker,
+  hideScope,
+  revealScope,
 } from './flicker.js';
 
 /**
@@ -50,12 +49,52 @@ export default async function getAndApplyRenderDecisions() {
   // activity can target a single block directly with a flat field offer.
   const blockScopes = getIntentSectionBlockScopes();
 
+  // Every scope we are about to request. A scope is only pre-hidden if it
+  // actually resolves to something on THIS page (elementsForScope returns
+  // elements) — hideScope() returns false for scopes with no matching DOM.
+  const requestedScopes = [...FORM_BASED_SCOPES, ...sectionScopes, ...blockScopes];
+
+  // Pre-hide the text of every targetable region BEFORE the request goes out,
+  // so the default copy never paints ahead of the decision (this is what kills
+  // the flicker — hiding only after the round-trip let the original text show
+  // first). A skeleton shimmer stands in while the decision is pending. `hidden`
+  // holds the scopes actually masked, so we know exactly what to reveal later.
+  const hidden = new Set(
+    requestedScopes.filter((scope) => hideScope(scope, sectionScopes, blockScopes)),
+  );
+
+  // Re-assert the hide as blocks decorate: a block's decorate() replaces its DOM
+  // with fresh (unhidden) elements, which would flash the default copy. Keep
+  // masking any not-yet-revealed scope until its decision resolves. Registered
+  // now so it covers blocks that decorate during the round-trip.
+  const appliedScopes = new Set();
+  const revealedScopes = new Set();
+  const rehide = () => {
+    hidden.forEach((scope) => {
+      if (!revealedScopes.has(scope)) hideScope(scope, sectionScopes, blockScopes);
+    });
+  };
+  onDecoratedElement(rehide);
+
+  // Reveal a scope once (fade its text in) and mark it done.
+  const reveal = (scope) => {
+    if (revealedScopes.has(scope)) return;
+    revealedScopes.add(scope);
+    revealScope(scope, sectionScopes, blockScopes);
+  };
+
+  // Failsafe: never leave content hidden. Reveal everything after a hard cap
+  // regardless of whether Target/handlers finished.
+  const revealTimer = window.setTimeout(() => {
+    hidden.forEach((scope) => reveal(scope));
+  }, FLICKER_TIMEOUT_MS);
+
   // Get the decisions, but don't render them automatically — form-based offers
   // are applied manually to stable anchors below.
   const response = await window.alloy('sendEvent', {
     renderDecisions: false,
     personalization: {
-      decisionScopes: [...FORM_BASED_SCOPES, ...sectionScopes, ...blockScopes],
+      decisionScopes: requestedScopes,
     },
   });
   const { propositions = [] } = response;
@@ -69,23 +108,11 @@ export default async function getAndApplyRenderDecisions() {
     if (content) offers.set(p.scope, content);
   });
 
-  // Pre-hide only the containers a returned offer will replace, so the default
-  // copy never flashes before personalization applies (FOOC). Elements resolved
-  // now (decoration is complete) and again as the failsafe reveals them.
-  const pendingScopes = [...offers.keys()];
-  const hidden = new Map(
-    pendingScopes.map((scope) => [scope, elementsForScope(scope, sectionScopes, blockScopes)]),
-  );
-  hidden.forEach((elements) => hideForFlicker(elements));
-
-  // Failsafe: never leave content hidden. Reveal everything after a hard cap
-  // regardless of whether Target/handlers finished.
-  const revealTimer = window.setTimeout(() => {
-    hidden.forEach((elements) => revealAfterFlicker(elements));
-    hidden.clear();
-  }, FLICKER_TIMEOUT_MS);
-
-  const appliedScopes = new Set();
+  // A hidden scope with NO returned offer keeps its default copy — reveal it now
+  // so it is not needlessly held behind the skeleton until the failsafe fires.
+  hidden.forEach((scope) => {
+    if (!offers.has(scope)) reveal(scope);
+  });
 
   onDecoratedElement(() => {
     offers.forEach((content, scope) => {
@@ -93,12 +120,11 @@ export default async function getAndApplyRenderDecisions() {
       const handler = resolveScopeHandler(scope, sectionScopes, blockScopes);
       if (handler && handler(content)) {
         appliedScopes.add(scope);
-        // Reveal this scope's container now that its offer has applied.
-        revealAfterFlicker(hidden.get(scope) || []);
-        hidden.delete(scope);
+        // Reveal this scope now that its personalized offer has applied.
+        reveal(scope);
       }
     });
-    if (!hidden.size) window.clearTimeout(revealTimer);
+    if (revealedScopes.size >= hidden.size) window.clearTimeout(revealTimer);
   });
 
   // Reporting is deferred to avoid long tasks

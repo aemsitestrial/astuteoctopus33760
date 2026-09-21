@@ -361,25 +361,36 @@ copy edits — the failure modes that break VEC selectors and positional matchin
 
 Because offers are applied client-side after decoration, the default copy could
 flash before personalization replaces it (flash of original content). The code
-prevents this:
+prevents this (see `scripts/target/flicker.js` + `orchestration.js`):
 
-- **Text-only pre-hiding.** Within the container(s) a *returned* offer will
-  modify, only the **text** elements are hidden (`h1`–`h6`, `p`, `li`, `a`,
-  `span`, table cells…) — never the container itself. Background images, media
-  and scrims stay fully visible, so there's no odd fade of the whole box; only
-  the copy that's about to change is masked. Scope → container mapping: section-id
-  scope → its section; block scope → that block's instances; `page` → `<main>`.
-  A scope that returns no offer hides nothing, so unpersonalized content paints
-  immediately.
-- **No layout shift.** Hiding uses `opacity:0` (via an injected
-  `.target-flicker-hide` rule) on the text elements, so each keeps its size —
-  CLS is unaffected.
-- **Reveal with a fade.** When an offer applies, the hidden text swaps to a
-  `.target-flicker-reveal` class that fades it in (~300ms), so the switch to
-  personalized copy reads as a smooth transition rather than a text flicker. The
-  class is removed on `animationend`. Under `prefers-reduced-motion: reduce` the
-  reveal is instant (no animation).
-- **Failsafe.** A hard timeout (`FLICKER_TIMEOUT_MS`, 3s) reveals everything
+- **Pre-hide BEFORE the request.** The text of every targetable region on the
+  page is masked *before* the Target decision request is even sent — not after
+  the response returns. This is the key to killing the flicker: hiding only
+  after the round-trip let the original copy paint first, then swap. Scope →
+  container mapping: section-id scope → its section; Intent Section block-id
+  scope → that block; block-type scope → that block's instances; `page` →
+  `<main>`; `default-content` → its wrappers. A scope with no matching DOM on
+  the page hides nothing.
+- **Text-only masking.** Only text-bearing elements are hidden (`h1`–`h6`, `p`,
+  `li`, `a`, `span`, table cells…) — never the container. Background images,
+  media and scrims stay fully visible.
+- **Skeleton shimmer.** Hidden text is made transparent and backed by a subtle
+  shimmering gradient (`.target-flicker-hide`), so the region reads as
+  intentionally *loading* rather than as a blank gap while the decision is
+  pending.
+- **No layout shift.** Masking uses `color:transparent` + a background (not
+  `display`/`visibility`), so each element keeps its size — CLS is unaffected.
+- **Re-hide on decoration.** A block's `decorate()` replaces its DOM with fresh,
+  unhidden elements; the code re-asserts the mask on each decoration pass until
+  the scope's decision resolves, so late-decorating blocks don't flash either.
+- **Reveal per decision.** A scope is revealed the moment its outcome is known:
+  immediately when the response carries **no** offer for it (default copy kept),
+  or once its offer has been **applied**. Reveal fades in via
+  `.target-flicker-reveal` (~500ms, `FLICKER_FADE_MS`) for a smooth settle; the
+  class is removed on `animationend`. Under `prefers-reduced-motion: reduce` (and
+  `forced-colors`) both the shimmer and the fade are disabled for an instant,
+  static reveal.
+- **Failsafe.** A hard timeout (`FLICKER_TIMEOUT_MS`, 4s) reveals everything
   regardless, so content is never stuck hidden if Target is slow or errors.
 
 No authoring step is required — this is automatic for every handled scope.
