@@ -1,0 +1,102 @@
+import { Meta, Canvas, Controls } from '@storybook/addon-docs/blocks';
+import * as XeHeroStories from './xe-hero.stories.js';
+
+<Meta of={XeHeroStories} />
+
+# XE Hero
+
+A full-bleed hero with a background image behind a scrim, a title, an optional
+subtitle, and up to two positional CTAs. The block rebuilds the authored content
+into web-component markup — `<xe-hero>` with slotted media/title/subtitle/actions
+and `<xe-button>` CTAs — defining those custom elements on first run.
+
+## Authoring model
+
+The controls below map one-to-one to the block's authoring model
+(`blocks/xe-hero/_xe-hero.json`), so this page mirrors what an author edits in
+the Universal Editor.
+
+<table>
+  <thead>
+    <tr><th>Field</th><th>Model type</th><th>Purpose</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>image</code></td><td>reference</td><td>Background image</td></tr>
+    <tr><td><code>imageAlt</code></td><td>text</td><td>Image alternative text</td></tr>
+    <tr><td><code>title</code></td><td>richtext</td><td>Hero title</td></tr>
+    <tr><td><code>subtitle</code></td><td>richtext</td><td>Subtitle under the title</td></tr>
+    <tr><td><code>cta_primaryLink</code></td><td>aem-content</td><td>Primary action href</td></tr>
+    <tr><td><code>cta_primaryLinkText</code></td><td>text</td><td>Primary action text</td></tr>
+    <tr><td><code>cta_secondaryLink</code></td><td>aem-content</td><td>Secondary action href</td></tr>
+    <tr><td><code>cta_secondaryLinkText</code></td><td>text</td><td>Secondary action text</td></tr>
+    <tr><td><code>classes</code></td><td>select</td><td>Locked layout variant (height + alignment)</td></tr>
+  </tbody>
+</table>
+
+A CTA renders only when it has both a link and link text. The first CTA is the
+primary (filled) button; the second is the secondary (outline) button.
+
+## Live example
+
+Edit any control to see the hero re-render, exactly as changing the field would
+in authoring.
+
+<Canvas of={XeHeroStories.Default} />
+
+<Controls of={XeHeroStories.Default} />
+
+## Variants
+
+### Single primary action
+
+When only the primary link and text are set, a single filled CTA renders.
+
+<Canvas of={XeHeroStories.SinglePrimaryAction} />
+
+### Without actions
+
+With both links blank, no actions slot renders.
+
+<Canvas of={XeHeroStories.WithoutActions} />
+
+### Tall Left
+
+The locked "Tall Left with Actions" preset sets `height=tall` and `align=left`.
+
+<Canvas of={XeHeroStories.TallLeft} />
+
+### Compact Center
+
+The locked "Compact Center with Actions" preset sets `height=compact` and
+`align=center`.
+
+<Canvas of={XeHeroStories.CompactCenter} />
+
+### Without image
+
+With no image, the media layer stays empty and a neutral background prevents a
+layout gap.
+
+<Canvas of={XeHeroStories.WithoutImage} />
+
+## How it renders
+
+The decorator classifies the authored rows positionally — the image row (has an
+`img`), CTA rows (have links), and the remaining text rows in document order
+(title, then subtitle) — and rebuilds them into the web-component markup above.
+The two custom elements (`xe-hero`, `xe-button`) are small shadow-DOM components
+defined by the block on first run: the media renders full-bleed behind a scrim,
+and the title, subtitle, and actions are distributed through named slots. Six
+locked variants set height and text alignment; the base variant uses the
+responsive default. Stories run that real `decorate()` against the shipped CSS,
+so what you see here matches production.
+
+## Testing
+
+- **Interaction tests** — each story's `play` function asserts the decorated
+  structure (slotted title/subtitle/media, CTA buttons, variant attributes) and
+  waits for the custom elements to upgrade. Run headless with
+  `npm run test:storybook`.
+- **Visual tests** — Chromatic snapshots each story and flags pixel diffs.
+- **Accessibility** — the a11y panel runs axe checks on every story, enforcing
+  WCAG 2.2 AA conformance.

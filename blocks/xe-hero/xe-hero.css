@@ -1,0 +1,17 @@
+/*
+ * XE Hero
+ *
+ * The block renders a web component (<xe-hero>) whose visual styling lives in
+ * its own shadow DOM (see xe-hero.js). This stylesheet only handles the
+ * light-DOM section layout; component internals are styled inside the shadow
+ * root.
+ */
+
+main > .section > div.xe-hero-wrapper {
+  max-width: unset;
+  padding: 0;
+}
+
+.xe-hero .xe-hero-banner {
+  display: block;
+}
