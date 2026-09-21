@@ -34,7 +34,8 @@
     "id": "intent-section",
     "components": [
       "text",
-      "hero-v3"
+      "hero-v3",
+      "xe-hero"
     ]
   },
   {
