@@ -85,7 +85,7 @@
                 "resourceType": "core/franklin/components/section/v1/section",
                 "template": {
                   "model": "intent-section",
-                  "filters": "intent-section"
+                  "filter": "intent-section"
                 }
               }
             }
