@@ -363,14 +363,24 @@ Because offers are applied client-side after decoration, the default copy could
 flash before personalization replaces it (flash of original content). The code
 prevents this (see `scripts/target/flicker.js` + `orchestration.js`):
 
+- **Synchronous head pre-hide (bridge).** A tiny inline script in `head.html`
+  runs during head parse — *before first paint* — and, only on target pages
+  (gated on the `target` meta), masks the text of top-level Intent Sections
+  (`main > div[id]`) with the skeleton shimmer. This is the EDS-idiomatic
+  equivalent of Adobe at.js's [pre-hiding snippet](https://experienceleague.adobe.com/en/docs/target-dev/developer/client-side/at-js-implementation/at-js/manage-flicker-with-atjs),
+  but scoped to the personalizable regions (like at.js's `#container-1,#container-2`
+  variant) instead of blacking out the whole `body {opacity:0}`. It carries its
+  own 4s self-timeout failsafe so content is never stuck hidden if the module
+  never loads. `scripts/target/flicker.js` removes it (`dismissPrehide`) once it
+  has applied its own granular mask.
 - **Pre-hide BEFORE the request.** The text of every targetable region on the
-  page is masked *before* the Target decision request is even sent — not after
-  the response returns. This is the key to killing the flicker: hiding only
-  after the round-trip let the original copy paint first, then swap. Scope →
-  container mapping: section-id scope → its section; Intent Section block-id
-  scope → that block; block-type scope → that block's instances; `page` →
-  `<main>`; `default-content` → its wrappers. A scope with no matching DOM on
-  the page hides nothing.
+  page is then masked by the module *before* the Target decision request is even
+  sent — not after the response returns. This (with the head bridge) is the key
+  to killing the flicker: hiding only after the round-trip let the original copy
+  paint first, then swap. Scope → container mapping: section-id scope → its
+  section; Intent Section block-id scope → that block; block-type scope → that
+  block's instances; `page` → `<main>`; `default-content` → its wrappers. A
+  scope with no matching DOM on the page hides nothing.
 - **Text-only masking.** Only text-bearing elements are hidden (`h1`–`h6`, `p`,
   `li`, `a`, `span`, table cells…) — never the container. Background images,
   media and scrims stay fully visible.

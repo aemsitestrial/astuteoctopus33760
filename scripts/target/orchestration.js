@@ -21,6 +21,7 @@ import {
   FLICKER_TIMEOUT_MS,
   hideScope,
   revealScope,
+  dismissPrehide,
 } from './flicker.js';
 
 /**
@@ -62,6 +63,13 @@ export default async function getAndApplyRenderDecisions() {
   const hidden = new Set(
     requestedScopes.filter((scope) => hideScope(scope, sectionScopes, blockScopes)),
   );
+
+  // Hand off from the coarse head.html bridge pre-hide (#target-prehide, which
+  // masked ALL Intent Section text before first paint) to the granular per-scope
+  // mask just applied. Removing it now means any text the broad head selector
+  // caught but no scope owns reveals immediately instead of waiting on its 4s
+  // failsafe. Our own per-scope reveal/failsafe governs the masked scopes.
+  dismissPrehide();
 
   // Re-assert the hide as blocks decorate: a block's decorate() replaces its DOM
   // with fresh (unhidden) elements, which would flash the default copy. Keep
