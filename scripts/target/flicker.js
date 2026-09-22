@@ -104,6 +104,17 @@ function ensureFlickerStyle() {
   document.head.appendChild(style);
 }
 
+// Removes the synchronous head.html bridge pre-hide (#target-prehide). That
+// snippet masks ALL Intent Section text before first paint to beat the flicker;
+// once this module has applied its own granular, per-scope mask (hideScope), the
+// coarse bridge is redundant and must go so that scopes with no offer — and any
+// text the broad selector caught but no scope owns — are not left hidden until
+// the bridge's own 4s failsafe. Safe to call repeatedly.
+export function dismissPrehide() {
+  const el = document.getElementById('target-prehide');
+  if (el) el.remove();
+}
+
 // Hides a scope's current text elements ahead of personalization. Safe to call
 // repeatedly (e.g. once per decoration pass) — it re-queries so newly decorated
 // text inside the scope is hidden too, and adding the class again is a no-op for
