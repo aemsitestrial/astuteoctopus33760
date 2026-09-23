@@ -1,7 +1,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <!-- Adobe Target flicker pre-hide (FOOC). Runs synchronously during head parse,
      only on target pages (gated on the target meta, which EDS injects above this
-     file). Masks the TEXT of top-level Intent Sections (main > div[id]) BEFORE
+     file). Masks the text and CTA buttons of top-level Intent Sections
+     (main > div[id]) BEFORE
      first paint, so the default copy never flashes ahead of the personalized
      offer. scripts/target/flicker.js takes over granular masking and removes
      this bridge style (dismissPrehide) once it owns the DOM; a self-timeout
@@ -10,11 +11,16 @@
   (function () {
     try {
       if (!document.querySelector('meta[name="target"]')) return;
-      var TEXT = 'main > div[id] :is(h1,h2,h3,h4,h5,h6,p,li,a,span,td,th,dt,dd)';
+      var SCOPE = 'main > div[id] ';
+      var TEXT = SCOPE + ':is(h1,h2,h3,h4,h5,h6,p,li,a,span,td,th,dt,dd)';
       var style = document.createElement('style');
       style.id = 'target-prehide';
+      // Light-DOM text hides via transparent color (no CLS). xe-button CTAs
+      // render their label in shadow DOM, so hide those with visibility:hidden
+      // (inherits across the shadow boundary, still preserves the box).
       style.textContent = TEXT + '{color:transparent !important;}'
-        + TEXT + ' *{color:transparent !important;}';
+        + TEXT + ' *{color:transparent !important;}'
+        + SCOPE + 'xe-button{visibility:hidden !important;}';
       document.head.appendChild(style);
       window.setTimeout(function () {
         var el = document.getElementById('target-prehide');
