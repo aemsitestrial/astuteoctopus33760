@@ -58,7 +58,7 @@ export default async function getAndApplyRenderDecisions() {
   // Pre-hide the text of every targetable region BEFORE the request goes out,
   // so the default copy never paints ahead of the decision (this is what kills
   // the flicker — hiding only after the round-trip let the original text show
-  // first). A skeleton shimmer stands in while the decision is pending. `hidden`
+  // first). The masked text is blank while the decision is pending. `hidden`
   // holds the scopes actually masked, so we know exactly what to reveal later.
   const hidden = new Set(
     requestedScopes.filter((scope) => hideScope(scope, sectionScopes, blockScopes)),
@@ -117,7 +117,7 @@ export default async function getAndApplyRenderDecisions() {
   });
 
   // A hidden scope with NO returned offer keeps its default copy — reveal it now
-  // so it is not needlessly held behind the skeleton until the failsafe fires.
+  // so it is not needlessly held hidden until the failsafe fires.
   hidden.forEach((scope) => {
     if (!offers.has(scope)) reveal(scope);
   });

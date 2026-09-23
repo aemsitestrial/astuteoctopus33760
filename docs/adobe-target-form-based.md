@@ -366,7 +366,7 @@ prevents this (see `scripts/target/flicker.js` + `orchestration.js`):
 - **Synchronous head pre-hide (bridge).** A tiny inline script in `head.html`
   runs during head parse — *before first paint* — and, only on target pages
   (gated on the `target` meta), masks the text of top-level Intent Sections
-  (`main > div[id]`) with the skeleton shimmer. This is the EDS-idiomatic
+  (`main > div[id]`) with `color:transparent`. This is the EDS-idiomatic
   equivalent of Adobe at.js's [pre-hiding snippet](https://experienceleague.adobe.com/en/docs/target-dev/developer/client-side/at-js-implementation/at-js/manage-flicker-with-atjs),
   but scoped to the personalizable regions (like at.js's `#container-1,#container-2`
   variant) instead of blacking out the whole `body {opacity:0}`. It carries its
@@ -383,12 +383,9 @@ prevents this (see `scripts/target/flicker.js` + `orchestration.js`):
   scope with no matching DOM on the page hides nothing.
 - **Text-only masking.** Only text-bearing elements are hidden (`h1`–`h6`, `p`,
   `li`, `a`, `span`, table cells…) — never the container. Background images,
-  media and scrims stay fully visible.
-- **Skeleton shimmer.** Hidden text is made transparent and backed by a subtle
-  shimmering gradient (`.target-flicker-hide`), so the region reads as
-  intentionally *loading* rather than as a blank gap while the decision is
-  pending.
-- **No layout shift.** Masking uses `color:transparent` + a background (not
+  media and scrims stay fully visible. Hidden text is made transparent via
+  `.target-flicker-hide`, so the region is blank while its decision is pending.
+- **No layout shift.** Masking uses `color:transparent` (not
   `display`/`visibility`), so each element keeps its size — CLS is unaffected.
 - **Re-hide on decoration.** A block's `decorate()` replaces its DOM with fresh,
   unhidden elements; the code re-asserts the mask on each decoration pass until
@@ -397,9 +394,8 @@ prevents this (see `scripts/target/flicker.js` + `orchestration.js`):
   immediately when the response carries **no** offer for it (default copy kept),
   or once its offer has been **applied**. Reveal fades in via
   `.target-flicker-reveal` (~500ms, `FLICKER_FADE_MS`) for a smooth settle; the
-  class is removed on `animationend`. Under `prefers-reduced-motion: reduce` (and
-  `forced-colors`) both the shimmer and the fade are disabled for an instant,
-  static reveal.
+  class is removed on `animationend`. Under `prefers-reduced-motion: reduce` the
+  fade is disabled for an instant reveal.
 - **Failsafe.** A hard timeout (`FLICKER_TIMEOUT_MS`, 4s) reveals everything
   regardless, so content is never stuck hidden if Target is slow or errors.
 

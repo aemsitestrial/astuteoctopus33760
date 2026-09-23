@@ -1,11 +1,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <!-- Adobe Target flicker pre-hide (FOOC). Runs synchronously during head parse,
      only on target pages (gated on the target meta, which EDS injects above this
-     file). Masks the TEXT of top-level Intent Sections (main > div[id]) with a
-     skeleton shimmer BEFORE first paint, so the default copy never flashes ahead
-     of the personalized offer. scripts/target/flicker.js takes over granular
-     masking and removes this bridge style (dismissPrehide) once it owns the DOM;
-     a self-timeout failsafe reveals content if that module never loads. -->
+     file). Masks the TEXT of top-level Intent Sections (main > div[id]) BEFORE
+     first paint, so the default copy never flashes ahead of the personalized
+     offer. scripts/target/flicker.js takes over granular masking and removes
+     this bridge style (dismissPrehide) once it owns the DOM; a self-timeout
+     failsafe reveals content if that module never loads. -->
 <script>
   (function () {
     try {
@@ -13,15 +13,8 @@
       var TEXT = 'main > div[id] :is(h1,h2,h3,h4,h5,h6,p,li,a,span,td,th,dt,dd)';
       var style = document.createElement('style');
       style.id = 'target-prehide';
-      style.textContent = TEXT + '{'
-        + 'color:transparent !important;'
-        + 'background-image:linear-gradient(90deg,rgba(0,0,0,.06) 25%,rgba(0,0,0,.12) 37%,rgba(0,0,0,.06) 63%) !important;'
-        + 'background-size:400% 100% !important;border-radius:4px;'
-        + 'animation:target-prehide-shimmer 1400ms ease infinite;}'
-        + TEXT + ' *{color:transparent !important;}'
-        + '@keyframes target-prehide-shimmer{from{background-position:100% 0}to{background-position:0 0}}'
-        + '@media (prefers-reduced-motion:reduce){' + TEXT + '{animation:none}}'
-        + '@media (forced-colors:active){' + TEXT + '{background-image:none !important;animation:none}}';
+      style.textContent = TEXT + '{color:transparent !important;}'
+        + TEXT + ' *{color:transparent !important;}';
       document.head.appendChild(style);
       window.setTimeout(function () {
         var el = document.getElementById('target-prehide');
