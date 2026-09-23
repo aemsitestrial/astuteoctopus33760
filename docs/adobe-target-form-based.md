@@ -381,12 +381,16 @@ prevents this (see `scripts/target/flicker.js` + `orchestration.js`):
   section; Intent Section block-id scope → that block; block-type scope → that
   block's instances; `page` → `<main>`; `default-content` → its wrappers. A
   scope with no matching DOM on the page hides nothing.
-- **Text-only masking.** Only text-bearing elements are hidden (`h1`–`h6`, `p`,
-  `li`, `a`, `span`, table cells…) — never the container. Background images,
-  media and scrims stay fully visible. Hidden text is made transparent via
-  `.target-flicker-hide`, so the region is blank while its decision is pending.
-- **No layout shift.** Masking uses `color:transparent` (not
-  `display`/`visibility`), so each element keeps its size — CLS is unaffected.
+- **Text + CTA masking.** Only text-bearing elements are hidden (`h1`–`h6`, `p`,
+  `li`, `a`, `span`, table cells…) plus custom-element CTAs (`xe-button`) —
+  never the container. Background images, media and scrims stay fully visible.
+  Hidden text is made transparent via `.target-flicker-hide`, so the region is
+  blank while its decision is pending.
+- **No layout shift.** Light-DOM text masking uses `color:transparent` (not
+  `display`/`visibility`), so each element keeps its size. `xe-button` renders
+  its label in shadow DOM where an outside `color` can't reach, so it is hidden
+  with `visibility:hidden` (inherits across the shadow boundary and still
+  reserves the box) — CLS is unaffected either way.
 - **Re-hide on decoration.** A block's `decorate()` replaces its DOM with fresh,
   unhidden elements; the code re-asserts the mask on each decoration pass until
   the scope's decision resolves, so late-decorating blocks don't flash either.

@@ -35,9 +35,10 @@ const FLICKER_REVEAL_CLASS = 'target-flicker-reveal';
 const FLICKER_FADE_MS = 500;
 
 // Text-bearing elements that Target offers replace (headings, copy, CTA labels,
-// list/table cells). Deliberately excludes img/picture/svg so backgrounds and
-// media are never dimmed by the flicker hide.
-const FLICKER_TEXT_SELECTOR = 'h1, h2, h3, h4, h5, h6, p, li, a, span, td, th, dt, dd';
+// list/table cells) plus custom-element CTAs (xe-button, whose label lives in
+// shadow DOM). Deliberately excludes img/picture/svg so backgrounds and media
+// are never dimmed by the flicker hide.
+const FLICKER_TEXT_SELECTOR = 'h1, h2, h3, h4, h5, h6, p, li, a, span, td, th, dt, dd, xe-button';
 
 // Resolves the container(s) a scope will modify. Section-id scopes → their
 // section; Intent Section block-id scopes → that one block element; page →
@@ -70,12 +71,16 @@ function ensureFlickerStyle() {
   if (document.getElementById('target-flicker-style')) return;
   const style = document.createElement('style');
   style.id = 'target-flicker-style';
-  // Hide by making text transparent (not display/visibility) so each box keeps
-  // its size — no CLS. Reveal fades in so the swap to personalized copy is
-  // smooth. Reduced-motion users get an instant, animation-free reveal.
+  // Hide light-DOM text by making it transparent (not display/visibility) so
+  // each box keeps its size — no CLS. Custom-element CTAs (xe-button) render
+  // their label in shadow DOM where an outside `color` can't reach, so hide
+  // those with `visibility:hidden` instead: it inherits across the shadow
+  // boundary and still preserves the box (no CLS). Reveal fades in so the swap
+  // to personalized copy is smooth; reduced-motion users get an instant reveal.
   style.textContent = `
     .${FLICKER_HIDE_CLASS}{color:transparent !important;}
     .${FLICKER_HIDE_CLASS} *{color:transparent !important;}
+    xe-button.${FLICKER_HIDE_CLASS}{visibility:hidden !important;}
     .${FLICKER_REVEAL_CLASS}{animation:target-flicker-fade ${FLICKER_FADE_MS}ms ease-out;}
     @keyframes target-flicker-fade{from{opacity:0;}to{opacity:1;}}
     @media (prefers-reduced-motion:reduce){.${FLICKER_REVEAL_CLASS}{animation:none;}}
