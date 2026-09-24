@@ -166,18 +166,20 @@ main > .section > .xe-footer-wrapper {
 /* --- Link columns grid --------------------------------------------------- */
 
 /* The footer-links field is grouped by the decorator into one column per
-   heading (the count is written to data-columns). Lay those columns out as a
-   grid: stacked on narrow screens, two on tablet, and one track per authored
-   heading on desktop. */
+   heading. On mobile each column is a collapsible accordion (heading = toggle
+   button, links = panel); on tablet/desktop the panels are forced open and the
+   columns lay out as a grid — two tracks on tablet, one track per heading on
+   desktop. */
 .xe-footer .xe-footer-links {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 32px 24px;
+    gap: 0;
 }
 
 @media (width >= 700px) {
     .xe-footer .xe-footer-links {
         grid-template-columns: repeat(2, 1fr);
+        gap: 32px 24px;
     }
 }
 
@@ -192,18 +194,83 @@ main > .section > .xe-footer-wrapper {
 .xe-footer .xe-footer-links-col {
     display: flex;
     flex-direction: column;
-    gap: 12px;
 }
 
-/* Scope to the column so this wins over the generic `.xe-footer-links-col p`
-   rule below (same <p> element, so specificity must be higher). Headings are
-   larger, bolder, and get extra space before their links. */
+/* Below tablet, give each accordion column a divider so the collapsed rows read
+   as distinct, tappable sections. */
+.xe-footer .xe-footer-links-col + .xe-footer-links-col {
+    border-top: 1px solid rgb(255 255 255 / 15%);
+}
+
+/* Heading is a full-width toggle button on mobile. Reset native button styles
+   so it inherits the footer's typography, and add a chevron that rotates when
+   the section is open. */
 .xe-footer .xe-footer-links-col .xe-footer-links-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 16px 0;
+    margin: 0;
+    border: 0;
+    background: none;
+    font: inherit;
     font-size: 17px;
     font-weight: 700;
     line-height: 1.3;
-    margin: 0 0 8px;
+    text-align: left;
     color: #fff;
+    cursor: pointer;
+}
+
+/* Chevron indicator (mobile only). */
+.xe-footer .xe-footer-links-col .xe-footer-links-title::after {
+    content: "";
+    width: 14px;
+    height: 14px;
+    flex: none;
+    background-color: currentcolor;
+    mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 15.4 5.6 9l1.4-1.4 5 5 5-5L18.4 9z"/></svg>') no-repeat center / contain;
+    transition: transform 0.2s ease;
+}
+
+.xe-footer .xe-footer-links-col .xe-footer-links-title[aria-expanded="true"]::after {
+    transform: rotate(180deg);
+}
+
+/* Collapsible panel: hidden when its toggle is collapsed, revealed when open. */
+.xe-footer .xe-footer-links-col .xe-footer-links-content {
+    display: none;
+    padding-bottom: 16px;
+}
+
+.xe-footer .xe-footer-links-col .xe-footer-links-title[aria-expanded="true"] + .xe-footer-links-content {
+    display: block;
+}
+
+/* From tablet up the accordion collapses into a static column: the toggle is no
+   longer interactive, the chevron and dividers disappear, and every panel is
+   permanently open. */
+@media (width >= 700px) {
+    .xe-footer .xe-footer-links-col + .xe-footer-links-col {
+        border-top: 0;
+    }
+
+    .xe-footer .xe-footer-links-col .xe-footer-links-title {
+        padding: 0 0 8px;
+        cursor: default;
+        pointer-events: none;
+    }
+
+    .xe-footer .xe-footer-links-col .xe-footer-links-title::after {
+        display: none;
+    }
+
+    .xe-footer .xe-footer-links-col .xe-footer-links-content {
+        display: block;
+        padding-bottom: 0;
+    }
 }
 
 /* Reset the authored <ul> bullets; render links as a clean vertical list. */
@@ -217,7 +284,7 @@ main > .section > .xe-footer-wrapper {
 }
 
 .xe-footer .xe-footer-links-col li,
-.xe-footer .xe-footer-links-col p,
+.xe-footer .xe-footer-links-col .xe-footer-links-content p,
 .xe-footer .xe-footer-links-col a {
     margin: 0;
     font-size: 15px;

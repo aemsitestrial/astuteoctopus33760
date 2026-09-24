@@ -93,6 +93,12 @@ export default function decorate(block) {
   // that follows it into a column so the stylesheet can lay them out as a grid
   // (one column per heading), matching the design's row of link columns.
   //
+  // On mobile the columns collapse into an accordion: the heading becomes a
+  // <button> toggle that expands/collapses its link list (each list lives in a
+  // dedicated `.xe-footer-links-content` panel wired to the button via
+  // aria-controls/aria-expanded). Desktop CSS forces every panel open and
+  // neutralises the toggle, so the same markup serves both layouts.
+  //
   // Drill through the row/cell wrapper divs to the element that actually holds
   // the heading/list sequence (the deepest single-child <div> whose children
   // are the <p>/<ul> content).
@@ -104,25 +110,50 @@ export default function decorate(block) {
   if (nodes.length) {
     const grid = document.createElement('div');
     grid.className = 'xe-footer-links';
-    let column = null;
+    let panel = null;
+    let colIndex = 0;
     nodes.forEach((node) => {
       const isHeading = node.matches('p, h2, h3, h4') && !node.querySelector('ul, ol');
       if (isHeading) {
-        column = document.createElement('div');
+        colIndex += 1;
+        const column = document.createElement('div');
         column.className = 'xe-footer-links-col';
-        const heading = document.createElement('p');
-        heading.className = 'xe-footer-links-title';
-        heading.textContent = node.textContent.trim();
-        column.append(heading);
+
+        const titleId = `xe-footer-links-title-${colIndex}`;
+        const panelId = `xe-footer-links-panel-${colIndex}`;
+
+        // Accessible accordion toggle. Collapsed by default so the mobile
+        // footer opens compact; desktop CSS overrides this to always-open.
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'xe-footer-links-title';
+        toggle.id = titleId;
+        toggle.textContent = node.textContent.trim();
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.setAttribute('aria-controls', panelId);
+
+        panel = document.createElement('div');
+        panel.className = 'xe-footer-links-content';
+        panel.id = panelId;
+        panel.setAttribute('role', 'region');
+        panel.setAttribute('aria-labelledby', titleId);
+
+        toggle.addEventListener('click', () => {
+          const expanded = toggle.getAttribute('aria-expanded') === 'true';
+          toggle.setAttribute('aria-expanded', String(!expanded));
+        });
+
+        column.append(toggle, panel);
         grid.append(column);
-      } else if (column) {
-        column.append(node);
+      } else if (panel) {
+        panel.append(node);
       } else {
         // Content before any heading: start an untitled column so it is kept.
-        column = document.createElement('div');
+        const column = document.createElement('div');
         column.className = 'xe-footer-links-col';
         column.append(node);
         grid.append(column);
+        panel = null;
       }
     });
     linksCell.replaceWith(grid);
