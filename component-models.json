@@ -1108,6 +1108,67 @@
     ]
   },
   {
+    "id": "xe-footer-v2",
+    "fields": [
+      {
+        "component": "reference",
+        "valueType": "string",
+        "name": "logo",
+        "label": "Logo",
+        "multi": false
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "logoAlt",
+        "label": "Logo alt text",
+        "value": ""
+      },
+      {
+        "component": "richtext",
+        "name": "copyright",
+        "value": "",
+        "label": "Copyright",
+        "valueType": "string"
+      },
+      {
+        "component": "richtext",
+        "name": "social",
+        "value": "",
+        "label": "Social links",
+        "valueType": "string"
+      },
+      {
+        "component": "richtext",
+        "name": "legal",
+        "value": "",
+        "label": "Legal links",
+        "valueType": "string"
+      },
+      {
+        "component": "richtext",
+        "name": "footerlinks",
+        "value": "",
+        "label": "Footer links",
+        "valueType": "string"
+      },
+      {
+        "component": "reference",
+        "valueType": "string",
+        "name": "banner_background",
+        "label": "Background",
+        "multi": false
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "banner_tagline",
+        "label": "Tagline",
+        "value": "Our Energy, Your Power"
+      }
+    ]
+  },
+  {
     "id": "xe-footer",
     "fields": [
       {
