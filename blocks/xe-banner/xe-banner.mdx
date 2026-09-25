@@ -1,0 +1,55 @@
+import { Meta, Canvas, Controls } from '@storybook/addon-docs/blocks';
+import * as XeBannerStories from './xe-banner.stories.js';
+
+<Meta of={XeBannerStories} />
+
+# XE Banner
+
+A full-width message banner: an optional icon, a heading, a rich-text message,
+and a single outlined call to action with a trailing arrow. The block rebuilds
+the authored content into web-component markup — `<xe-banner>` wrapping an
+`<xe-banner-column>` with slotted icon/heading/message/action, an `<xe-button>`
+CTA and `<xe-icon>` glyphs.
+
+## Authoring model
+
+The controls below map one-to-one to the block's authoring model
+(`blocks/xe-banner/_xe-banner.json`), so this page mirrors what an author edits
+in the Universal Editor.
+
+<table>
+  <thead>
+    <tr><th>Field</th><th>Model type</th><th>Purpose</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>icon</code></td><td>select</td><td>Icon above the heading (or None)</td></tr>
+    <tr><td><code>heading</code></td><td>text</td><td>Heading text</td></tr>
+    <tr><td><code>headingType</code></td><td>select</td><td>Heading level (H1–H4, default H2)</td></tr>
+    <tr><td><code>message</code></td><td>richtext</td><td>Message under the heading</td></tr>
+    <tr><td><code>cta_link</code></td><td>aem-content</td><td>Action href</td></tr>
+    <tr><td><code>cta_linkText</code></td><td>text</td><td>Action text</td></tr>
+    <tr><td><code>classes_size</code></td><td>select</td><td>Spacing: default, compact, or generous</td></tr>
+    <tr><td><code>classes_background</code></td><td>select</td><td>Background: default or subtle</td></tr>
+    <tr><td><code>classes_align</code></td><td>select</td><td>Alignment: center (default) or left</td></tr>
+  </tbody>
+</table>
+
+The action renders only when it has both a link and link text.
+
+## Live example
+
+<Canvas of={XeBannerStories.Default} />
+
+<Controls of={XeBannerStories.Default} />
+
+## Variants
+
+### Subtle background, left aligned
+
+<Canvas of={XeBannerStories.SubtleLeft} />
+
+### Message only
+
+No icon and no action.
+
+<Canvas of={XeBannerStories.MessageOnly} />

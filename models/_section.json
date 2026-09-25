@@ -61,7 +61,8 @@
         "xe-feature-cards",
         "xe-ignite-feature-cards",
         "xe-ignite-feature-cards-npm",
-        "xe-cards"
+        "xe-cards",
+        "xe-banner"
       ]
     }
   ]

@@ -642,6 +642,26 @@
           }
         },
         {
+          "title": "XE Banner",
+          "id": "xe-banner",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/block/v1/block",
+                "template": {
+                  "name": "XE Banner",
+                  "model": "xe-banner",
+                  "icon": "leaf",
+                  "heading": "Save Energy, Save Money",
+                  "headingType": "h2",
+                  "message": "<p>Explore rebates, tips, and programs to help reduce your energy use and lower your bill.</p>",
+                  "cta_linkText": "Explore Programs"
+                }
+              }
+            }
+          }
+        },
+        {
           "title": "XE Cards",
           "id": "xe-cards",
           "plugins": {

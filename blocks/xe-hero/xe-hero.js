@@ -1,5 +1,5 @@
-/* eslint-disable max-classes-per-file */
 import { moveInstrumentation } from '../../scripts/scripts.js';
+import '../../scripts/components/xe-button.js';
 
 /*
  * XE Hero
@@ -18,12 +18,12 @@ import { moveInstrumentation } from '../../scripts/scripts.js';
  *   </xe-hero>
  *
  * The `slot` attributes and the align/height presets only mean something inside
- * real custom elements, so the tags are defined below as small shadow-DOM
- * components. The media renders full-bleed behind a scrim; title, subtitle, and
- * actions render on top through named slots.
+ * real custom elements, so <xe-hero> is defined below as a small shadow-DOM
+ * component; <xe-button> is shared with the other xe-* blocks
+ * (scripts/components). The media renders full-bleed behind a scrim; title,
+ * subtitle, and actions render on top through named slots.
  */
 
-const BRAND = '#0b3d91';
 const SCRIM = 'linear-gradient(180deg, rgb(0 0 0 / 55%) 0%, rgb(0 0 0 / 65%) 100%)';
 
 // Maps the six locked-preset variant classes (see _xe-hero.json "classes"
@@ -128,67 +128,9 @@ class XeHero extends HTMLElement {
   }
 }
 
-/**
- * <xe-button> — CTA. Renders an anchor when it carries an href so the CTA still
- * navigates; otherwise a plain button. The primary/filled treatment matches the
- * solid brand button; secondary/outline matches the light bordered button.
- */
-class XeButton extends HTMLElement {
-  connectedCallback() {
-    if (this.shadowRoot) return;
-    const root = this.attachShadow({ mode: 'open' });
-    const href = this.getAttribute('href');
-    const label = '<slot></slot>';
-    const shared = `
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 44px;
-      padding: 0.65rem 1.5rem;
-      border-radius: 0.25rem;
-      font-family: var(--heading-font-family);
-      font-weight: 600;
-      text-decoration: none;
-      cursor: pointer;
-      border: 2px solid transparent;
-      transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-    `;
-    root.innerHTML = `
-      <style>
-        :host { display: inline-block; }
-        .btn { ${shared} }
-        :host([variant="primary"][treatment="filled"]) .btn {
-          background: ${BRAND};
-          color: #fff;
-        }
-        :host([variant="primary"][treatment="filled"]) .btn:hover,
-        :host([variant="primary"][treatment="filled"]) .btn:focus {
-          background: color-mix(in srgb, ${BRAND} 85%, black);
-        }
-        :host([variant="secondary"][treatment="outline"]) .btn {
-          background: transparent;
-          color: #fff;
-          border-color: #fff;
-        }
-        :host([variant="secondary"][treatment="outline"]) .btn:hover,
-        :host([variant="secondary"][treatment="outline"]) .btn:focus {
-          background: rgb(255 255 255 / 15%);
-        }
-      </style>
-      ${href
-    ? `<a class="btn" href="${href}">${label}</a>`
-    : `<button class="btn" type="button">${label}</button>`}
-    `;
-  }
-}
-
 // Register once — the block can be decorated multiple times per page.
-[
-  ['xe-hero', XeHero],
-  ['xe-button', XeButton],
-].forEach(([name, ctor]) => {
-  if (!customElements.get(name)) customElements.define(name, ctor);
-});
+// <xe-button> is shared with the other xe-* blocks (scripts/components).
+if (!customElements.get('xe-hero')) customElements.define('xe-hero', XeHero);
 
 /**
  * Resolves the effective height/alignment for this block instance: a locked
