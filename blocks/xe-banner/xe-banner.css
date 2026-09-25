@@ -1,0 +1,44 @@
+/*
+ * XE Banner
+ *
+ * The block renders web components (<xe-banner>/<xe-banner-column>) whose
+ * layout lives in their own shadow DOM (see xe-banner.js). This stylesheet
+ * handles the light-DOM section layout — the banner runs full-bleed so a
+ * background color spans the page, and <xe-banner> re-applies the content
+ * width inside its shadow root — plus the typography of the slotted heading
+ * and message, which page-level heading and paragraph rules would otherwise override.
+ */
+
+main > .section > div.xe-banner-wrapper {
+  max-width: unset;
+  padding: 0;
+}
+
+.xe-banner xe-banner {
+  display: block;
+}
+
+.xe-banner [slot="heading"] {
+  max-width: 16ch;
+  margin: 0;
+  font-family: var(--heading-font-family);
+  font-size: clamp(2.5rem, 5vw + 1rem, 4.5rem);
+  font-weight: 700;
+  line-height: 1.1;
+  text-transform: uppercase;
+  overflow-wrap: break-word;
+}
+
+.xe-banner [slot="message"] {
+  font-family: var(--body-font-family);
+  font-size: 1.125rem;
+  line-height: 1.5;
+}
+
+.xe-banner [slot="message"] > :first-child {
+  margin-top: 0;
+}
+
+.xe-banner [slot="message"] > :last-child {
+  margin-bottom: 0;
+}
