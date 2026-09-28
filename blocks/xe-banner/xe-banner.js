@@ -6,8 +6,8 @@ import '../../scripts/components/xe-icon.js';
  * XE Banner
  *
  * decorate() rebuilds the authored EDS table rows into web-component semantics
- * using <xe-banner> and <xe-banner-column> from @ignite/web (vendored as
- * ./vendor/xe-banner-ignite.js). The heading slot receives a <span> because
+ * using <xe-banner> and <xe-banner-column> from @ignite/web (centralized bundle
+ * at scripts/ignite/bundle). The heading slot receives a <span> because
  * <xe-banner-column> renders the actual heading element internally based on
  * the `heading-level` attribute. <xe-button> and <xe-icon> are the shared
  * local components (scripts/components) to avoid conflicts with xe-hero.
@@ -43,7 +43,7 @@ const ALIGNMENTS = ['left'];
 let ignitePromise;
 function loadIgnite() {
   if (!ignitePromise) {
-    ignitePromise = import('./vendor/xe-banner-ignite.js').catch(() => {
+    ignitePromise = import('../../scripts/ignite/bundle/compositions/banner/xe-banner.js').catch(() => {
       // Load failure: the decorated fallback content still renders, so swallow
       // the error rather than break the page.
     });
