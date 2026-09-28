@@ -6,10 +6,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Use Node.js 20
+    - name: Use Node.js 24
       uses: actions/setup-node@v4
       with:
-        node-version: 20
+        node-version: 24
     # @ignite/web (Xcel JFrog) and Font Awesome Pro install from private
     # registries. Tokens come from repository secrets and are written to the
     # runner's user npmrc only — nothing is committed to the repo.
