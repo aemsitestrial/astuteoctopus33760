@@ -14,6 +14,7 @@
     "build:json:filters": "merge-json-cli -i \"models/_component-filters.json\" -o \"component-filters.json\"",
     "build:xe-cards-vendor": "node blocks/xe-cards/vendor/build.mjs",
     "build:xe-ignite-feature-cards-npm-vendor": "node blocks/xe-ignite-feature-cards-npm/vendor/build.mjs",
+    "build:xe-banner-vendor": "node blocks/xe-banner/vendor/build.mjs",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test:storybook": "vitest --project=storybook",
@@ -55,6 +56,10 @@
     "vitest": "^4.1.11"
   },
   "dependencies": {
-    "igniteui-webcomponents": "^7.3.2"
+    "igniteui-webcomponents": "^7.3.2",
+    "@fortawesome/free-brands-svg-icons": "^7.3.1",
+    "@fortawesome/pro-regular-svg-icons": "^7.3.1",
+    "@ignite/web": "^0.34.0",
+    "lit": "^3.3.3"
   }
 }
