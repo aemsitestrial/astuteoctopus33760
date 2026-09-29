@@ -1,4 +1,4 @@
-import { Meta, Canvas, Controls, Story } from '@storybook/addon-docs/blocks';
+import { Meta, Canvas, Controls } from '@storybook/addon-docs/blocks';
 import * as XeFooterStories from './xe-footer-v2.stories.js';
 
 <Meta of={XeFooterStories} />
@@ -26,77 +26,63 @@ composition, following its reference markup:
 </xe-footer>
 ```
 
-Up to five link columns render, plus the logo (Ignite's built-in Xcel Energy
-logo when none is authored) and the banner tagline. Social buttons open the
-profile in a new window.
-
-Below 1024px each link column collapses into an accordion (`<xe-accordion>`).
-Colors, spacing and typography come from the Ignite design tokens
-(`scripts/ignite/bundle/themes/tokens.css`), loaded by
+The logo (Ignite's built-in Xcel Energy logo when none is authored) and the
+banner tagline render too. Below 1024px each link column collapses into an
+accordion (`<xe-accordion>`). Colors, spacing and typography come from the
+Ignite design tokens (`scripts/ignite/bundle/themes/tokens.css`), loaded by
 `scripts/components/ignite.js`.
 
 ## Authoring model
 
-The controls below map one-to-one to the block's authoring model
-(`blocks/xe-footer-v2/_xe-footer-v2.json`), so this page mirrors what an author edits
-in the Universal Editor.
-
-The block is a **key-value block** (`"key-value": true` on its template): every
-field renders as a `name | value` row, and the decorator reads each field by
-name. A blank field is simply absent, so it can't shift the fields after it.
-Link columns are five fixed slots; a slot renders only when it has links.
+The block is a **container** (its `xe-footer-v2` filter): its own fields
+render as rows first, then one row per child item. The controls below map
+one-to-one to the model (`blocks/xe-footer-v2/_xe-footer-v2.json`).
 
 <table>
   <thead>
     <tr><th>Field</th><th>Model type</th><th>Purpose</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>logo</code></td><td>reference</td><td>Footer logo image</td></tr>
-    <tr><td><code>logoAlt</code></td><td>text</td><td>Logo alt text</td></tr>
+    <tr><td><code>logo</code> + <code>logoAlt</code></td><td>reference + text</td><td>Footer logo image and its alt text</td></tr>
     <tr><td><code>copyright</code></td><td>richtext</td><td>Copyright line</td></tr>
-    <tr><td><code>social</code></td><td>richtext</td><td>Social icon links</td></tr>
-    <tr><td><code>legal</code></td><td>richtext</td><td>Legal links</td></tr>
-    <tr><td><code>column1Heading</code> … <code>column5Heading</code></td><td>text</td><td>Link column heading</td></tr>
-    <tr><td><code>column1Links</code> … <code>column5Links</code></td><td>richtext</td><td>Link column links (a list); the column renders only when it has links</td></tr>
-    <tr><td><code>banner_background</code></td><td>reference</td><td>Full-bleed banner image</td></tr>
-    <tr><td><code>banner_tagline</code></td><td>text</td><td>Centered banner overlay text</td></tr>
+    <tr><td><code>banner_background</code> + <code>banner_tagline</code></td><td>reference + text</td><td>Full-bleed banner image and its centered tagline</td></tr>
   </tbody>
 </table>
 
 ### Child items: social and legal links
 
-The block is also a container for two items (its `xe-footer-v2` filter):
-
 <table>
   <thead>
-    <tr><th>Item</th><th>Field</th><th>Purpose</th></tr>
+    <tr><th>Item</th><th>Field</th><th>Renders as</th></tr>
   </thead>
   <tbody>
-    <tr><td>XE Footer Social Links</td><td><code>socialLinks</code> (multi: <code>cta_link</code> profile URL + <code>cta_linkText</code> network select)</td><td>Social icon links (Facebook, X, Instagram, LinkedIn, YouTube), opening in a new window</td></tr>
-    <tr><td>XE Footer Legal Links</td><td><code>legalLinks</code> (multi: <code>cta_link</code> + <code>cta_linkText</code>)</td><td>Legal text links</td></tr>
+    <tr><td>XE Footer Social Links</td><td><code>socialLinks</code> (multi: <code>cta_link</code> profile URL + <code>cta_linkText</code> network select)</td><td>Social icon buttons (Facebook, X, Instagram, LinkedIn, YouTube), opening in a new window</td></tr>
+    <tr><td>XE Footer Legal Links</td><td><code>legalLinks</code> (multi: <code>cta_link</code> + <code>cta_linkText</code>)</td><td>Legal links with a trailing icon</td></tr>
   </tbody>
 </table>
 
-Each item renders as a list of links. Published markup doesn't record which
-item a list came from, so a list whose links all point to known social
-networks is the social list and any other list is the legal list; if AEM
-renders the items as key-value rows, their field names identify them.
+Each item is decorated by its own block — `blocks/xe-footer-social-links` and
+`blocks/xe-footer-legal-links` export `decorate(item)`, returning the elements
+the footer slots in, and `decorateDefaults()`, the live Xcel Energy footer's
+links used when no item is authored.
 
 In the Universal Editor each item row carries its model (`data-aue-model`), so
-it lands in the right list regardless of its links, and its instrumentation is
-moved onto the first button or link rendered from it — keeping every item in
-the editor's content tree. An item that has no links yet shows an "Add social
-links" / "Add legal links" placeholder (editor only) so it can be selected and
-filled in.
+it lands in the right place regardless of its links, and its instrumentation
+moves onto the first button or link rendered from it, keeping every item in the
+editor's content tree. An item with no links yet shows an "Add social links" /
+"Add legal links" placeholder (editor only) so it can be selected and filled in.
+On published pages rows carry no model, so a list whose links all point to
+social networks is the social item and any other list of links is the legal
+item.
 
-When neither an item nor the older `social` / `legal` rich-text field is
-authored, the live Xcel Energy footer's links render as defaults: the five
-social profiles, and Online Terms of Use, Privacy and Accessibility.
+### Footers authored with earlier models
 
-Footers created before the key-value model render as positional rows with a
-single `footerlinks` rich-text field (heading + link-list pairs). The block
-still reads those, so existing content keeps working; they only need
-re-authoring into the column slots to be edited with the new fields.
+Rows are recognized by what they hold, not by position, so earlier footers keep
+rendering: footers created while the block was **key-value** (`name | value`
+rows, including their five link-column slots and rich-text social / legal
+fields), and the original **positional** layout (rich-text social, legal and
+footer links). The current model has no link-column fields, so link columns
+render only from those earlier footers.
 
 ## Live example
 
@@ -109,60 +95,40 @@ would in authoring.
 
 ## Variants
 
-### Non-contiguous columns
+### Default social and legal links
 
-Only slots 1 and 4 are filled; the blank slots are skipped.
+No items authored — the defaults render.
 
-<Canvas of={XeFooterStories.NonContiguousColumns} />
-
-### Five columns
-
-<Canvas of={XeFooterStories.FiveColumns} />
+<Canvas of={XeFooterStories.DefaultLinks} />
 
 ### Blank fields
 
-Copyright and social are left blank; every other field still lands in place.
+No copyright and no tagline; the banner image still lands as the banner.
 
 <Canvas of={XeFooterStories.BlankFields} />
 
 ### Default logo
 
-With no logo authored, Ignite's built-in Xcel Energy logo renders.
-
 <Canvas of={XeFooterStories.DefaultLogo} />
 
-### Default social and legal links
+### Empty items in the Universal Editor
 
-Nothing authored for social or legal links — the defaults render.
+Just-added items with no links show editor-only placeholders.
 
-<Canvas of={XeFooterStories.DefaultLinks} />
+<Canvas of={XeFooterStories.EditorEmptyItems} />
 
-### Rich-text social and legal links
+### Key-value footer with link columns
 
-No items, but the older rich-text fields are filled; they render as authored.
-
-<Canvas of={XeFooterStories.RichTextLinks} />
+<Canvas of={XeFooterStories.KeyValueFooter} />
 
 ### Legacy content
 
-A footer authored before the key-value model (positional rows, one
-`footerlinks` field) renders the same columns.
-
 <Canvas of={XeFooterStories.LegacyContent} />
-
-## How it renders
-
-The block's decorator reads each authored field by its key, builds
-the Ignite markup, and waits for the footer bundle
-(`scripts/ignite/bundle/compositions/footer/xe-footer.js`) to register its
-elements. Stories run that real `decorate()` against the shipped
-`xe-footer-v2.css` and the same bundle, so what you see here matches production.
 
 ## Testing
 
-- **Interaction tests** — each story's `play` function asserts the decorated
-  Ignite structure (columns, links, logo, banner tagline). Run headless with
-  `npm run test:storybook`.
+- **Interaction tests** — each story's `play` function asserts the rendered
+  Ignite structure. Run headless with `npm run test:storybook`.
 - **Visual tests** — Chromatic snapshots each story and flags pixel diffs.
 - **Accessibility** — the a11y panel runs axe checks on every story, enforcing
   WCAG 2.2 AA conformance.

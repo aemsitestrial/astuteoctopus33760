@@ -56,7 +56,8 @@ const config = {
       ...viteConfig.resolve,
       alias: [
         ...(viteConfig.resolve?.alias || []),
-        { find: /^.*\/scripts\/scripts\.js$/, replacement: scriptsMock },
+        // Also `../scripts.js`, as imported by the shared modules in scripts/components.
+        { find: /^(.*\/scripts\/|\.\.\/)scripts\.js$/, replacement: scriptsMock },
         { find: /^@fortawesome\/pro-(solid|regular)-svg-icons$/, replacement: fontAwesomeShim },
       ],
     },

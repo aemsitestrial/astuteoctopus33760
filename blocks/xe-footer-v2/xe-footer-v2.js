@@ -1,5 +1,13 @@
 import { moveInstrumentation } from '../../scripts/scripts.js';
 import loadIgnite from '../../scripts/components/ignite.js';
+import { hyperlink } from '../../scripts/components/xe-footer-utils.js';
+import decorateSocialLinks, {
+  decorateDefaults as defaultSocialLinks,
+  isSocialLinks,
+} from '../xe-footer-social-links/xe-footer-social-links.js';
+import decorateLegalLinks, {
+  decorateDefaults as defaultLegalLinks,
+} from '../xe-footer-legal-links/xe-footer-legal-links.js';
 
 /*
  * XE Footer V2
@@ -13,32 +21,24 @@ import loadIgnite from '../../scripts/components/ignite.js';
  *     <xe-footer-column heading="Company">
  *       <xe-hyperlink href="…" variant="variant">Careers</xe-hyperlink>…
  *     </xe-footer-column>…
- *     <xe-icon-button slot="social" size="xl" href="…" aria-label="Facebook …">
- *       <xe-icon icon="faSquareFacebook"></xe-icon>
- *     </xe-icon-button>…
- *     <xe-hyperlink slot="legal" href="…" variant="variant" trailing-icon>Privacy</xe-hyperlink>…
+ *     <xe-icon-button slot="social" …>…</xe-icon-button>…       (xe-footer-social-links)
+ *     <xe-hyperlink slot="legal" … trailing-icon>…</xe-hyperlink>… (xe-footer-legal-links)
  *     <img slot="banner-image" src="…" alt="">
  *     <span slot="tagline">Our Energy, Your Power</span>
  *   </xe-footer>
  *
- * The block is a key-value block ("key-value": true in _xe-footer-v2.json):
- * every model field renders as a `name | value` row, so fields are read by
- * name and a blank field can't shift the others. Link columns are fixed slots
- * (column1Heading/column1Links … column5Heading/column5Links); a slot without
- * links is skipped. Footers authored before the switch (positional rows with
- * one `footerlinks` rich-text field) are still read.
+ * The block is a container (filter `xe-footer-v2`): its own fields (logo +
+ * alt, copyright, banner background + tagline) render as rows first, then one
+ * row per child item. The social and legal links are those items, decorated
+ * by their own blocks (xe-footer-social-links / xe-footer-legal-links); the
+ * live Xcel Energy footer's links render when none are authored.
  *
- * Social and legal links come from the block's child items
- * (xe-footer-social-links: network + profile URL; xe-footer-legal-links:
- * text + link), falling back to the `social` / `legal` rich-text fields, and
- * then to the live Xcel Energy footer's links (DEFAULT_SOCIAL_LINKS /
- * DEFAULT_LEGAL_LINKS) when none are authored.
- *
- * Universal Editor: the editor's content tree and selection come from the
- * data-aue-* instrumentation in the DOM, so every authored row's
- * instrumentation is moved onto the element rendered from it (see
- * keepInstrumentation). Each child item keeps its own; an item that has no
- * links yet renders an editor-only placeholder rather than disappearing.
+ * Rows are recognized by what they hold rather than by position, so blank
+ * fields can't shift the others and older footers still render: key-value
+ * rows (`name | value`, footers created while the block was key-value) by
+ * name, a row instrumented with an item model (Universal Editor) as that item,
+ * a list of links as an item, headings + link lists as link columns, and
+ * images / text as the logo, banner and copyright.
  *
  * <xe-footer-column> wraps each link in an <li> inside its list; below 1024px
  * it switches to an accordion. Styling comes from the Ignite tokens (loaded by
@@ -46,49 +46,19 @@ import loadIgnite from '../../scripts/components/ignite.js';
  * light-DOM content that page-level rules would otherwise restyle.
  */
 
-// Link-column slots in the model (column1Heading/column1Links … column5…).
+// Link-column slots of key-value footers (column1Heading/column1Links … column5…).
 const COLUMN_SLOTS = 5;
-
-// Legacy (pre-key-value) footers: single-cell rows in the old model order,
-// with the banner (background + tagline, one grouped cell) as the last row.
-const LEGACY_FIELDS = ['logo', 'copyright', 'social', 'legal', 'footerlinks'];
 
 // <xe-footer-column>'s accordion breakpoint (it hard-codes this media query).
 const ACCORDION_QUERY = window.matchMedia('(max-width: 1024px)');
 
-// Social networks, keyed by the xe-footer-social-links "Network" value, with
-// their icon (scripts/components/icons.js). `match` also recognizes a network
-// from its profile URL or a free-text label.
-const SOCIAL_NETWORKS = {
-  facebook: { label: 'Facebook', icon: 'faSquareFacebook', match: /facebook/i },
-  x: { label: 'X', icon: 'faSquareXTwitter', match: /^x$|twitter|(^|\/\/|\.)x\.com/i },
-  instagram: { label: 'Instagram', icon: 'faInstagram', match: /instagram/i },
-  linkedin: { label: 'LinkedIn', icon: 'faSquareLinkedin', match: /linkedin/i },
-  youtube: { label: 'YouTube', icon: 'faYoutube', match: /youtube/i },
-};
-
-// Child item models (the xe-footer-v2 filter) → the footer area they fill,
-// and their multi-field names, which identify them if AEM renders the items
-// as key-value rows.
+// Child item models (the xe-footer-v2 filter) → the footer area they fill, and
+// their multi-field names, which identify them if rendered as key-value rows.
 const ITEM_MODELS = {
   'xe-footer-social-links': 'social',
   'xe-footer-legal-links': 'legal',
 };
 const ITEM_KEYS = { sociallinks: 'social', legallinks: 'legal' };
-
-// Rendered when no social / legal links are authored (the live Xcel Energy footer's).
-const DEFAULT_SOCIAL_LINKS = [
-  ['facebook', 'https://www.facebook.com/XcelEnergy'],
-  ['x', 'https://twitter.com/XcelEnergy'],
-  ['instagram', 'https://www.instagram.com/xcelenergy'],
-  ['linkedin', 'https://www.linkedin.com/company/xcel-energy'],
-  ['youtube', 'https://www.youtube.com/XcelEnergyVideo'],
-];
-const DEFAULT_LEGAL_LINKS = [
-  ['Online Terms of Use', 'https://www.xcelenergy.com/staticfiles/xe-responsive/Admin/My%20Account_Terms_and_Conditions.pdf'],
-  ['Privacy', 'https://my.xcelenergy.com/s/privacy'],
-  ['Accessibility', 'https://corporate.my.xcelenergy.com/s/about/accessibility'],
-];
 
 /** The element holding a row's authored content (its single cell). */
 function cellOf(row) {
@@ -108,179 +78,85 @@ function hasContent(element) {
   return element.textContent.trim() || element.querySelector('img, picture, svg');
 }
 
-/**
- * The network key for a social link (or null), from its text, its accessible
- * name or icon alt text (icon-only rich-text links), or its URL.
- */
-function socialNetwork(anchor) {
-  const img = anchor.querySelector('img');
-  const names = [anchor.textContent, anchor.getAttribute('aria-label'), img && img.alt]
-    .map((name) => (name || '').trim())
-    .filter(Boolean);
-  const href = anchor.getAttribute('href') || '';
-  const found = Object.entries(SOCIAL_NETWORKS).find(([key, { match }]) => match.test(href)
-    || names.some((name) => name.toLowerCase() === key || match.test(name)));
-  return found ? found[0] : null;
+/** True when all of `part`'s text is link text (whitespace aside). */
+function isLinksOnly(part) {
+  const squash = (text) => text.replace(/\s+/g, '');
+  const linkText = [...part.querySelectorAll('a')].map((a) => a.textContent).join('');
+  return squash(part.textContent) === squash(linkText);
 }
 
 /**
- * Which footer area ('social' | 'legal') a child item row fills, or null.
- * In the Universal Editor the row is instrumented with its model
- * (`data-aue-model`), which is exact. On published pages the row carries no
- * such hint: an item rendered as a key-value row is known by its field name,
- * otherwise a list whose links all point to social networks is the social
- * list and any other list of links is the legal list.
+ * True when `cell` is nothing but links: a list, or paragraphs, of links whose
+ * text is all the text there is (so a copyright line with a link isn't one).
  */
-function itemKind(row, key) {
-  const model = row.getAttribute('data-aue-model');
-  if (ITEM_MODELS[model]) return ITEM_MODELS[model];
-  if (ITEM_KEYS[key]) return ITEM_KEYS[key];
-  const links = [...row.querySelectorAll('a')];
-  if (!links.length) return null;
-  return links.every((anchor) => socialNetwork(anchor)) ? 'social' : 'legal';
+function isLinkList(cell) {
+  const nodes = [...cell.children];
+  if (!nodes.length || !nodes.every((node) => node.querySelector('a'))) return false;
+  return nodes.every((node) => {
+    const items = node.matches('ul, ol') ? [...node.children] : [node];
+    return items.every(isLinksOnly);
+  });
+}
+
+/** True when `cell` is headings followed by link lists (link columns). */
+function isLinkColumns(cell) {
+  const nodes = [...cell.children];
+  return nodes.some((node) => !node.querySelector('a') && node.textContent.trim())
+    && nodes.some((node) => node.querySelector('a'));
 }
 
 /**
- * Reads the authored fields into `{ normalizedName: valueElement }`, plus
- * `items: { social: [row…], legal: [row…] }` for the child item rows (kept
- * whole, since the row carries the item's Universal Editor instrumentation).
- * Key-value rows (two cells: name, value) are read by name. Otherwise the rows
- * are the legacy positional layout, mapped onto the same names.
+ * Reads the authored rows into `{ normalizedName: valueElement }` plus
+ * `items: { social: [row…], legal: [row…] }` (item rows are kept whole, since
+ * the row carries the item's Universal Editor instrumentation).
  */
 function readFields(block) {
-  const rows = [...block.children];
   const fields = { items: { social: [], legal: [] } };
-  const isItemModel = (row) => Boolean(ITEM_MODELS[row.getAttribute('data-aue-model')]);
+  const addItem = (kind, row) => fields.items[kind].push(row);
+  let seenCopyright = false;
 
-  if (rows.some((row) => row.children.length === 2 || isItemModel(row))) {
-    rows.forEach((row) => {
-      const key = row.children.length === 2 ? toKey(row.firstElementChild.textContent) : '';
-      if (isItemModel(row) || ITEM_KEYS[key] || row.children.length === 1) {
-        const kind = itemKind(row, key);
-        if (kind) fields.items[kind].push(row);
-        return;
-      }
+  [...block.children].forEach((row) => {
+    const model = ITEM_MODELS[row.getAttribute('data-aue-model')];
+    if (model) {
+      addItem(model, row);
+      return;
+    }
+
+    // Key-value row: read by name.
+    if (row.children.length === 2) {
+      const key = toKey(row.firstElementChild.textContent);
       const value = row.children[1];
-      if (key && hasContent(value)) fields[key] = value;
-    });
-    return fields;
-  }
+      if (ITEM_KEYS[key]) addItem(ITEM_KEYS[key], row);
+      else if (key && hasContent(value)) fields[key] = value;
+      return;
+    }
 
-  const lastRow = rows[rows.length - 1];
-  const bannerRow = rows.length > 1 && lastRow.querySelector('picture, img') ? lastRow : null;
-  rows.filter((row) => row !== bannerRow).forEach((row, index) => {
-    const name = LEGACY_FIELDS[index];
-    if (name && hasContent(row)) fields[name] = cellOf(row);
+    // Plain row: recognize by content. Social icon links hold images too, so
+    // link lists are checked before the logo / banner.
+    const cell = cellOf(row);
+    if (!hasContent(cell)) return;
+    const image = cell.querySelector('picture, img');
+    const linkList = isLinkList(cell);
+    if (linkList && (!image || isSocialLinks(cell))) {
+      addItem(isSocialLinks(cell) ? 'social' : 'legal', row);
+    } else if (image) {
+      // The logo comes before the copyright; the banner (image + tagline) after.
+      const isBanner = fields.logo || seenCopyright || cell.textContent.trim();
+      if (isBanner) {
+        fields['banner-background'] = cell;
+        const tagline = [...cell.childNodes].find((node) => node.textContent.trim());
+        if (tagline) fields['banner-tagline'] = tagline;
+      } else {
+        fields.logo = cell;
+      }
+    } else if (isLinkColumns(cell)) {
+      fields.footerlinks = cell;
+    } else if (!fields.copyright) {
+      fields.copyright = cell;
+      seenCopyright = true;
+    }
   });
-
-  if (bannerRow) {
-    // Background + tagline share one grouped cell: split them apart.
-    const cell = cellOf(bannerRow);
-    const background = document.createElement('div');
-    background.append(cell.querySelector('picture') || cell.querySelector('img'));
-    fields['banner-background'] = background;
-    const tagline = [...cell.childNodes].find((node) => node.textContent.trim());
-    if (tagline) fields['banner-tagline'] = tagline;
-  }
   return fields;
-}
-
-/**
- * An Ignite hyperlink styled for the dark footer, from an authored link or a
- * `[text, href]` default. `slot` / `trailingIcon` place it in the legal area.
- */
-function hyperlink(source, { slot, trailingIcon } = {}) {
-  const link = document.createElement('xe-hyperlink');
-  if (slot) link.setAttribute('slot', slot);
-  link.setAttribute('variant', 'variant');
-  if (trailingIcon) link.setAttribute('trailing-icon', '');
-  if (Array.isArray(source)) {
-    const [text, href] = source;
-    link.setAttribute('href', href);
-    link.textContent = text;
-    return link;
-  }
-  link.setAttribute('href', source.getAttribute('href') || '');
-  ['target', 'aria-label'].forEach((name) => {
-    if (source.hasAttribute(name)) link.setAttribute(name, source.getAttribute(name));
-  });
-  link.textContent = source.textContent.trim();
-  moveInstrumentation(source, link);
-  return link;
-}
-
-/** An Ignite icon button linking to a social profile in a new window. */
-function socialButton(network, href) {
-  const { label, icon } = SOCIAL_NETWORKS[network];
-  const button = document.createElement('xe-icon-button');
-  button.setAttribute('slot', 'social');
-  button.setAttribute('size', 'xl');
-  button.setAttribute('href', href);
-  button.setAttribute('target', '_blank');
-  button.setAttribute('aria-label', `${label} (opens in a new window)`);
-  const glyph = document.createElement('xe-icon');
-  glyph.setAttribute('icon', icon);
-  button.append(glyph);
-  return button;
-}
-
-/**
- * Keeps a source's Universal Editor instrumentation in the rendered footer by
- * moving it onto the first element built from it, so the item or field stays
- * in the editor's content tree and can be selected. A child item with nothing
- * to render yet (just added, no links) gets an editor-only placeholder instead
- * of disappearing; on published pages there is no instrumentation, so nothing
- * is added.
- */
-function keepInstrumentation(source, elements, slot, placeholderText) {
-  if (elements.length) {
-    moveInstrumentation(source, elements[0]);
-    return elements;
-  }
-  if (!source.hasAttribute('data-aue-resource')) return elements;
-  const placeholder = document.createElement('span');
-  placeholder.setAttribute('slot', slot);
-  placeholder.className = 'xe-footer-v2-placeholder';
-  placeholder.textContent = placeholderText;
-  moveInstrumentation(source, placeholder);
-  return [placeholder];
-}
-
-/** Social icon buttons for the links in `source`; unrecognized networks stay as authored links. */
-function socialButtons(source) {
-  return [...source.querySelectorAll('a')].map((anchor) => {
-    const network = socialNetwork(anchor);
-    if (network) return socialButton(network, anchor.getAttribute('href') || '');
-    anchor.setAttribute('slot', 'social');
-    return anchor;
-  });
-}
-
-/**
- * The social icon buttons: from the xe-footer-social-links items, else the
- * legacy `social` rich text, else the default networks.
- */
-function buildSocial(fields) {
-  const fromItems = fields.items.social
-    .flatMap((row) => keepInstrumentation(row, socialButtons(row), 'social', 'Add social links'));
-  if (fromItems.length) return fromItems;
-  if (fields.social) return keepInstrumentation(fields.social, socialButtons(fields.social));
-  return DEFAULT_SOCIAL_LINKS.map(([network, href]) => socialButton(network, href));
-}
-
-/**
- * The legal links (each an Ignite hyperlink with a trailing icon): from the
- * xe-footer-legal-links items, else the legacy `legal` rich text, else the
- * default legal links.
- */
-function buildLegal(fields) {
-  const options = { slot: 'legal', trailingIcon: true };
-  const links = (source) => [...source.querySelectorAll('a')].map((a) => hyperlink(a, options));
-  const fromItems = fields.items.legal
-    .flatMap((row) => keepInstrumentation(row, links(row), 'legal', 'Add legal links'));
-  if (fromItems.length) return fromItems;
-  if (fields.legal) return keepInstrumentation(fields.legal, links(fields.legal));
-  return DEFAULT_LEGAL_LINKS.map((link) => hyperlink(link, options));
 }
 
 /** An <xe-footer-column> holding the links found in `container`. */
@@ -291,7 +167,7 @@ function buildColumn(heading, container) {
   return column;
 }
 
-/** Builds the columns from the key-value slots, skipping slots without links. */
+/** Columns from a key-value footer's column slots, skipping slots without links. */
 function buildSlotColumns(fields) {
   const columns = [];
   for (let slot = 1; slot <= COLUMN_SLOTS; slot += 1) {
@@ -307,11 +183,11 @@ function buildSlotColumns(fields) {
 }
 
 /**
- * Builds columns from the legacy `footerlinks` rich text: a flat sequence of
- * heading (<p>/<hN>) + link list pairs, one column per heading. Links before
- * any heading get an untitled column so they are kept.
+ * Columns from footer-links rich text: a flat sequence of heading (<p>/<hN>)
+ * + link list pairs, one column per heading. Links before any heading get an
+ * untitled column so they are kept.
  */
-function buildLegacyColumns(value) {
+function buildColumnsFromRichText(value) {
   // Drill through wrapper divs to the element holding the heading/list sequence.
   let content = value;
   while (content.children.length === 1 && content.firstElementChild.matches('div')) {
@@ -378,6 +254,14 @@ function buildBannerImage(value) {
 }
 
 /**
+ * The first non-empty result: the child items, then a legacy rich-text field
+ * (decorated the same way), then the defaults.
+ */
+function firstOf(...sources) {
+  return sources.map((source) => source()).find((elements) => elements.length) || [];
+}
+
+/**
  * Keeps the column <li>s valid in both layouts. On desktop <xe-footer-column>
  * slots them into a <ul>, but its accordion (mobile) layout slots them without
  * one, which leaves orphaned list items (WCAG 1.3.1, axe `listitem`). Drop
@@ -413,16 +297,27 @@ export default async function decorate(block) {
 
   if (fields.copyright) footer.append(buildCopyright(fields.copyright));
 
-  // --- Link columns (default slot): key-value slots, else legacy rich text ---
+  // --- Link columns (default slot) ---
   let columns = buildSlotColumns(fields);
-  if (!columns.length && fields.footerlinks) columns = buildLegacyColumns(fields.footerlinks);
+  if (!columns.length && fields.footerlinks) columns = buildColumnsFromRichText(fields.footerlinks);
   if (columns.length) {
     footer.setAttribute('columns', String(columns.length));
     footer.append(...columns);
   }
 
-  // --- Social and legal links (authored items, legacy rich text, or defaults) ---
-  footer.append(...buildSocial(fields), ...buildLegal(fields));
+  // --- Social and legal links: the child items, decorated by their blocks ---
+  footer.append(
+    ...firstOf(
+      () => fields.items.social.flatMap(decorateSocialLinks),
+      () => (fields.social ? decorateSocialLinks(fields.social) : []),
+      defaultSocialLinks,
+    ),
+    ...firstOf(
+      () => fields.items.legal.flatMap(decorateLegalLinks),
+      () => (fields.legal ? decorateLegalLinks(fields.legal) : []),
+      defaultLegalLinks,
+    ),
+  );
 
   // --- Banner: background image + centered tagline ---
   const bannerImage = fields['banner-background'] && buildBannerImage(fields['banner-background']);
