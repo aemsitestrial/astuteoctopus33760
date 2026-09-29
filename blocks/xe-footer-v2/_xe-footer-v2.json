@@ -10,7 +10,7 @@
             "template": {
               "name": "XE Footer V2",
               "model": "xe-footer-v2",
-              "filter": "xe-footer-v2"
+              "key-value": true
             }
           }
         }
@@ -57,11 +57,74 @@
           "valueType": "string"
         },
         {
+          "component": "text",
+          "valueType": "string",
+          "name": "column1Heading",
+          "label": "Column 1 heading",
+          "value": ""
+        },
+        {
           "component": "richtext",
-          "name": "footerlinks",
-          "value": "",
-          "label": "Footer links",
-          "valueType": "string"
+          "valueType": "string",
+          "name": "column1Links",
+          "label": "Column 1 links",
+          "value": ""
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "column2Heading",
+          "label": "Column 2 heading",
+          "value": ""
+        },
+        {
+          "component": "richtext",
+          "valueType": "string",
+          "name": "column2Links",
+          "label": "Column 2 links",
+          "value": ""
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "column3Heading",
+          "label": "Column 3 heading",
+          "value": ""
+        },
+        {
+          "component": "richtext",
+          "valueType": "string",
+          "name": "column3Links",
+          "label": "Column 3 links",
+          "value": ""
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "column4Heading",
+          "label": "Column 4 heading",
+          "value": ""
+        },
+        {
+          "component": "richtext",
+          "valueType": "string",
+          "name": "column4Links",
+          "label": "Column 4 links",
+          "value": ""
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "column5Heading",
+          "label": "Column 5 heading",
+          "value": ""
+        },
+        {
+          "component": "richtext",
+          "valueType": "string",
+          "name": "column5Links",
+          "label": "Column 5 links",
+          "value": ""
         },
         {
           "component": "reference",

@@ -6,10 +6,9 @@ import * as XeFooterStories from './xe-footer-v2.stories.js';
 # XE Footer V2
 
 The **XE Footer V2** is the Xcel footer rendered with the `@ignite/web` footer
-composition. It uses the same authoring model as XE Footer: the authored content
-is rebuilt into `<xe-footer>` with slotted logo, copyright, social and legal
-links, one `<xe-footer-column>` per link heading, and a full-bleed banner with a
-centered tagline. Links become `<xe-hyperlink>` elements. When no logo is
+composition. The authored content is rebuilt into `<xe-footer>` with slotted
+logo, copyright, social and legal links, up to five `<xe-footer-column>` link
+columns, and a full-bleed banner with a centered tagline. Links become `<xe-hyperlink>` elements. When no logo is
 authored, Ignite's built-in Xcel Energy logo is used.
 
 Below 1024px each link column collapses into an accordion (`<xe-accordion>`).
@@ -23,6 +22,11 @@ The controls below map one-to-one to the block's authoring model
 (`blocks/xe-footer-v2/_xe-footer-v2.json`), so this page mirrors what an author edits
 in the Universal Editor.
 
+The block is a **key-value block** (`"key-value": true` on its template): every
+field renders as a `name | value` row, and the decorator reads each field by
+name. A blank field is simply absent, so it can't shift the fields after it.
+Link columns are five fixed slots; a slot renders only when it has links.
+
 <table>
   <thead>
     <tr><th>Field</th><th>Model type</th><th>Purpose</th></tr>
@@ -33,11 +37,17 @@ in the Universal Editor.
     <tr><td><code>copyright</code></td><td>richtext</td><td>Copyright line</td></tr>
     <tr><td><code>social</code></td><td>richtext</td><td>Social icon links</td></tr>
     <tr><td><code>legal</code></td><td>richtext</td><td>Legal links</td></tr>
-    <tr><td><code>footerlinks</code></td><td>richtext</td><td>Heading + link-list pairs; each heading becomes a column</td></tr>
+    <tr><td><code>column1Heading</code> … <code>column5Heading</code></td><td>text</td><td>Link column heading</td></tr>
+    <tr><td><code>column1Links</code> … <code>column5Links</code></td><td>richtext</td><td>Link column links (a list); the column renders only when it has links</td></tr>
     <tr><td><code>banner_background</code></td><td>reference</td><td>Full-bleed banner image</td></tr>
     <tr><td><code>banner_tagline</code></td><td>text</td><td>Centered banner overlay text</td></tr>
   </tbody>
 </table>
+
+Footers created before the key-value model render as positional rows with a
+single `footerlinks` rich-text field (heading + link-list pairs). The block
+still reads those, so existing content keeps working; they only need
+re-authoring into the column slots to be edited with the new fields.
 
 ## Live example
 
@@ -50,13 +60,21 @@ would in authoring.
 
 ## Variants
 
-### Single link column
+### Non-contiguous columns
 
-<Canvas of={XeFooterStories.SingleLinkColumn} />
+Only slots 1 and 4 are filled; the blank slots are skipped.
 
-### Two link columns
+<Canvas of={XeFooterStories.NonContiguousColumns} />
 
-<Canvas of={XeFooterStories.TwoLinkColumns} />
+### Five columns
+
+<Canvas of={XeFooterStories.FiveColumns} />
+
+### Blank fields
+
+Copyright and social are left blank; every other field still lands in place.
+
+<Canvas of={XeFooterStories.BlankFields} />
 
 ### Default logo
 
@@ -64,9 +82,16 @@ With no logo authored, Ignite's built-in Xcel Energy logo renders.
 
 <Canvas of={XeFooterStories.DefaultLogo} />
 
+### Legacy content
+
+A footer authored before the key-value model (positional rows, one
+`footerlinks` field) renders the same columns.
+
+<Canvas of={XeFooterStories.LegacyContent} />
+
 ## How it renders
 
-The block's decorator maps each authored row to its field by position, builds
+The block's decorator reads each authored field by its key, builds
 the Ignite markup, and waits for the footer bundle
 (`scripts/ignite/bundle/compositions/footer/xe-footer.js`) to register its
 elements. Stories run that real `decorate()` against the shipped
