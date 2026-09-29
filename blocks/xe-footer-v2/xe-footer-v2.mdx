@@ -6,10 +6,29 @@ import * as XeFooterStories from './xe-footer-v2.stories.js';
 # XE Footer V2
 
 The **XE Footer V2** is the Xcel footer rendered with the `@ignite/web` footer
-composition. The authored content is rebuilt into `<xe-footer>` with slotted
-logo, copyright, social and legal links, up to five `<xe-footer-column>` link
-columns, and a full-bleed banner with a centered tagline. Links become `<xe-hyperlink>` elements. When no logo is
-authored, Ignite's built-in Xcel Energy logo is used.
+composition, following its reference markup:
+
+```html
+<xe-footer columns="5">
+  <span slot="copyright">© 2026 Xcel Energy Inc. All rights reserved.</span>
+  <xe-footer-column heading="Company">
+    <xe-hyperlink href="…" variant="variant">Careers</xe-hyperlink>
+    …
+  </xe-footer-column>
+  …
+  <xe-icon-button slot="social" size="xl" href="…" aria-label="Facebook (opens in a new window)">
+    <xe-icon icon="faSquareFacebook"></xe-icon>
+  </xe-icon-button>
+  …
+  <xe-hyperlink slot="legal" href="…" variant="variant" trailing-icon>Privacy</xe-hyperlink>
+  …
+  <img slot="banner-image" src="…" alt="">
+</xe-footer>
+```
+
+Up to five link columns render, plus the logo (Ignite's built-in Xcel Energy
+logo when none is authored) and the banner tagline. Social buttons open the
+profile in a new window.
 
 Below 1024px each link column collapses into an accordion (`<xe-accordion>`).
 Colors, spacing and typography come from the Ignite design tokens
@@ -43,6 +62,29 @@ Link columns are five fixed slots; a slot renders only when it has links.
     <tr><td><code>banner_tagline</code></td><td>text</td><td>Centered banner overlay text</td></tr>
   </tbody>
 </table>
+
+### Child items: social and legal links
+
+The block is also a container for two items (its `xe-footer-v2` filter):
+
+<table>
+  <thead>
+    <tr><th>Item</th><th>Field</th><th>Purpose</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>XE Footer Social Links</td><td><code>socialLinks</code> (multi: <code>cta_link</code> profile URL + <code>cta_linkText</code> network select)</td><td>Social icon links (Facebook, X, Instagram, LinkedIn, YouTube), opening in a new window</td></tr>
+    <tr><td>XE Footer Legal Links</td><td><code>legalLinks</code> (multi: <code>cta_link</code> + <code>cta_linkText</code>)</td><td>Legal text links</td></tr>
+  </tbody>
+</table>
+
+Each item renders as a list of links. Published markup doesn't record which
+item a list came from, so a list whose links all point to known social
+networks is the social list and any other list is the legal list; if AEM
+renders the items as key-value rows, their field names identify them.
+
+When neither an item nor the older `social` / `legal` rich-text field is
+authored, the live Xcel Energy footer's links render as defaults: the five
+social profiles, and Online Terms of Use, Privacy and Accessibility.
 
 Footers created before the key-value model render as positional rows with a
 single `footerlinks` rich-text field (heading + link-list pairs). The block
@@ -81,6 +123,18 @@ Copyright and social are left blank; every other field still lands in place.
 With no logo authored, Ignite's built-in Xcel Energy logo renders.
 
 <Canvas of={XeFooterStories.DefaultLogo} />
+
+### Default social and legal links
+
+Nothing authored for social or legal links — the defaults render.
+
+<Canvas of={XeFooterStories.DefaultLinks} />
+
+### Rich-text social and legal links
+
+No items, but the older rich-text fields are filled; they render as authored.
+
+<Canvas of={XeFooterStories.RichTextLinks} />
 
 ### Legacy content
 

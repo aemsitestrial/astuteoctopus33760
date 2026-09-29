@@ -1256,21 +1256,21 @@
     "fields": [
       {
         "component": "container",
-        "name": "test",
-        "label": "Multi Text",
+        "name": "legalLinks",
+        "label": "Legal links",
         "multi": true,
         "fields": [
           {
             "component": "aem-content",
             "valueType": "string",
             "name": "cta_link",
-            "label": "Legal Link"
+            "label": "Link"
           },
           {
             "component": "text",
             "valueType": "string",
             "name": "cta_linkText",
-            "label": "Legal Text"
+            "label": "Text"
           }
         ]
       }
@@ -1281,21 +1281,44 @@
     "fields": [
       {
         "component": "container",
-        "name": "test",
-        "label": "Multi Text",
+        "name": "socialLinks",
+        "label": "Social links",
         "multi": true,
         "fields": [
           {
             "component": "aem-content",
             "valueType": "string",
             "name": "cta_link",
-            "label": "Social Link"
+            "label": "Profile URL"
           },
           {
-            "component": "text",
+            "component": "select",
             "valueType": "string",
             "name": "cta_linkText",
-            "label": "Social Icon"
+            "label": "Network",
+            "value": "facebook",
+            "options": [
+              {
+                "name": "Facebook",
+                "value": "facebook"
+              },
+              {
+                "name": "X (Twitter)",
+                "value": "x"
+              },
+              {
+                "name": "Instagram",
+                "value": "instagram"
+              },
+              {
+                "name": "LinkedIn",
+                "value": "linkedin"
+              },
+              {
+                "name": "YouTube",
+                "value": "youtube"
+              }
+            ]
           }
         ]
       }

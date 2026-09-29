@@ -15,11 +15,17 @@
  *   banner_background       reference (image) -> text control (asset URL)
  *   banner_tagline          text              -> text control
  *
+ * Child items (their composite multi-field renders as a <ul> of links):
+ *
+ *   xe-footer-social-links  socialLinks (network + profile URL) -> "socialLinks" (HTML)
+ *   xe-footer-legal-links   legalLinks (text + link)            -> "legalLinks" (HTML)
+ *
  * The block is a key-value block, so `fieldsToRows` renders each non-empty
  * field as a `name | value` row — the markup AEM produces for
- * "key-value": true. The LegacyContent story instead renders the old
- * positional layout (one `footerlinks` rich-text field) that footers created
- * before the switch still use.
+ * "key-value": true — followed by one single-cell row per child item. The
+ * LegacyContent story instead renders the old positional layout (one
+ * `footerlinks` rich-text field) that footers created before the switch
+ * still use.
  */
 import { expect, within, waitFor } from 'storybook/test';
 import decorate from './xe-footer-v2.js';
@@ -34,6 +40,31 @@ const COLUMNS = [
   ['Services', ['Residential', 'Business', 'Renewable plans', 'Usage insights']],
   ['Support', ['Contact us', 'Help center', 'Report an outage', 'Billing &amp; payments']],
 ];
+
+/** A <ul> of [text, href] links — how a link composite multi-field renders. */
+const linkList = (pairs) => `<ul>${pairs.map(([text, href]) => `<li><a href="${href}">${text}</a></li>`).join('')}</ul>`;
+
+// xe-footer-social-links: the link text is the "Network" select value.
+const SOCIAL_ITEMS = linkList([
+  ['facebook', 'https://www.facebook.com/XcelEnergy'],
+  ['x', 'https://twitter.com/XcelEnergy'],
+  ['instagram', 'https://www.instagram.com/xcelenergy'],
+  ['linkedin', 'https://www.linkedin.com/company/xcel-energy'],
+  ['youtube', 'https://www.youtube.com/XcelEnergyVideo'],
+]);
+const LEGAL_ITEMS = linkList([['Privacy Policy', '#'], ['Terms of Use', '#'], ['Cookie Preferences', '#']]);
+
+// The legacy `social` / `legal` rich-text fields.
+const SOCIAL_RICH_TEXT = [
+  '<p>',
+  '<a href="#" aria-label="Facebook">', picture('/icons/facebook.svg', 'Facebook'), '</a>',
+  '<a href="#" aria-label="X">', picture('/icons/x.svg', 'X'), '</a>',
+  '<a href="#" aria-label="Instagram">', picture('/icons/instagram.svg', 'Instagram'), '</a>',
+  '<a href="#" aria-label="LinkedIn">', picture('/icons/linkedin.svg', 'LinkedIn'), '</a>',
+  '<a href="#" aria-label="YouTube">', picture('/icons/youtube.svg', 'YouTube'), '</a>',
+  '</p>',
+].join('\n');
+const LEGAL_RICH_TEXT = list(['Privacy Policy', 'Terms of Use', 'Cookie Preferences']);
 
 /** Flat arg key for a column slot field, e.g. column(2, 'Links') -> 'column2Links'. */
 const column = (slot, field) => `column${slot}${field}`;
@@ -54,19 +85,13 @@ const defaults = {
   logo: '/icons/xcel-logo-white.svg',
   logoAlt: 'Xcel',
   copyright: '<p>© 2026 Xcel Energy. All rights reserved.</p>',
-  social: [
-    '<p>',
-    '<a href="#" aria-label="Facebook">', picture('/icons/facebook.svg', 'Facebook'), '</a>',
-    '<a href="#" aria-label="X">', picture('/icons/x.svg', 'X'), '</a>',
-    '<a href="#" aria-label="Instagram">', picture('/icons/instagram.svg', 'Instagram'), '</a>',
-    '<a href="#" aria-label="LinkedIn">', picture('/icons/linkedin.svg', 'LinkedIn'), '</a>',
-    '<a href="#" aria-label="YouTube">', picture('/icons/youtube.svg', 'YouTube'), '</a>',
-    '</p>',
-  ].join('\n'),
-  legal: list(['Privacy Policy', 'Terms of Use', 'Cookie Preferences']),
+  social: '',
+  legal: '',
   ...columnsToArgs(COLUMNS),
   banner_background: 'https://picsum.photos/1600/400?grayscale',
   banner_tagline: 'Our Energy, Your Power',
+  socialLinks: SOCIAL_ITEMS,
+  legalLinks: LEGAL_ITEMS,
 };
 
 // Model field order (_xe-footer-v2.json) — the order key-value rows render in.
@@ -78,16 +103,20 @@ const FIELD_ORDER = [
 
 /**
  * Renders the args as key-value rows (`[name, value]`) in model order,
- * omitting blank fields. Image references render as pictures.
+ * omitting blank fields (image references render as pictures), then one
+ * single-cell row per authored child item.
  */
 function fieldsToRows(args) {
-  return FIELD_ORDER
+  const rows = FIELD_ORDER
     .filter((name) => args[name])
     .map((name) => {
       if (name === 'logo') return [name, picture(args.logo, args.logoAlt || '')];
       if (name === 'banner_background') return [name, picture(args.banner_background, '')];
       return [name, args[name]];
     });
+  if (args.socialLinks) rows.push([args.socialLinks]);
+  if (args.legalLinks) rows.push([args.legalLinks]);
+  return rows;
 }
 
 /** The pre-key-value positional layout: one cell per field, banner last. */
@@ -96,8 +125,8 @@ function legacyRows(args) {
   return [
     [picture(args.logo, args.logoAlt)],
     [args.copyright],
-    [args.social],
-    [args.legal],
+    [SOCIAL_RICH_TEXT],
+    [LEGAL_RICH_TEXT],
     [footerlinks],
     [`${picture(args.banner_background, 'Banner')}<p>${args.banner_tagline}</p>`],
   ];
@@ -113,6 +142,8 @@ const argTypes = {
   legal: { control: 'text', description: 'Legal links (rich text) — HTML list of legal links.', table: { category: 'Brand' } },
   banner_background: { control: 'text', description: 'Background (reference) — asset URL for the full-bleed banner image.', table: { category: 'Banner' } },
   banner_tagline: { control: 'text', description: 'Tagline — centered banner overlay text.', table: { category: 'Banner' } },
+  socialLinks: { control: 'text', description: 'XE Footer Social Links item — <ul> of links whose text is the network (facebook, x, instagram, linkedin, youtube).', table: { category: 'Child items' } },
+  legalLinks: { control: 'text', description: 'XE Footer Legal Links item — <ul> of text + link pairs.', table: { category: 'Child items' } },
 };
 for (let slot = 1; slot <= COLUMN_SLOTS; slot += 1) {
   const category = `Column ${slot}`;
@@ -152,6 +183,34 @@ async function upgraded(canvasElement) {
 const columnHeadings = (canvasElement) => [...canvasElement.querySelectorAll('xe-footer-column')]
   .map((col) => col.getAttribute('heading'));
 
+/**
+ * The rendered social icon buttons as [aria-label, href, icon] triples. The
+ * button moves its aria-label onto the anchor in its shadow root, so wait for
+ * that render.
+ */
+async function socialLinks(canvasElement) {
+  const buttons = [...canvasElement.querySelectorAll('xe-footer > xe-icon-button[slot="social"]')];
+  await waitFor(() => expect(buttons.every((b) => b.shadowRoot?.querySelector('a'))).toBe(true));
+  return buttons.map((button) => [
+    button.shadowRoot.querySelector('a').getAttribute('aria-label'),
+    button.getAttribute('href'),
+    button.querySelector('xe-icon').getAttribute('icon'),
+  ]);
+}
+
+/** The rendered legal links (direct slotted hyperlinks) as [text, href] pairs. */
+const legalLinks = (canvasElement) => [...canvasElement.querySelectorAll('xe-footer > xe-hyperlink[slot="legal"]')]
+  .map((link) => [link.textContent, link.getAttribute('href')]);
+
+const EXPECTED_SOCIAL = [
+  ['Facebook (opens in a new window)', 'https://www.facebook.com/XcelEnergy', 'faSquareFacebook'],
+  ['X (opens in a new window)', 'https://twitter.com/XcelEnergy', 'faSquareXTwitter'],
+  ['Instagram (opens in a new window)', 'https://www.instagram.com/xcelenergy', 'faInstagram'],
+  ['LinkedIn (opens in a new window)', 'https://www.linkedin.com/company/xcel-energy', 'faSquareLinkedin'],
+  ['YouTube (opens in a new window)', 'https://www.youtube.com/XcelEnergyVideo', 'faYoutube'],
+];
+const AUTHORED_LEGAL = [['Privacy Policy', '#'], ['Terms of Use', '#'], ['Cookie Preferences', '#']];
+
 // The complete footer as authored on the site.
 export const Default = {
   play: async ({ canvasElement }) => {
@@ -159,14 +218,23 @@ export const Default = {
     const footer = await upgraded(canvasElement);
     await expect(footer).toHaveAttribute('columns', '3');
     await expect(columnHeadings(canvasElement)).toEqual(['Company', 'Services', 'Support']);
-    // Column links become Ignite hyperlinks, each in a list item.
-    const firstColumn = canvasElement.querySelector('xe-footer-column');
-    await expect(firstColumn.querySelectorAll(':scope > li > xe-hyperlink')).toHaveLength(4);
+    // Column links are direct <xe-hyperlink variant="variant"> children; the
+    // column then wraps each one in an <li> for its list.
+    const firstColumn = canvasElement.querySelector('xe-footer > xe-footer-column');
+    await expect(firstColumn).toHaveAttribute('heading', 'Company');
+    await waitFor(() => expect(firstColumn.querySelectorAll(':scope > li > xe-hyperlink[variant="variant"]')).toHaveLength(4));
     await expect(canvasElement.querySelector('[slot="logo"] img')).toHaveAttribute('alt', 'Xcel');
+    await expect(canvasElement.querySelector('xe-footer > span[slot="copyright"]'))
+      .toHaveTextContent('© 2026 Xcel Energy. All rights reserved.');
     await expect(canvas.getByText('© 2026 Xcel Energy. All rights reserved.')).toBeInTheDocument();
-    await expect(canvasElement.querySelectorAll('[slot="social"] a')).toHaveLength(5);
-    await expect(canvasElement.querySelectorAll('[slot="legal"] xe-hyperlink')).toHaveLength(3);
-    await expect(canvasElement.querySelector('[slot="banner-image"]')).toBeInTheDocument();
+    // Social: one <xe-icon-button slot="social" size="xl"> per network, opening
+    // in a new window. Legal: <xe-hyperlink slot="legal" trailing-icon>s.
+    await expect(await socialLinks(canvasElement)).toEqual(EXPECTED_SOCIAL);
+    const buttons = [...canvasElement.querySelectorAll('xe-icon-button[slot="social"]')];
+    await expect(buttons.every((b) => b.getAttribute('size') === 'xl' && b.getAttribute('target') === '_blank')).toBe(true);
+    await expect(legalLinks(canvasElement)).toEqual(AUTHORED_LEGAL);
+    await expect([...canvasElement.querySelectorAll('xe-hyperlink[slot="legal"]')].every((l) => l.hasAttribute('trailing-icon'))).toBe(true);
+    await expect(canvasElement.querySelector('xe-footer > img[slot="banner-image"]')).toBeInTheDocument();
     await expect(canvasElement.querySelector('[slot="tagline"]')).toHaveTextContent('Our Energy, Your Power');
     // The hyperlink renders a real anchor in its shadow root.
     const link = canvasElement.querySelector('xe-hyperlink');
@@ -198,17 +266,76 @@ export const FiveColumns = {
   },
 };
 
-// Blank fields between filled ones (no copyright, no social) don't misplace
-// the rest — every field is read by its key.
+// Blank fields between filled ones (no copyright, no social item) don't
+// misplace the rest — every field is read by its key.
 export const BlankFields = {
-  args: { copyright: '', social: '', banner_tagline: 'Powering Tomorrow' },
+  args: { copyright: '', socialLinks: '', banner_tagline: 'Powering Tomorrow' },
   play: async ({ canvasElement }) => {
     await upgraded(canvasElement);
     await expect(canvasElement.querySelector('[slot="copyright"]')).toBeNull();
-    await expect(canvasElement.querySelector('[slot="social"]')).toBeNull();
-    await expect(canvasElement.querySelectorAll('[slot="legal"] xe-hyperlink')).toHaveLength(3);
+    await expect(legalLinks(canvasElement)).toEqual(AUTHORED_LEGAL);
     await expect(columnHeadings(canvasElement)).toEqual(['Company', 'Services', 'Support']);
     await expect(canvasElement.querySelector('[slot="tagline"]')).toHaveTextContent('Powering Tomorrow');
+  },
+};
+
+// No social or legal links authored — the live Xcel Energy footer's links
+// render as defaults.
+export const DefaultLinks = {
+  args: { socialLinks: '', legalLinks: '' },
+  play: async ({ canvasElement }) => {
+    await upgraded(canvasElement);
+    await expect(await socialLinks(canvasElement)).toEqual(EXPECTED_SOCIAL);
+    await expect(legalLinks(canvasElement)).toEqual([
+      ['Online Terms of Use', 'https://www.xcelenergy.com/staticfiles/xe-responsive/Admin/My%20Account_Terms_and_Conditions.pdf'],
+      ['Privacy', 'https://my.xcelenergy.com/s/privacy'],
+      ['Accessibility', 'https://corporate.my.xcelenergy.com/s/about/accessibility'],
+    ]);
+  },
+};
+
+// The items authored in the other order (legal first): each list is still
+// recognized by its links, not its position.
+export const ItemsReversed = {
+  render: (args) => {
+    const rows = fieldsToRows({ ...args, socialLinks: '', legalLinks: '' });
+    rows.push([args.legalLinks], [args.socialLinks]);
+    return renderBlock({ name: 'xe-footer-v2', rows, decorate });
+  },
+  play: async ({ canvasElement }) => {
+    await upgraded(canvasElement);
+    await expect(await socialLinks(canvasElement)).toEqual(EXPECTED_SOCIAL);
+    await expect(legalLinks(canvasElement)).toEqual(AUTHORED_LEGAL);
+  },
+};
+
+// If AEM renders the child items as key-value rows too, their field names
+// (socialLinks / legalLinks) identify them.
+export const ItemsAsKeyValueRows = {
+  render: (args) => {
+    const rows = fieldsToRows({ ...args, socialLinks: '', legalLinks: '' });
+    rows.push(['socialLinks', args.socialLinks], ['legalLinks', args.legalLinks]);
+    return renderBlock({ name: 'xe-footer-v2', rows, decorate });
+  },
+  play: async ({ canvasElement }) => {
+    await upgraded(canvasElement);
+    await expect(await socialLinks(canvasElement)).toEqual(EXPECTED_SOCIAL);
+    await expect(legalLinks(canvasElement)).toEqual(AUTHORED_LEGAL);
+  },
+};
+
+// No child items, but the legacy social / legal rich-text fields are filled:
+// their links render in the same Ignite structure.
+export const RichTextLinks = {
+  args: {
+    socialLinks: '', legalLinks: '', social: SOCIAL_RICH_TEXT, legal: LEGAL_RICH_TEXT,
+  },
+  play: async ({ canvasElement }) => {
+    await upgraded(canvasElement);
+    // Icon-only rich-text links are recognized by their accessible name and
+    // become icon buttons (keeping the authored hrefs).
+    await expect(await socialLinks(canvasElement)).toEqual(EXPECTED_SOCIAL.map(([label, , icon]) => [label, '#', icon]));
+    await expect(legalLinks(canvasElement)).toEqual(AUTHORED_LEGAL);
   },
 };
 
@@ -230,7 +357,8 @@ export const LegacyContent = {
     await expect(footer).toHaveAttribute('columns', '3');
     await expect(columnHeadings(canvasElement)).toEqual(['Company', 'Services', 'Support']);
     await expect(canvasElement.querySelector('[slot="logo"] img')).toHaveAttribute('alt', 'Xcel');
-    await expect(canvasElement.querySelectorAll('[slot="legal"] xe-hyperlink')).toHaveLength(3);
+    await expect(legalLinks(canvasElement)).toEqual(AUTHORED_LEGAL);
+    await expect(await socialLinks(canvasElement)).toEqual(EXPECTED_SOCIAL.map(([label, , icon]) => [label, '#', icon]));
     await expect(canvasElement.querySelector('[slot="tagline"]')).toHaveTextContent('Our Energy, Your Power');
   },
 };

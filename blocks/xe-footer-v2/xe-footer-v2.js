@@ -5,21 +5,19 @@ import loadIgnite from '../../scripts/components/ignite.js';
  * XE Footer V2
  *
  * The Xcel footer rendered with the @ignite/web footer composition
- * (scripts/ignite/bundle/compositions/footer) instead of block CSS:
+ * (scripts/ignite/bundle/compositions/footer), following its reference markup:
  *
- *   <xe-footer columns="3">
+ *   <xe-footer columns="5">
  *     <picture slot="logo">…</picture>          (or <xe-logo> when no logo is authored)
- *     <div slot="copyright"><p>© 2026 …</p></div>
- *     <div slot="social"><p><a …><picture>…</picture></a>…</p></div>
- *     <div slot="legal">
- *       <xe-hyperlink variant="variant" href="…">Privacy Policy</xe-hyperlink>…
- *     </div>
- *     <div class="xe-footer-v2-columns">          (display: contents — groups the
- *       <xe-footer-column heading="Company">       legacy columns for UE instrumentation)
- *         <li><xe-hyperlink variant="variant" href="…">About us</xe-hyperlink></li>…
- *       </xe-footer-column>…
- *     </div>
- *     <picture slot="banner-image">…</picture>
+ *     <span slot="copyright">© 2026 Xcel Energy Inc. All rights reserved.</span>
+ *     <xe-footer-column heading="Company">
+ *       <xe-hyperlink href="…" variant="variant">Careers</xe-hyperlink>…
+ *     </xe-footer-column>…
+ *     <xe-icon-button slot="social" size="xl" href="…" aria-label="Facebook …">
+ *       <xe-icon icon="faSquareFacebook"></xe-icon>
+ *     </xe-icon-button>…
+ *     <xe-hyperlink slot="legal" href="…" variant="variant" trailing-icon>Privacy</xe-hyperlink>…
+ *     <img slot="banner-image" src="…" alt="">
  *     <span slot="tagline">Our Energy, Your Power</span>
  *   </xe-footer>
  *
@@ -30,11 +28,16 @@ import loadIgnite from '../../scripts/components/ignite.js';
  * links is skipped. Footers authored before the switch (positional rows with
  * one `footerlinks` rich-text field) are still read.
  *
- * <xe-footer-column> renders its own heading and slots the links (each in an
- * <li>) into a list; below 1024px it switches to an accordion. Styling comes
- * from the Ignite tokens (loaded by scripts/components/ignite.js);
- * xe-footer-v2.css only covers the authored light-DOM content the components
- * slot in.
+ * Social and legal links come from the block's child items
+ * (xe-footer-social-links: network + profile URL; xe-footer-legal-links:
+ * text + link), falling back to the `social` / `legal` rich-text fields, and
+ * then to the live Xcel Energy footer's links (DEFAULT_SOCIAL_LINKS /
+ * DEFAULT_LEGAL_LINKS) when none are authored.
+ *
+ * <xe-footer-column> wraps each link in an <li> inside its list; below 1024px
+ * it switches to an accordion. Styling comes from the Ignite tokens (loaded by
+ * scripts/components/ignite.js); xe-footer-v2.css only covers authored
+ * light-DOM content that page-level rules would otherwise restyle.
  */
 
 // Link-column slots in the model (column1Heading/column1Links … column5…).
@@ -46,6 +49,31 @@ const LEGACY_FIELDS = ['logo', 'copyright', 'social', 'legal', 'footerlinks'];
 
 // <xe-footer-column>'s accordion breakpoint (it hard-codes this media query).
 const ACCORDION_QUERY = window.matchMedia('(max-width: 1024px)');
+
+// Social networks, keyed by the xe-footer-social-links "Network" value, with
+// their icon (scripts/components/icons.js). `match` also recognizes a network
+// from its profile URL or a free-text label.
+const SOCIAL_NETWORKS = {
+  facebook: { label: 'Facebook', icon: 'faSquareFacebook', match: /facebook/i },
+  x: { label: 'X', icon: 'faSquareXTwitter', match: /^x$|twitter|(^|\/\/|\.)x\.com/i },
+  instagram: { label: 'Instagram', icon: 'faInstagram', match: /instagram/i },
+  linkedin: { label: 'LinkedIn', icon: 'faSquareLinkedin', match: /linkedin/i },
+  youtube: { label: 'YouTube', icon: 'faYoutube', match: /youtube/i },
+};
+
+// Rendered when no social / legal links are authored (the live Xcel Energy footer's).
+const DEFAULT_SOCIAL_LINKS = [
+  ['facebook', 'https://www.facebook.com/XcelEnergy'],
+  ['x', 'https://twitter.com/XcelEnergy'],
+  ['instagram', 'https://www.instagram.com/xcelenergy'],
+  ['linkedin', 'https://www.linkedin.com/company/xcel-energy'],
+  ['youtube', 'https://www.youtube.com/XcelEnergyVideo'],
+];
+const DEFAULT_LEGAL_LINKS = [
+  ['Online Terms of Use', 'https://www.xcelenergy.com/staticfiles/xe-responsive/Admin/My%20Account_Terms_and_Conditions.pdf'],
+  ['Privacy', 'https://my.xcelenergy.com/s/privacy'],
+  ['Accessibility', 'https://corporate.my.xcelenergy.com/s/about/accessibility'],
+];
 
 /** The element holding a row's authored content (its single cell). */
 function cellOf(row) {
@@ -66,21 +94,59 @@ function hasContent(element) {
 }
 
 /**
+ * The network key for a social link (or null), from its text, its accessible
+ * name or icon alt text (icon-only rich-text links), or its URL.
+ */
+function socialNetwork(anchor) {
+  const img = anchor.querySelector('img');
+  const names = [anchor.textContent, anchor.getAttribute('aria-label'), img && img.alt]
+    .map((name) => (name || '').trim())
+    .filter(Boolean);
+  const href = anchor.getAttribute('href') || '';
+  const found = Object.entries(SOCIAL_NETWORKS).find(([key, { match }]) => match.test(href)
+    || names.some((name) => name.toLowerCase() === key || match.test(name)));
+  return found ? found[0] : null;
+}
+
+/**
+ * Sorts the child item rows (xe-footer-social-links / xe-footer-legal-links)
+ * into `fields.sociallinks` / `fields.legallinks`. Published markup doesn't say
+ * which item a row came from, so a list whose links all point to known social
+ * networks is the social list; any other list of links is the legal list.
+ * The row itself is kept, since it carries the item's UE instrumentation.
+ */
+function classifyItems(rows, fields) {
+  rows.forEach((row) => {
+    const links = [...row.querySelectorAll('a')];
+    if (!links.length) return;
+    const key = links.every((anchor) => socialNetwork(anchor)) ? 'sociallinks' : 'legallinks';
+    if (!fields[key]) fields[key] = row;
+  });
+}
+
+/**
  * Reads the authored fields into `{ normalizedName: valueElement }`.
- * Key-value rows (two cells: name, value) are read by name. Otherwise the rows
- * are the legacy positional layout, mapped onto the same names.
+ * Key-value rows (two cells: name, value) are read by name; single-cell rows
+ * alongside them are the child link items. Otherwise the rows are the legacy
+ * positional layout, mapped onto the same names.
  */
 function readFields(block) {
   const rows = [...block.children];
   const fields = {};
 
   if (rows.some((row) => row.children.length === 2)) {
+    const items = [];
     rows.forEach((row) => {
+      if (row.children.length === 1) {
+        items.push(row);
+        return;
+      }
       if (row.children.length !== 2) return;
       const [name, value] = row.children;
       const key = toKey(name.textContent);
       if (key && hasContent(value)) fields[key] = value;
     });
+    classifyItems(items, fields);
     return fields;
   }
 
@@ -103,40 +169,84 @@ function readFields(block) {
   return fields;
 }
 
-/** Converts an authored link into an Ignite hyperlink styled for the dark footer. */
-function toHyperlink(anchor) {
+/**
+ * An Ignite hyperlink styled for the dark footer, from an authored link or a
+ * `[text, href]` default. `slot` / `trailingIcon` place it in the legal area.
+ */
+function hyperlink(source, { slot, trailingIcon } = {}) {
   const link = document.createElement('xe-hyperlink');
+  if (slot) link.setAttribute('slot', slot);
   link.setAttribute('variant', 'variant');
-  link.setAttribute('href', anchor.getAttribute('href') || '');
+  if (trailingIcon) link.setAttribute('trailing-icon', '');
+  if (Array.isArray(source)) {
+    const [text, href] = source;
+    link.setAttribute('href', href);
+    link.textContent = text;
+    return link;
+  }
+  link.setAttribute('href', source.getAttribute('href') || '');
   ['target', 'aria-label'].forEach((name) => {
-    if (anchor.hasAttribute(name)) link.setAttribute(name, anchor.getAttribute(name));
+    if (source.hasAttribute(name)) link.setAttribute(name, source.getAttribute(name));
   });
-  link.textContent = anchor.textContent.trim();
-  moveInstrumentation(anchor, link);
+  link.textContent = source.textContent.trim();
+  moveInstrumentation(source, link);
   return link;
 }
 
-/** Moves a value's authored nodes into a new slotted <div>. */
-function slotted(name, value) {
-  const wrapper = document.createElement('div');
-  wrapper.setAttribute('slot', name);
-  moveInstrumentation(value, wrapper);
-  wrapper.append(...value.childNodes);
-  return wrapper;
+/** An Ignite icon button linking to a social profile in a new window. */
+function socialButton(network, href) {
+  const { label, icon } = SOCIAL_NETWORKS[network];
+  const button = document.createElement('xe-icon-button');
+  button.setAttribute('slot', 'social');
+  button.setAttribute('size', 'xl');
+  button.setAttribute('href', href);
+  button.setAttribute('target', '_blank');
+  button.setAttribute('aria-label', `${label} (opens in a new window)`);
+  const glyph = document.createElement('xe-icon');
+  glyph.setAttribute('icon', icon);
+  button.append(glyph);
+  return button;
 }
 
-/** Builds an <xe-footer-column> with the links found in `container`, each in an <li>. */
+/**
+ * The social icon buttons: from the xe-footer-social-links item, else the
+ * legacy `social` rich text, else the default networks. A rich-text link to
+ * an unrecognized network is kept as authored.
+ */
+function buildSocial(fields) {
+  const source = fields.sociallinks || fields.social;
+  if (!source) return DEFAULT_SOCIAL_LINKS.map(([network, href]) => socialButton(network, href));
+
+  const buttons = [...source.querySelectorAll('a')].map((anchor) => {
+    const network = socialNetwork(anchor);
+    if (network) return socialButton(network, anchor.getAttribute('href') || '');
+    anchor.setAttribute('slot', 'social');
+    return anchor;
+  });
+  if (buttons.length) moveInstrumentation(source, buttons[0]);
+  return buttons;
+}
+
+/**
+ * The legal links (each an Ignite hyperlink with a trailing icon): from the
+ * xe-footer-legal-links item, else the legacy `legal` rich text, else the
+ * default legal links.
+ */
+function buildLegal(fields) {
+  const options = { slot: 'legal', trailingIcon: true };
+  const source = fields.legallinks || fields.legal;
+  if (!source) return DEFAULT_LEGAL_LINKS.map((link) => hyperlink(link, options));
+
+  const links = [...source.querySelectorAll('a')].map((anchor) => hyperlink(anchor, options));
+  if (links.length) moveInstrumentation(source, links[0]);
+  return links;
+}
+
+/** An <xe-footer-column> holding the links found in `container`. */
 function buildColumn(heading, container) {
   const column = document.createElement('xe-footer-column');
-  if (heading) {
-    column.setAttribute('heading', heading);
-    column.setAttribute('heading-level', '2');
-  }
-  column.append(...[...container.querySelectorAll('a')].map((anchor) => {
-    const item = document.createElement('li');
-    item.append(toHyperlink(anchor));
-    return item;
-  }));
+  if (heading) column.setAttribute('heading', heading);
+  column.append(...[...container.querySelectorAll('a')].map((anchor) => hyperlink(anchor)));
   return column;
 }
 
@@ -178,11 +288,51 @@ function buildLegacyColumns(value) {
     }
   });
 
-  return groups.map(({ heading, nodes }) => {
+  const columns = groups.map(({ heading, nodes }) => {
     const container = document.createElement('div');
     container.append(...nodes);
     return buildColumn(heading, container);
   });
+  if (columns.length) moveInstrumentation(value, columns[0]);
+  return columns;
+}
+
+/** The copyright as a slotted <span>, keeping inline markup from a single paragraph. */
+function buildCopyright(value) {
+  const span = document.createElement('span');
+  span.setAttribute('slot', 'copyright');
+  moveInstrumentation(value, span);
+  const paragraphs = value.querySelectorAll('p');
+  if (paragraphs.length === 1) span.append(...paragraphs[0].childNodes);
+  else span.textContent = value.textContent.trim();
+  return span;
+}
+
+/**
+ * The banner as a bare slotted <img> (the component styles `::slotted(img)`).
+ * The authored <picture>'s responsive sources are folded into the image's
+ * srcset (widths from their `width=` parameter) so the full-bleed banner
+ * doesn't fall back to the small default rendition.
+ */
+function buildBannerImage(value) {
+  const img = value.querySelector('img');
+  if (!img) return null;
+  const candidates = [...value.querySelectorAll('source')]
+    .filter((source) => !source.type || source.type === 'image/webp')
+    .map((source) => {
+      const url = source.getAttribute('srcset') || '';
+      const width = url.match(/[?&]width=(\d+)/);
+      return width ? `${url} ${width[1]}w` : null;
+    })
+    .filter(Boolean);
+  if (candidates.length) {
+    img.setAttribute('srcset', [...new Set(candidates)].join(', '));
+    img.setAttribute('sizes', '100vw');
+  }
+  img.setAttribute('slot', 'banner-image');
+  img.setAttribute('alt', '');
+  img.setAttribute('loading', 'lazy');
+  return img;
 }
 
 /**
@@ -219,39 +369,22 @@ export default async function decorate(block) {
     footer.append(logo);
   }
 
-  if (fields.copyright) footer.append(slotted('copyright', fields.copyright));
-  if (fields.social) footer.append(slotted('social', fields.social));
-
-  // --- Legal: links become stacked Ignite hyperlinks ---
-  if (fields.legal) {
-    const legal = document.createElement('div');
-    legal.setAttribute('slot', 'legal');
-    moveInstrumentation(fields.legal, legal);
-    legal.append(...[...fields.legal.querySelectorAll('a')].map(toHyperlink));
-    footer.append(legal);
-  }
+  if (fields.copyright) footer.append(buildCopyright(fields.copyright));
 
   // --- Link columns (default slot): key-value slots, else legacy rich text ---
   let columns = buildSlotColumns(fields);
-  const legacyLinks = !columns.length && fields.footerlinks;
-  if (legacyLinks) columns = buildLegacyColumns(legacyLinks);
+  if (!columns.length && fields.footerlinks) columns = buildLegacyColumns(fields.footerlinks);
   if (columns.length) {
-    const group = document.createElement('div');
-    group.className = 'xe-footer-v2-columns';
-    if (legacyLinks) moveInstrumentation(legacyLinks, group);
-    group.append(...columns);
     footer.setAttribute('columns', String(columns.length));
-    footer.append(group);
+    footer.append(...columns);
   }
 
+  // --- Social and legal links (authored items, legacy rich text, or defaults) ---
+  footer.append(...buildSocial(fields), ...buildLegal(fields));
+
   // --- Banner: background image + centered tagline ---
-  const background = fields['banner-background'];
-  const bannerPicture = background
-    && (background.querySelector('picture') || background.querySelector('img'));
-  if (bannerPicture) {
-    bannerPicture.setAttribute('slot', 'banner-image');
-    footer.append(bannerPicture);
-  }
+  const bannerImage = fields['banner-background'] && buildBannerImage(fields['banner-background']);
+  if (bannerImage) footer.append(bannerImage);
   const taglineSource = fields['banner-tagline'];
   const taglineText = taglineSource && taglineSource.textContent.trim();
   if (taglineText) {
@@ -265,10 +398,16 @@ export default async function decorate(block) {
   block.textContent = '';
   block.append(footer);
 
-  syncListSemantics(footer);
+  // <xe-footer-column> wraps its links in <li>s once it renders; keep their
+  // list semantics in step with the layout as they appear and as it changes.
+  new MutationObserver(() => syncListSemantics(footer))
+    .observe(footer, { childList: true, subtree: true });
   ACCORDION_QUERY.addEventListener('change', () => syncListSemantics(footer));
 
   // Wait for the components to register so the section reveals the styled
   // footer rather than its unstyled light DOM.
-  await loadIgnite(() => import('../../scripts/ignite/bundle/compositions/footer/xe-footer.js'));
+  await loadIgnite(() => Promise.all([
+    import('../../scripts/ignite/bundle/compositions/footer/xe-footer.js'),
+    import('../../scripts/ignite/bundle/primitives/action/icon-button/xe-icon-button.js'),
+  ]));
 }

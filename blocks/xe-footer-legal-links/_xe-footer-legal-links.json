@@ -6,7 +6,7 @@
       "plugins": {
         "xwalk": {
           "page": {
-            "resourceType": "core/franklin/components/block/v1/block",
+            "resourceType": "core/franklin/components/block/v1/block/item",
             "template": {
               "name": "XE Footer Legal Links",
               "model": "xe-footer-legal-links"
@@ -21,24 +21,24 @@
       "id": "xe-footer-legal-links",
       "fields": [
         {
-            "component": "container",
-            "name": "test",
-            "label": "Multi Text",
-            "multi": true,
-            "fields": [
-                {
-                    "component": "aem-content",
-                    "valueType": "string",
-                    "name": "cta_link",
-                    "label": "Legal Link"
-                },
-                {
-                    "component": "text",
-                    "valueType": "string",
-                    "name": "cta_linkText",
-                    "label": "Legal Text"
-                }
-            ]
+          "component": "container",
+          "name": "legalLinks",
+          "label": "Legal links",
+          "multi": true,
+          "fields": [
+            {
+              "component": "aem-content",
+              "valueType": "string",
+              "name": "cta_link",
+              "label": "Link"
+            },
+            {
+              "component": "text",
+              "valueType": "string",
+              "name": "cta_linkText",
+              "label": "Text"
+            }
+          ]
         }
       ]
     }
