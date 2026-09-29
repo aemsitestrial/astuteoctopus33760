@@ -153,6 +153,22 @@ export const Default = {
     await expect(canvas.getByText('Company')).toBeInTheDocument();
     await expect(canvasElement.querySelectorAll('.xe-footer-links-col')).toHaveLength(3);
     await expect(canvas.getByText('Our Energy, Your Power')).toBeInTheDocument();
+    // Column titles are real headings. Only the mobile accordion wraps them in
+    // a toggle button; from tablet up they are plain text, panels always shown.
+    const titles = [...canvasElement.querySelectorAll('h2.xe-footer-links-title')];
+    await expect(titles.map((title) => title.textContent)).toEqual(['Company', 'Services', 'Support']);
+    const panels = [...canvasElement.querySelectorAll('.xe-footer-links-content')];
+    if (window.matchMedia('(min-width: 700px)').matches) {
+      await expect(canvasElement.querySelectorAll('.xe-footer-links-toggle')).toHaveLength(0);
+      await expect(panels.every((panel) => !panel.hidden && !panel.hasAttribute('role'))).toBe(true);
+    } else {
+      const toggles = [...canvasElement.querySelectorAll('.xe-footer-links-toggle')];
+      await expect(toggles).toHaveLength(3);
+      await expect(panels.every((panel) => panel.hidden)).toBe(true);
+      toggles[0].click();
+      await expect(toggles[0]).toHaveAttribute('aria-expanded', 'true');
+      await expect(panels[0].hidden).toBe(false);
+    }
   },
 };
 

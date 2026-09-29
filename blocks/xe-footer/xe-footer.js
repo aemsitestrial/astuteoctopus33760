@@ -14,6 +14,45 @@
 
 const CONTAINER_FIELDS = ['logo', 'copyright', 'social', 'legal', 'links'];
 
+// From this width up the link columns are static (see xe-footer.css); below it
+// each column is an accordion.
+const STATIC_COLUMNS = window.matchMedia('(min-width: 700px)');
+
+/**
+ * Renders a link column's heading for the current layout, following the
+ * accordion pattern: on mobile the heading wraps a <button> toggle that shows
+ * or hides its panel (a labelled region); from tablet up the heading is plain
+ * text and the panel is always shown — no inert toggle for keyboard and screen
+ * reader users to land on. `state` keeps the open/closed choice across
+ * breakpoint changes.
+ */
+function renderColumnHeading(title, panel, state) {
+  if (STATIC_COLUMNS.matches) {
+    title.textContent = state.label;
+    panel.hidden = false;
+    panel.removeAttribute('role');
+    panel.removeAttribute('aria-labelledby');
+    return;
+  }
+
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'xe-footer-links-toggle';
+  toggle.textContent = state.label;
+  toggle.setAttribute('aria-expanded', String(state.expanded));
+  toggle.setAttribute('aria-controls', panel.id);
+  toggle.addEventListener('click', () => {
+    state.expanded = !state.expanded;
+    toggle.setAttribute('aria-expanded', String(state.expanded));
+    panel.hidden = !state.expanded;
+  });
+
+  title.replaceChildren(toggle);
+  panel.hidden = !state.expanded;
+  panel.setAttribute('role', 'region');
+  panel.setAttribute('aria-labelledby', title.id);
+}
+
 export default function decorate(block) {
   const rows = [...block.children];
 
@@ -93,11 +132,10 @@ export default function decorate(block) {
   // that follows it into a column so the stylesheet can lay them out as a grid
   // (one column per heading), matching the design's row of link columns.
   //
-  // On mobile the columns collapse into an accordion: the heading becomes a
-  // <button> toggle that expands/collapses its link list (each list lives in a
-  // dedicated `.xe-footer-links-content` panel wired to the button via
-  // aria-controls/aria-expanded). Desktop CSS forces every panel open and
-  // neutralises the toggle, so the same markup serves both layouts.
+  // On mobile the columns collapse into an accordion (collapsed by default so
+  // the footer opens compact); from tablet up they are static columns. The
+  // heading and panel markup for each layout comes from renderColumnHeading(),
+  // re-run whenever the viewport crosses the breakpoint.
   //
   // Drill through the row/cell wrapper divs to the element that actually holds
   // the heading/list sequence (the deepest single-child <div> whose children
@@ -112,6 +150,7 @@ export default function decorate(block) {
     grid.className = 'xe-footer-links';
     let panel = null;
     let colIndex = 0;
+    const headings = [];
     nodes.forEach((node) => {
       const isHeading = node.matches('p, h2, h3, h4') && !node.querySelector('ul, ol');
       if (isHeading) {
@@ -119,31 +158,21 @@ export default function decorate(block) {
         const column = document.createElement('div');
         column.className = 'xe-footer-links-col';
 
-        const titleId = `xe-footer-links-title-${colIndex}`;
-        const panelId = `xe-footer-links-panel-${colIndex}`;
-
-        // Accessible accordion toggle. Collapsed by default so the mobile
-        // footer opens compact; desktop CSS overrides this to always-open.
-        const toggle = document.createElement('button');
-        toggle.type = 'button';
-        toggle.className = 'xe-footer-links-title';
-        toggle.id = titleId;
-        toggle.textContent = node.textContent.trim();
-        toggle.setAttribute('aria-expanded', 'false');
-        toggle.setAttribute('aria-controls', panelId);
+        // A real heading (the authored level, or h2 for a <p>) keeps the
+        // column in the document outline in both layouts.
+        const title = document.createElement(node.matches('h2, h3, h4') ? node.localName : 'h2');
+        title.className = 'xe-footer-links-title';
+        title.id = `xe-footer-links-title-${colIndex}`;
 
         panel = document.createElement('div');
         panel.className = 'xe-footer-links-content';
-        panel.id = panelId;
-        panel.setAttribute('role', 'region');
-        panel.setAttribute('aria-labelledby', titleId);
+        panel.id = `xe-footer-links-panel-${colIndex}`;
 
-        toggle.addEventListener('click', () => {
-          const expanded = toggle.getAttribute('aria-expanded') === 'true';
-          toggle.setAttribute('aria-expanded', String(!expanded));
-        });
+        const state = { label: node.textContent.trim(), expanded: false };
+        headings.push([title, panel, state]);
+        renderColumnHeading(title, panel, state);
 
-        column.append(toggle, panel);
+        column.append(title, panel);
         grid.append(column);
       } else if (panel) {
         panel.append(node);
@@ -157,6 +186,9 @@ export default function decorate(block) {
       }
     });
     linksCell.replaceWith(grid);
+    STATIC_COLUMNS.addEventListener('change', () => {
+      headings.forEach((args) => renderColumnHeading(...args));
+    });
   }
 
   // Content zone wraps the brand column and the link columns side by side.

@@ -166,9 +166,9 @@ main > .section > .xe-footer-wrapper {
 /* --- Link columns grid --------------------------------------------------- */
 
 /* The footer-links field is grouped by the decorator into one column per
-   heading. On mobile each column is a collapsible accordion (heading = toggle
-   button, links = panel); on tablet/desktop the panels are forced open and the
-   columns lay out as a grid — two tracks on tablet, one track per heading on
+   heading. On mobile each column is a collapsible accordion (a toggle button
+   inside the heading, links = panel); on tablet/desktop the heading is plain
+   text, every panel is shown, and the columns lay out as a grid — two tracks on tablet, one track per heading on
    desktop. */
 .xe-footer .xe-footer-links {
     display: grid;
@@ -202,10 +202,21 @@ main > .section > .xe-footer-wrapper {
     border-top: 1px solid rgb(255 255 255 / 15%);
 }
 
-/* Heading is a full-width toggle button on mobile. Reset native button styles
-   so it inherits the footer's typography, and add a chevron that rotates when
-   the section is open. */
+/* Column heading. The site's global h2–h4 rules are reset so it keeps the
+   footer typography. On mobile it wraps the accordion toggle; from tablet up
+   it is plain heading text (see renderColumnHeading() in xe-footer.js). */
 .xe-footer .xe-footer-links-col .xe-footer-links-title {
+    margin: 0;
+    font: inherit;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #fff;
+}
+
+/* Mobile toggle: a full-width row with a chevron that rotates when open.
+   Native button styles are reset so it inherits the heading typography. */
+.xe-footer .xe-footer-links-col .xe-footer-links-toggle {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -216,16 +227,12 @@ main > .section > .xe-footer-wrapper {
     border: 0;
     background: none;
     font: inherit;
-    font-size: 17px;
-    font-weight: 700;
-    line-height: 1.3;
+    color: inherit;
     text-align: left;
-    color: #fff;
     cursor: pointer;
 }
 
-/* Chevron indicator (mobile only). */
-.xe-footer .xe-footer-links-col .xe-footer-links-title::after {
+.xe-footer .xe-footer-links-col .xe-footer-links-toggle::after {
     content: "";
     width: 14px;
     height: 14px;
@@ -235,23 +242,16 @@ main > .section > .xe-footer-wrapper {
     transition: transform 0.2s ease;
 }
 
-.xe-footer .xe-footer-links-col .xe-footer-links-title[aria-expanded="true"]::after {
+.xe-footer .xe-footer-links-col .xe-footer-links-toggle[aria-expanded="true"]::after {
     transform: rotate(180deg);
 }
 
-/* Collapsible panel: hidden when its toggle is collapsed, revealed when open. */
+/* Panel visibility is driven by its `hidden` attribute (set by the decorator). */
 .xe-footer .xe-footer-links-col .xe-footer-links-content {
-    display: none;
     padding-bottom: 16px;
 }
 
-.xe-footer .xe-footer-links-col .xe-footer-links-title[aria-expanded="true"] + .xe-footer-links-content {
-    display: block;
-}
-
-/* From tablet up the accordion collapses into a static column: the toggle is no
-   longer interactive, the chevron and dividers disappear, and every panel is
-   permanently open. */
+/* From tablet up the columns are static: no dividers, and every panel shown. */
 @media (width >= 700px) {
     .xe-footer .xe-footer-links-col + .xe-footer-links-col {
         border-top: 0;
@@ -259,16 +259,9 @@ main > .section > .xe-footer-wrapper {
 
     .xe-footer .xe-footer-links-col .xe-footer-links-title {
         padding: 0 0 8px;
-        cursor: default;
-        pointer-events: none;
-    }
-
-    .xe-footer .xe-footer-links-col .xe-footer-links-title::after {
-        display: none;
     }
 
     .xe-footer .xe-footer-links-col .xe-footer-links-content {
-        display: block;
         padding-bottom: 0;
     }
 }
