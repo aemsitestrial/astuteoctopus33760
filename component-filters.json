@@ -152,6 +152,18 @@
     ]
   },
   {
+    "id": "xe-footer-social-links",
+    "components": [
+      "xe-footer-social-links"
+    ]
+  },
+  {
+    "id": "xe-footer-v2",
+    "components": [
+      "xe-footer-social-links"
+    ]
+  },
+  {
     "id": "xe-ignite-feature-cards-npm",
     "components": [
       "xe-ignite-feature-card-npm"

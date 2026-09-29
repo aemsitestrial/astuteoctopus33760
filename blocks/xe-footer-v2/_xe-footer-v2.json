@@ -10,7 +10,8 @@
             "template": {
               "name": "XE Footer V2",
               "model": "xe-footer-v2",
-              "key-value": true
+              "key-value": true,
+              "filter": "xe-footer-v2"
             }
           }
         }
@@ -143,5 +144,12 @@
       ]
     }
   ],
-  "filters": []
+  "filters": [
+    {
+      "id": "xe-footer-v2",
+      "components": [
+        "xe-footer-social-links"
+      ]
+    }
+  ]
 }

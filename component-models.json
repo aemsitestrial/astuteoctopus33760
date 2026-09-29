@@ -1252,6 +1252,31 @@
     ]
   },
   {
+    "id": "xe-footer-social-links",
+    "fields": [
+      {
+        "component": "container",
+        "name": "test",
+        "label": "Multi Text",
+        "multi": true,
+        "fields": [
+          {
+            "component": "aem-content",
+            "valueType": "string",
+            "name": "cta_link",
+            "label": "Social Link"
+          },
+          {
+            "component": "text",
+            "valueType": "string",
+            "name": "cta_linkText",
+            "label": "Social Icon"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "xe-footer-v2",
     "fields": [
       {
