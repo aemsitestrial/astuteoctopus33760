@@ -10,7 +10,6 @@
             "template": {
               "name": "XE Footer V2",
               "model": "xe-footer-v2",
-              "key-value": true,
               "filter": "xe-footer-v2"
             }
           }
@@ -148,6 +147,7 @@
     {
       "id": "xe-footer-v2",
       "components": [
+        "xe-footer-legal-links",
         "xe-footer-social-links"
       ]
     }

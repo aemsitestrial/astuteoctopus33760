@@ -1252,6 +1252,31 @@
     ]
   },
   {
+    "id": "xe-footer-legal-links",
+    "fields": [
+      {
+        "component": "container",
+        "name": "test",
+        "label": "Multi Text",
+        "multi": true,
+        "fields": [
+          {
+            "component": "aem-content",
+            "valueType": "string",
+            "name": "cta_link",
+            "label": "Legal Link"
+          },
+          {
+            "component": "text",
+            "valueType": "string",
+            "name": "cta_linkText",
+            "label": "Legal Text"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "xe-footer-social-links",
     "fields": [
       {

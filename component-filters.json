@@ -152,14 +152,9 @@
     ]
   },
   {
-    "id": "xe-footer-social-links",
-    "components": [
-      "xe-footer-social-links"
-    ]
-  },
-  {
     "id": "xe-footer-v2",
     "components": [
+      "xe-footer-legal-links",
       "xe-footer-social-links"
     ]
   },
