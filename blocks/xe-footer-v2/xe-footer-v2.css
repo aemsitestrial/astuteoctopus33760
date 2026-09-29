@@ -1,0 +1,73 @@
+/*
+ * XE Footer V2
+ *
+ * Layout, colors and typography come from the @ignite/web <xe-footer>
+ * composition (shadow DOM, driven by the --xe-* tokens). This stylesheet only
+ * covers the section wrapper and the authored light-DOM content slotted into
+ * it, which the component's ::slotted() rules don't reach (page-level p/a/img
+ * rules outrank ::slotted() for light-DOM children).
+ */
+
+/* Full bleed: override the section's 1200px content cap. */
+main > .section > .xe-footer-v2-wrapper {
+  max-width: none;
+  padding: 0;
+}
+
+.xe-footer-v2 xe-footer {
+  display: block;
+}
+
+/* Groups the columns for authoring instrumentation without becoming a grid item. */
+.xe-footer-v2 .xe-footer-v2-columns {
+  display: contents;
+}
+
+.xe-footer-v2 [slot] p {
+  margin: 0;
+}
+
+/* Logo: the slot sets the 218px width; keep the image inside it. */
+.xe-footer-v2 [slot="logo"] img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Social: a horizontal row of linked icons (inline links or a <ul>). */
+.xe-footer-v2 [slot="social"] p,
+.xe-footer-v2 [slot="social"] ul {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.xe-footer-v2 [slot="social"] a {
+  display: inline-flex;
+  color: inherit;
+}
+
+.xe-footer-v2 [slot="social"] img,
+.xe-footer-v2 [slot="social"] .icon {
+  width: 22px;
+  height: 22px;
+}
+
+.xe-footer-v2 [slot="legal"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--xe-spacing-stack-gap-sm);
+}
+
+/* Banner: the slot is positioned to fill the band; cover it with the image. */
+.xe-footer-v2 [slot="banner-image"],
+.xe-footer-v2 [slot="banner-image"] img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
