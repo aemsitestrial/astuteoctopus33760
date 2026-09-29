@@ -10,7 +10,8 @@
             "template": {
               "name": "XE Footer V2",
               "model": "xe-footer-v2",
-              "filter": "xe-footer-v2"
+              "filter": "xe-footer-v2",
+              "key-value": true
             }
           }
         }
