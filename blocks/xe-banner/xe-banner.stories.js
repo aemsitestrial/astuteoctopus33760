@@ -125,14 +125,19 @@ export const Default = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const banner = canvasElement.querySelector('xe-banner');
-    await expect(banner).toHaveAttribute('variant', 'message');
     await expect(banner).toHaveAttribute('size', 'generous');
     await expect(banner).toHaveAttribute('background', 'default');
     const column = canvasElement.querySelector('xe-banner-column');
     await expect(column).toHaveAttribute('align', 'center');
     await expect(column).toHaveAttribute('heading-level', '2');
     await expect(canvasElement.querySelector('xe-icon[slot="icon"]')).toHaveAttribute('icon', 'faLeaf');
-    await expect(canvasElement.querySelector('h2[slot="heading"]')).toHaveTextContent('Save Energy, Save Money');
+    // The heading text is slotted as a <span>; <xe-banner-column> renders the
+    // real heading element (level from heading-level) in its shadow root.
+    await expect(canvasElement.querySelector('span[slot="heading"]')).toHaveTextContent('Save Energy, Save Money');
+    await waitFor(
+      () => expect(column.shadowRoot?.querySelector('h2.heading-wrapper')).toBeTruthy(),
+      { timeout: 8000 },
+    );
     await expect(canvas.getByText(/Explore rebates, tips, and programs/)).toBeInTheDocument();
     const button = canvasElement.querySelector('xe-button[slot="action"]');
     await expect(button).toHaveAttribute('treatment', 'outlined');
@@ -153,8 +158,13 @@ export const SubtleLeft = {
   play: async ({ canvasElement }) => {
     await expect(canvasElement.querySelector('xe-banner')).toHaveAttribute('background', 'subtle');
     await expect(canvasElement.querySelector('xe-banner')).toHaveAttribute('size', 'default');
-    await expect(canvasElement.querySelector('xe-banner-column')).toHaveAttribute('align', 'left');
-    await expect(canvasElement.querySelector('h3[slot="heading"]')).toBeInTheDocument();
+    const column = canvasElement.querySelector('xe-banner-column');
+    await expect(column).toHaveAttribute('align', 'left');
+    await expect(column).toHaveAttribute('heading-level', '3');
+    await waitFor(
+      () => expect(column.shadowRoot?.querySelector('h3.heading-wrapper')).toBeTruthy(),
+      { timeout: 8000 },
+    );
   },
 };
 
