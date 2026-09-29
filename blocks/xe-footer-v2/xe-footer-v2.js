@@ -29,15 +29,16 @@ import decorateLegalLinks, {
  *
  * The block is a container (filter `xe-footer-v2`): its own fields (logo +
  * alt, copyright, banner background + tagline) render as rows first, then one
- * row per child item. The social and legal links are those items, decorated
- * by their own blocks (xe-footer-social-links / xe-footer-legal-links); the
- * live Xcel Energy footer's links render when none are authored.
+ * row per child item — one social profile or legal link each. Those items are
+ * decorated by their own blocks (xe-footer-social-links /
+ * xe-footer-legal-links); the live Xcel Energy footer's links render when
+ * none are authored.
  *
  * Rows are recognized by what they hold rather than by position, so blank
  * fields can't shift the others and older footers still render: key-value
  * rows (`name | value`, footers created while the block was key-value) by
  * name, a row instrumented with an item model (Universal Editor) as that item,
- * a list of links as an item, headings + link lists as link columns, and
+ * a row of only links as an item, headings + link lists as link columns, and
  * images / text as the logo, banner and copyright.
  *
  * <xe-footer-column> wraps each link in an <li> inside its list; below 1024px
@@ -52,13 +53,12 @@ const COLUMN_SLOTS = 5;
 // <xe-footer-column>'s accordion breakpoint (it hard-codes this media query).
 const ACCORDION_QUERY = window.matchMedia('(max-width: 1024px)');
 
-// Child item models (the xe-footer-v2 filter) → the footer area they fill, and
-// their multi-field names, which identify them if rendered as key-value rows.
+// Child item models (the xe-footer-v2 filter) → the footer area they fill.
+// Each item is one link (social profile or legal link).
 const ITEM_MODELS = {
   'xe-footer-social-links': 'social',
   'xe-footer-legal-links': 'legal',
 };
-const ITEM_KEYS = { sociallinks: 'social', legallinks: 'legal' };
 
 /** The element holding a row's authored content (its single cell). */
 function cellOf(row) {
@@ -126,8 +126,7 @@ function readFields(block) {
     if (row.children.length === 2) {
       const key = toKey(row.firstElementChild.textContent);
       const value = row.children[1];
-      if (ITEM_KEYS[key]) addItem(ITEM_KEYS[key], row);
-      else if (key && hasContent(value)) fields[key] = value;
+      if (key && hasContent(value)) fields[key] = value;
       return;
     }
 
@@ -151,6 +150,9 @@ function readFields(block) {
       }
     } else if (isLinkColumns(cell)) {
       fields.footerlinks = cell;
+    } else if (fields['banner-background']) {
+      // Past the banner only child items follow (model order); one without a
+      // link yet (e.g. a network chosen but no URL) renders nothing.
     } else if (!fields.copyright) {
       fields.copyright = cell;
       seenCopyright = true;

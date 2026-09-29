@@ -10,10 +10,11 @@
  *   banner_background       reference         -> "banner_background" (asset URL)
  *   banner_tagline          text              -> "banner_tagline" (grouped with the background)
  *
- * Child items (the block's filter), each rendered as a <ul> of links:
+ * Child items (the block's filter), one per link — each item's link + text
+ * fields collapse into one <a> in its own row:
  *
- *   xe-footer-social-links  socialLinks (network + profile URL) -> "socialLinks" (HTML)
- *   xe-footer-legal-links   legalLinks (text + link)            -> "legalLinks" (HTML)
+ *   xe-footer-social-links  network select + profile URL -> "socialLinks" (links, one item each)
+ *   xe-footer-legal-links   text + link                  -> "legalLinks" (links, one item each)
  *
  * `fieldsToRows` renders the container markup AEM produces: one single-cell
  * row per field (logo, copyright, banner) followed by one row per child item.
@@ -24,7 +25,7 @@ import { expect, within, waitFor } from 'storybook/test';
 import decorate from './xe-footer-v2.js';
 import { renderBlock, picture } from '../../.storybook/eds.js';
 
-/** A <ul> of [text, href] links — how a link composite multi-field renders. */
+/** A <ul> of [text, href] links (rich-text lists, and the link sets split into items). */
 const linkList = (pairs) => `<ul>${pairs.map(([text, href]) => `<li><a href="${href}">${text}</a></li>`).join('')}</ul>`;
 const list = (labels) => linkList(labels.map((label) => [label, '#']));
 
@@ -67,9 +68,22 @@ const defaults = {
 };
 
 /**
+ * One item row per link in `html` (the socialLinks / legalLinks controls):
+ * each item's link + text collapse into a single <a>.
+ */
+function itemRows(html) {
+  if (!html) return [];
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  return [...doc.querySelectorAll('a')].map((anchor) => [`<p>${anchor.outerHTML}</p>`]);
+}
+
+/** How many item rows `html` renders as. */
+const itemCount = (html) => itemRows(html).length;
+
+/**
  * The container markup: one single-cell row per non-empty field in model
  * order — logo (alt collapsed in), copyright, banner (background + tagline
- * grouped) — then one row per authored child item.
+ * grouped) — then one row per child item (one per link).
  */
 function fieldsToRows(args) {
   const rows = [];
@@ -79,8 +93,7 @@ function fieldsToRows(args) {
     const background = args.banner_background ? picture(args.banner_background, '') : '';
     rows.push([`${background}${args.banner_tagline ? `<p>${args.banner_tagline}</p>` : ''}`]);
   }
-  if (args.socialLinks) rows.push([args.socialLinks]);
-  if (args.legalLinks) rows.push([args.legalLinks]);
+  rows.push(...itemRows(args.socialLinks), ...itemRows(args.legalLinks));
   return rows;
 }
 
@@ -92,8 +105,7 @@ function keyValueRows(args, columns = COLUMNS) {
     rows.push([`column${index + 1}Heading`, heading], [`column${index + 1}Links`, list(links)]);
   });
   rows.push(['banner_background', picture(args.banner_background, '')], ['banner_tagline', args.banner_tagline]);
-  if (args.socialLinks) rows.push([args.socialLinks]);
-  if (args.legalLinks) rows.push([args.legalLinks]);
+  rows.push(...itemRows(args.socialLinks), ...itemRows(args.legalLinks));
   return rows;
 }
 
@@ -110,10 +122,12 @@ function legacyRows(args) {
   ];
 }
 
-const ITEM_LABELS = {
-  'xe-footer-social-links': 'XE Footer Social Links',
-  'xe-footer-legal-links': 'XE Footer Legal Links',
-};
+const SOCIAL = 'xe-footer-social-links';
+const LEGAL = 'xe-footer-legal-links';
+const ITEM_LABELS = { [SOCIAL]: 'XE Footer Social Link', [LEGAL]: 'XE Footer Legal Link' };
+
+/** The item models of a footer's item rows: `social` social items, then `legal` legal ones. */
+const itemModels = (social, legal) => [...Array(social).fill(SOCIAL), ...Array(legal).fill(LEGAL)];
 
 /**
  * A decorate() that first instruments the last `models.length` rows (the
@@ -143,8 +157,8 @@ const argTypes = {
   copyright: { control: 'text', description: 'Copyright (rich text) — HTML.', table: { category: 'Brand' } },
   banner_background: { control: 'text', description: 'Background (reference) — asset URL for the full-bleed banner image.', table: { category: 'Banner' } },
   banner_tagline: { control: 'text', description: 'Tagline — centered banner overlay text.', table: { category: 'Banner' } },
-  socialLinks: { control: 'text', description: 'XE Footer Social Links item — <ul> of links whose text is the network (facebook, x, instagram, linkedin, youtube).', table: { category: 'Child items' } },
-  legalLinks: { control: 'text', description: 'XE Footer Legal Links item — <ul> of text + link pairs.', table: { category: 'Child items' } },
+  socialLinks: { control: 'text', description: 'XE Footer Social Link items — one item per link; the link text is the network (facebook, x, instagram, linkedin, youtube).', table: { category: 'Child items' } },
+  legalLinks: { control: 'text', description: 'XE Footer Legal Link items — one item per link (text + link).', table: { category: 'Child items' } },
 };
 
 export default {
@@ -254,7 +268,7 @@ export const DefaultLinks = {
 export const ItemsReversed = {
   render: (args) => {
     const rows = fieldsToRows({ ...args, socialLinks: '', legalLinks: '' });
-    rows.push([args.legalLinks], [args.socialLinks]);
+    rows.push(...itemRows(args.legalLinks), ...itemRows(args.socialLinks));
     return render(rows);
   },
   play: async ({ canvasElement }) => {
@@ -287,6 +301,22 @@ export const CopyrightWithLink = {
   },
 };
 
+// A published item that's only half filled in (network chosen, no URL yet)
+// renders no link: it's skipped rather than read as another field, even with
+// the copyright blank.
+export const IncompleteItem = {
+  render: (args) => {
+    const rows = fieldsToRows({ ...args, copyright: '' });
+    rows.push(['<p>facebook</p>']);
+    return render(rows);
+  },
+  play: async ({ canvasElement }) => {
+    await upgraded(canvasElement);
+    await expect(canvasElement.querySelector('[slot="copyright"]')).toBeNull();
+    await expect(await socialLinks(canvasElement)).toEqual(EXPECTED_SOCIAL);
+  },
+};
+
 // No logo authored — Ignite's built-in Xcel Energy logo (inverse) is used.
 export const DefaultLogo = {
   args: { logo: '' },
@@ -299,14 +329,22 @@ export const DefaultLogo = {
 
 // --- Stories: the Universal Editor --------------------------------------------
 
-// Each child item keeps its instrumentation on the first element rendered
-// from it, so both appear in the editor's content tree.
+// Each child item keeps its instrumentation on the element rendered from it,
+// so every item appears in the editor's content tree.
 export const EditorItems = {
-  render: (args) => render(fieldsToRows(args), inEditor(['xe-footer-social-links', 'xe-footer-legal-links'])),
+  render: (args) => render(
+    fieldsToRows(args),
+    inEditor(itemModels(itemCount(args.socialLinks), itemCount(args.legalLinks))),
+  ),
   play: async ({ canvasElement }) => {
     await upgraded(canvasElement);
+    // 5 social items (item_0–4) and 3 legal items (item_5–7), each its own element.
+    const elements = [...Array(8).keys()].map((index) => itemElement(canvasElement, index));
+    await expect(elements.every(Boolean)).toBe(true);
+    await expect(elements.slice(0, 5).every((el) => el.matches('xe-footer > xe-icon-button[slot="social"]'))).toBe(true);
+    await expect(elements.slice(5).every((el) => el.matches('xe-footer > xe-hyperlink[slot="legal"]'))).toBe(true);
     const social = itemElement(canvasElement, 0);
-    const legal = itemElement(canvasElement, 1);
+    const legal = itemElement(canvasElement, 5);
     await expect(social.matches('xe-footer > xe-icon-button[slot="social"]')).toBe(true);
     await expect(social).toHaveAttribute('data-aue-model', 'xe-footer-social-links');
     await expect(social).toHaveAttribute('data-aue-type', 'component');
@@ -327,16 +365,16 @@ export const EditorEmptyItems = {
   render: (args) => {
     const rows = fieldsToRows({ ...args, socialLinks: '', legalLinks: '' });
     rows.push([''], ['']);
-    return render(rows, inEditor(['xe-footer-social-links', 'xe-footer-legal-links']));
+    return render(rows, inEditor(itemModels(1, 1)));
   },
   play: async ({ canvasElement }) => {
     await upgraded(canvasElement);
     const social = itemElement(canvasElement, 0);
     const legal = itemElement(canvasElement, 1);
     await expect(social.matches('span.xe-footer-v2-placeholder[slot="social"]')).toBe(true);
-    await expect(social).toHaveTextContent('Add social links');
+    await expect(social).toHaveTextContent('Add a social link');
     await expect(legal.matches('span.xe-footer-v2-placeholder[slot="legal"]')).toBe(true);
-    await expect(legal).toHaveTextContent('Add legal links');
+    await expect(legal).toHaveTextContent('Add a legal link');
     await expect(canvasElement.querySelectorAll('xe-icon-button')).toHaveLength(0);
     await expect(legalLinks(canvasElement)).toEqual([]);
   },
@@ -347,7 +385,7 @@ export const EditorEmptyItems = {
 export const EditorModelWins = {
   render: (args) => render(
     fieldsToRows({ ...args, legalLinks: linkList([['Facebook terms', 'https://www.facebook.com/terms']]) }),
-    inEditor(['xe-footer-social-links', 'xe-footer-legal-links']),
+    inEditor(itemModels(itemCount(args.socialLinks), 1)),
   ),
   play: async ({ canvasElement }) => {
     await upgraded(canvasElement);
@@ -382,21 +420,6 @@ export const KeyValueNonContiguousColumns = {
     const footer = await upgraded(canvasElement);
     await expect(footer).toHaveAttribute('columns', '2');
     await expect(columnHeadings(canvasElement)).toEqual(['Company', 'Support']);
-  },
-};
-
-// Key-value footers whose items rendered as key-value rows are identified by
-// their field names (socialLinks / legalLinks).
-export const KeyValueItemRows = {
-  render: (args) => {
-    const rows = keyValueRows({ ...args, socialLinks: '', legalLinks: '' });
-    rows.push(['socialLinks', args.socialLinks], ['legalLinks', args.legalLinks]);
-    return render(rows);
-  },
-  play: async ({ canvasElement }) => {
-    await upgraded(canvasElement);
-    await expect(await socialLinks(canvasElement)).toEqual(EXPECTED_SOCIAL);
-    await expect(legalLinks(canvasElement)).toEqual(AUTHORED_LEGAL);
   },
 };
 

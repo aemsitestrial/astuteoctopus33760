@@ -1,16 +1,18 @@
 import { hyperlink, keepInstrumentation } from '../../scripts/components/xe-footer-utils.js';
 
 /*
- * XE Footer Legal Links — child item of XE Footer V2.
+ * XE Footer Legal Link — child item of XE Footer V2, one per legal link.
  *
- * decorate(item) turns the item's authored links (a composite multi-field of
- * text + link, rendered as a <ul> of links) into the footer's legal links,
- * which XE Footer V2 slots straight into <xe-footer>:
+ * The item's Text + Link (cta_linkText + cta_link) collapse into one authored
+ * link. decorate(item) turns it into the footer's legal link, which XE Footer
+ * V2 slots straight into <xe-footer>:
  *
  *   <xe-hyperlink slot="legal" href="…" variant="variant" trailing-icon>Privacy</xe-hyperlink>
  *
- * The item's Universal Editor instrumentation moves onto the first link (or
- * an editor-only placeholder while the item has no links).
+ * The item's Universal Editor instrumentation moves onto the link (or an
+ * editor-only placeholder while the item has no link yet). The item holds
+ * plain fields, not a multi-field: multi-fields are an early-access feature
+ * and render empty unless Adobe enables them for the program.
  */
 
 // Rendered when no legal links are authored (the live Xcel Energy footer's).
@@ -35,5 +37,5 @@ export function decorateDefaults() {
  */
 export default function decorate(item) {
   const links = [...item.querySelectorAll('a')].map((anchor) => hyperlink(anchor, LEGAL));
-  return keepInstrumentation(item, links, 'legal', 'Add legal links');
+  return keepInstrumentation(item, links, 'legal', 'Add a legal link');
 }

@@ -1,14 +1,14 @@
 {
   "definitions": [
     {
-      "title": "XE Footer Social Links",
+      "title": "XE Footer Social Link",
       "id": "xe-footer-social-links",
       "plugins": {
         "xwalk": {
           "page": {
             "resourceType": "core/franklin/components/block/v1/block/item",
             "template": {
-              "name": "XE Footer Social Links",
+              "name": "XE Footer Social Link",
               "model": "xe-footer-social-links"
             }
           }
@@ -21,32 +21,39 @@
       "id": "xe-footer-social-links",
       "fields": [
         {
-          "component": "container",
-          "name": "socialLinks",
-          "label": "Social links",
-          "multi": true,
-          "fields": [
+          "component": "select",
+          "valueType": "string",
+          "name": "cta_linkText",
+          "label": "Network",
+          "value": "facebook",
+          "options": [
             {
-              "component": "aem-content",
-              "valueType": "string",
-              "name": "cta_link",
-              "label": "Profile URL"
+              "name": "Facebook",
+              "value": "facebook"
             },
             {
-              "component": "select",
-              "valueType": "string",
-              "name": "cta_linkText",
-              "label": "Network",
-              "value": "facebook",
-              "options": [
-                { "name": "Facebook", "value": "facebook" },
-                { "name": "X (Twitter)", "value": "x" },
-                { "name": "Instagram", "value": "instagram" },
-                { "name": "LinkedIn", "value": "linkedin" },
-                { "name": "YouTube", "value": "youtube" }
-              ]
+              "name": "X (Twitter)",
+              "value": "x"
+            },
+            {
+              "name": "Instagram",
+              "value": "instagram"
+            },
+            {
+              "name": "LinkedIn",
+              "value": "linkedin"
+            },
+            {
+              "name": "YouTube",
+              "value": "youtube"
             }
           ]
+        },
+        {
+          "component": "aem-content",
+          "valueType": "string",
+          "name": "cta_link",
+          "label": "Profile URL"
         }
       ]
     }

@@ -1255,24 +1255,16 @@
     "id": "xe-footer-legal-links",
     "fields": [
       {
-        "component": "container",
-        "name": "legalLinks",
-        "label": "Legal links",
-        "multi": true,
-        "fields": [
-          {
-            "component": "aem-content",
-            "valueType": "string",
-            "name": "cta_link",
-            "label": "Link"
-          },
-          {
-            "component": "text",
-            "valueType": "string",
-            "name": "cta_linkText",
-            "label": "Text"
-          }
-        ]
+        "component": "text",
+        "valueType": "string",
+        "name": "cta_linkText",
+        "label": "Text"
+      },
+      {
+        "component": "aem-content",
+        "valueType": "string",
+        "name": "cta_link",
+        "label": "Link"
       }
     ]
   },
@@ -1280,47 +1272,39 @@
     "id": "xe-footer-social-links",
     "fields": [
       {
-        "component": "container",
-        "name": "socialLinks",
-        "label": "Social links",
-        "multi": true,
-        "fields": [
+        "component": "select",
+        "valueType": "string",
+        "name": "cta_linkText",
+        "label": "Network",
+        "value": "facebook",
+        "options": [
           {
-            "component": "aem-content",
-            "valueType": "string",
-            "name": "cta_link",
-            "label": "Profile URL"
+            "name": "Facebook",
+            "value": "facebook"
           },
           {
-            "component": "select",
-            "valueType": "string",
-            "name": "cta_linkText",
-            "label": "Network",
-            "value": "facebook",
-            "options": [
-              {
-                "name": "Facebook",
-                "value": "facebook"
-              },
-              {
-                "name": "X (Twitter)",
-                "value": "x"
-              },
-              {
-                "name": "Instagram",
-                "value": "instagram"
-              },
-              {
-                "name": "LinkedIn",
-                "value": "linkedin"
-              },
-              {
-                "name": "YouTube",
-                "value": "youtube"
-              }
-            ]
+            "name": "X (Twitter)",
+            "value": "x"
+          },
+          {
+            "name": "Instagram",
+            "value": "instagram"
+          },
+          {
+            "name": "LinkedIn",
+            "value": "linkedin"
+          },
+          {
+            "name": "YouTube",
+            "value": "youtube"
           }
         ]
+      },
+      {
+        "component": "aem-content",
+        "valueType": "string",
+        "name": "cta_link",
+        "label": "Profile URL"
       }
     ]
   },

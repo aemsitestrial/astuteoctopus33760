@@ -1,19 +1,22 @@
 import { keepInstrumentation } from '../../scripts/components/xe-footer-utils.js';
 
 /*
- * XE Footer Social Links — child item of XE Footer V2.
+ * XE Footer Social Link — child item of XE Footer V2, one per social profile.
  *
- * decorate(item) turns the item's authored links (a composite multi-field of
- * network + profile URL, rendered as a <ul> of links) into the footer's social
- * icon buttons, which XE Footer V2 slots straight into <xe-footer>:
+ * The item's Network select + Profile URL (cta_linkText + cta_link) collapse
+ * into one authored link, <a href="profile URL">network</a>. decorate(item)
+ * turns it into the footer's social icon button, which XE Footer V2 slots
+ * straight into <xe-footer>:
  *
  *   <xe-icon-button slot="social" size="xl" href="…" target="_blank"
  *                   aria-label="Facebook (opens in a new window)">
  *     <xe-icon icon="faSquareFacebook"></xe-icon>
  *   </xe-icon-button>
  *
- * The item's Universal Editor instrumentation moves onto the first button (or
- * an editor-only placeholder while the item has no links).
+ * The item's Universal Editor instrumentation moves onto the button (or an
+ * editor-only placeholder while the item has no profile URL yet). The item
+ * holds plain fields, not a multi-field: multi-fields are an early-access
+ * feature and render empty unless Adobe enables them for the program.
  */
 
 // Social networks, keyed by the item's "Network" select value, with their
@@ -91,5 +94,5 @@ export default function decorate(item) {
     anchor.setAttribute('slot', 'social');
     return anchor;
   });
-  return keepInstrumentation(item, buttons, 'social', 'Add social links');
+  return keepInstrumentation(item, buttons, 'social', 'Add a social link');
 }

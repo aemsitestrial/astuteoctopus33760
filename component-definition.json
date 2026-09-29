@@ -724,14 +724,14 @@
           }
         },
         {
-          "title": "XE Footer Legal Links",
+          "title": "XE Footer Legal Link",
           "id": "xe-footer-legal-links",
           "plugins": {
             "xwalk": {
               "page": {
                 "resourceType": "core/franklin/components/block/v1/block/item",
                 "template": {
-                  "name": "XE Footer Legal Links",
+                  "name": "XE Footer Legal Link",
                   "model": "xe-footer-legal-links"
                 }
               }
@@ -739,14 +739,14 @@
           }
         },
         {
-          "title": "XE Footer Social Links",
+          "title": "XE Footer Social Link",
           "id": "xe-footer-social-links",
           "plugins": {
             "xwalk": {
               "page": {
                 "resourceType": "core/franklin/components/block/v1/block/item",
                 "template": {
-                  "name": "XE Footer Social Links",
+                  "name": "XE Footer Social Link",
                   "model": "xe-footer-social-links"
                 }
               }
