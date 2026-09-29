@@ -33,6 +33,18 @@ main > .section > .xe-footer-v2-wrapper {
   object-fit: cover;
 }
 
+/* Universal Editor only: stands in for a just-added social/legal item that has
+   no links yet, so authors can see and select it. */
+.xe-footer-v2 .xe-footer-v2-placeholder {
+  display: inline-block;
+  padding: 4px 10px;
+  border: 1px dashed currentcolor;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1.4;
+  opacity: 0.8;
+}
+
 /* A rich-text social link to a network without an icon button, kept as authored. */
 .xe-footer-v2 a[slot="social"] {
   display: inline-flex;

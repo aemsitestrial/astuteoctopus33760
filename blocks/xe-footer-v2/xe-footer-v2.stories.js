@@ -180,6 +180,32 @@ async function upgraded(canvasElement) {
   return footer;
 }
 
+const ITEM_LABELS = {
+  'xe-footer-social-links': 'XE Footer Social Links',
+  'xe-footer-legal-links': 'XE Footer Legal Links',
+};
+
+/**
+ * A decorate() that first instruments the child item rows (the single-cell
+ * rows, in order) the way the Universal Editor serves them — component
+ * resource, type, model and label — so stories can check the instrumentation
+ * survives decoration and the items stay in the editor's content tree.
+ */
+const inEditor = (models) => (block) => {
+  [...block.children].filter((row) => row.children.length === 1).forEach((row, index) => {
+    const model = models[index];
+    row.setAttribute('data-aue-resource', `urn:aemconnection:/content/xcel/index/jcr:content/root/section/xe_footer_v2/item_${index}`);
+    row.setAttribute('data-aue-type', 'component');
+    row.setAttribute('data-aue-model', model);
+    row.setAttribute('data-aue-label', ITEM_LABELS[model]);
+  });
+  return decorate(block);
+};
+
+/** The instrumented element for child item `index` (see inEditor). */
+const itemElement = (canvasElement, index) => canvasElement
+  .querySelector(`[data-aue-resource$="/item_${index}"]`);
+
 const columnHeadings = (canvasElement) => [...canvasElement.querySelectorAll('xe-footer-column')]
   .map((col) => col.getAttribute('heading'));
 
@@ -360,5 +386,68 @@ export const LegacyContent = {
     await expect(legalLinks(canvasElement)).toEqual(AUTHORED_LEGAL);
     await expect(await socialLinks(canvasElement)).toEqual(EXPECTED_SOCIAL.map(([label, , icon]) => [label, '#', icon]));
     await expect(canvasElement.querySelector('[slot="tagline"]')).toHaveTextContent('Our Energy, Your Power');
+  },
+};
+
+// Universal Editor: each child item keeps its instrumentation on the first
+// element rendered from it, so both appear in the editor's content tree.
+export const EditorItems = {
+  render: (args) => renderBlock({
+    name: 'xe-footer-v2',
+    rows: fieldsToRows(args),
+    decorate: inEditor(['xe-footer-social-links', 'xe-footer-legal-links']),
+  }),
+  play: async ({ canvasElement }) => {
+    await upgraded(canvasElement);
+    const social = itemElement(canvasElement, 0);
+    const legal = itemElement(canvasElement, 1);
+    await expect(social.matches('xe-footer > xe-icon-button[slot="social"]')).toBe(true);
+    await expect(social).toHaveAttribute('data-aue-model', 'xe-footer-social-links');
+    await expect(social).toHaveAttribute('data-aue-type', 'component');
+    await expect(legal.matches('xe-footer > xe-hyperlink[slot="legal"]')).toBe(true);
+    await expect(legal).toHaveAttribute('data-aue-model', 'xe-footer-legal-links');
+    await expect(await socialLinks(canvasElement)).toEqual(EXPECTED_SOCIAL);
+    await expect(legalLinks(canvasElement)).toEqual(AUTHORED_LEGAL);
+  },
+};
+
+// Universal Editor: items just added (no links yet) render a placeholder that
+// carries their instrumentation, instead of disappearing — and don't fall
+// back to the default links.
+export const EditorEmptyItems = {
+  render: (args) => {
+    const rows = fieldsToRows({ ...args, socialLinks: '', legalLinks: '' });
+    rows.push([''], ['']);
+    return renderBlock({
+      name: 'xe-footer-v2',
+      rows,
+      decorate: inEditor(['xe-footer-social-links', 'xe-footer-legal-links']),
+    });
+  },
+  play: async ({ canvasElement }) => {
+    await upgraded(canvasElement);
+    const social = itemElement(canvasElement, 0);
+    const legal = itemElement(canvasElement, 1);
+    await expect(social.matches('span.xe-footer-v2-placeholder[slot="social"]')).toBe(true);
+    await expect(social).toHaveTextContent('Add social links');
+    await expect(legal.matches('span.xe-footer-v2-placeholder[slot="legal"]')).toBe(true);
+    await expect(legal).toHaveTextContent('Add legal links');
+    await expect(canvasElement.querySelectorAll('xe-icon-button')).toHaveLength(0);
+    await expect(legalLinks(canvasElement)).toEqual([]);
+  },
+};
+
+// Universal Editor: the item's model decides where it renders, even when its
+// links would look like the other list (a legal page on facebook.com).
+export const EditorModelWins = {
+  render: (args) => renderBlock({
+    name: 'xe-footer-v2',
+    rows: fieldsToRows({ ...args, legalLinks: linkList([['Facebook terms', 'https://www.facebook.com/terms']]) }),
+    decorate: inEditor(['xe-footer-social-links', 'xe-footer-legal-links']),
+  }),
+  play: async ({ canvasElement }) => {
+    await upgraded(canvasElement);
+    await expect(legalLinks(canvasElement)).toEqual([['Facebook terms', 'https://www.facebook.com/terms']]);
+    await expect(await socialLinks(canvasElement)).toEqual(EXPECTED_SOCIAL);
   },
 };

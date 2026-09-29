@@ -82,6 +82,13 @@ item a list came from, so a list whose links all point to known social
 networks is the social list and any other list is the legal list; if AEM
 renders the items as key-value rows, their field names identify them.
 
+In the Universal Editor each item row carries its model (`data-aue-model`), so
+it lands in the right list regardless of its links, and its instrumentation is
+moved onto the first button or link rendered from it — keeping every item in
+the editor's content tree. An item that has no links yet shows an "Add social
+links" / "Add legal links" placeholder (editor only) so it can be selected and
+filled in.
+
 When neither an item nor the older `social` / `legal` rich-text field is
 authored, the live Xcel Energy footer's links render as defaults: the five
 social profiles, and Online Terms of Use, Privacy and Accessibility.
