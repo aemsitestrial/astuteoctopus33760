@@ -273,14 +273,15 @@ main > .section > .xe-footer-wrapper {
     }
 }
 
-/* Reset the authored <ul> bullets; render links as a clean vertical list. */
+/* Reset the authored <ul> bullets; render links as a clean vertical list.
+   The 9px gap plus the 24px link rows below keeps the original 33px pitch. */
 .xe-footer .xe-footer-links-col ul {
     margin: 0;
     padding: 0;
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 9px;
 }
 
 .xe-footer .xe-footer-links-col li,
@@ -290,6 +291,14 @@ main > .section > .xe-footer-wrapper {
     font-size: 15px;
     line-height: 1.4;
     color: rgb(255 255 255 / 85%);
+}
+
+/* WCAG 2.2 target size (2.5.8): at least 24px tall, so the first link clears
+   the column heading above it. */
+.xe-footer .xe-footer-links-col a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
 }
 
 .xe-footer .xe-footer-links-col a:hover {
