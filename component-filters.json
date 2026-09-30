@@ -160,6 +160,13 @@
     ]
   },
   {
+    "id": "xe-footer-v2-social-full",
+    "components": [
+      "xe-footer-column-links",
+      "xe-footer-legal-links"
+    ]
+  },
+  {
     "id": "xe-ignite-feature-cards-npm",
     "components": [
       "xe-ignite-feature-card-npm"

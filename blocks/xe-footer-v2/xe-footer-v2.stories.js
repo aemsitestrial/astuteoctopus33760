@@ -160,12 +160,16 @@ const itemModels = (columns, social, legal) => [
 ];
 
 /**
- * A decorate() that first instruments the last `models.length` rows (the
- * child items) the way the Universal Editor serves them — component resource,
- * type, model and label — so stories can check the instrumentation survives
- * decoration and the items stay in the editor's content tree.
+ * A decorate() that first instruments the block and the last `models.length`
+ * rows (the child items) the way the Universal Editor serves them — the block
+ * as a container with its filter; each item's resource, type, model and
+ * label — so stories can check the instrumentation survives decoration, the
+ * items stay in the editor's content tree, and the filter the (+) menu uses.
  */
 const inEditor = (models) => (block) => {
+  block.setAttribute('data-aue-resource', 'urn:aemconnection:/content/xcel/index/jcr:content/root/section/xe_footer_v2');
+  block.setAttribute('data-aue-type', 'container');
+  block.setAttribute('data-aue-filter', 'xe-footer-v2');
   const rows = [...block.children].slice(-models.length);
   rows.forEach((row, index) => {
     const model = models[index];
@@ -422,6 +426,10 @@ export const EditorItems = {
     await expect(canvasElement.querySelector('img[slot="banner-image"]')).toBeInTheDocument();
     await expect(await socialLinks(canvasElement)).toEqual(EXPECTED_SOCIAL);
     await expect(legalLinks(canvasElement)).toEqual(AUTHORED_LEGAL);
+    // Five social links is the most the footer shows, so the block switches to
+    // the filter without the social link item: (+) no longer offers it.
+    await expect(canvasElement.querySelector('.xe-footer-v2.block'))
+      .toHaveAttribute('data-aue-filter', 'xe-footer-v2-social-full');
   },
 };
 
@@ -450,6 +458,9 @@ export const EditorEmptyItems = {
     await expect(legal).toHaveTextContent('Add legal links');
     await expect(canvasElement.querySelectorAll('xe-icon-button')).toHaveLength(0);
     await expect(legalLinks(canvasElement)).toEqual([]);
+    // One social link item: below the limit, the block keeps its own filter.
+    await expect(canvasElement.querySelector('.xe-footer-v2.block'))
+      .toHaveAttribute('data-aue-filter', 'xe-footer-v2');
   },
 };
 
@@ -505,6 +516,16 @@ export const EditorTooManySocialLinks = {
       expect(notice).toHaveTextContent('Only 5 social links are shown — remove this one');
       expect(notice).toHaveAttribute('data-aue-model', 'xe-footer-social-links');
     });
+    await expect(canvasElement.querySelector('.xe-footer-v2.block'))
+      .toHaveAttribute('data-aue-filter', 'xe-footer-v2-social-full');
+  },
+};
+
+// Published pages carry no editor filter, and none is added.
+export const PublishedHasNoFilter = {
+  play: async ({ canvasElement }) => {
+    await upgraded(canvasElement);
+    await expect(canvasElement.querySelector('.xe-footer-v2.block')).not.toHaveAttribute('data-aue-filter');
   },
 };
 

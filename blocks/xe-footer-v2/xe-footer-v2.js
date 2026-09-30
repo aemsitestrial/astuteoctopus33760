@@ -4,6 +4,7 @@ import decorateSocialLinks, {
   decorateDefaults as defaultSocialLinks,
   decorateItems as decorateSocialItems,
   isSocialLinks,
+  MAX_SOCIAL_LINKS,
 } from '../xe-footer-social-links/xe-footer-social-links.js';
 import decorateLegalLinks, {
   decorateDefaults as defaultLegalLinks,
@@ -53,6 +54,12 @@ const COLUMN_SLOTS = 5;
 
 // <xe-footer-column>'s accordion breakpoint (it hard-codes this media query).
 const ACCORDION_QUERY = window.matchMedia('(max-width: 1024px)');
+
+// Universal Editor filters (_xe-footer-v2.json): the block's own, and one
+// without the social link item for when the footer already has the most it
+// shows, so the editor's (+) menu stops offering it.
+const FILTER = 'xe-footer-v2';
+const SOCIAL_FULL_FILTER = 'xe-footer-v2-social-full';
 
 // Child item models (the xe-footer-v2 filter) → the footer area they fill.
 const ITEM_MODELS = {
@@ -240,6 +247,15 @@ function syncListSemantics(footer) {
 export default async function decorate(block) {
   const fields = readFields(block);
   const footer = document.createElement('xe-footer');
+
+  // Universal Editor: with MAX_SOCIAL_LINKS social links already added, switch
+  // to the filter without the social link item so (+) no longer offers it.
+  // The block is re-rendered with its original filter after every add or
+  // remove (scripts/editor-support.js), so this re-evaluates each time.
+  // Published pages carry no data-aue-filter; nothing changes there.
+  if (block.dataset.aueFilter === FILTER && fields.items.social.length >= MAX_SOCIAL_LINKS) {
+    block.dataset.aueFilter = SOCIAL_FULL_FILTER;
+  }
 
   // --- Logo: the authored image, or Ignite's built-in Xcel Energy logo ---
   const logoPicture = fields.logo && fields.logo.querySelector('picture, img');
