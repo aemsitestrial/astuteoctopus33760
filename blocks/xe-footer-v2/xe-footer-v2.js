@@ -1,6 +1,5 @@
 import { moveInstrumentation } from '../../scripts/scripts.js';
 import loadIgnite from '../../scripts/components/ignite.js';
-import { hyperlink } from '../../scripts/components/xe-footer-utils.js';
 import decorateSocialLinks, {
   decorateDefaults as defaultSocialLinks,
   isSocialLinks,
@@ -8,6 +7,7 @@ import decorateSocialLinks, {
 import decorateLegalLinks, {
   decorateDefaults as defaultLegalLinks,
 } from '../xe-footer-legal-links/xe-footer-legal-links.js';
+import decorateColumnLinks, { buildColumn } from '../xe-footer-column-links/xe-footer-column-links.js';
 
 /*
  * XE Footer V2
@@ -18,7 +18,7 @@ import decorateLegalLinks, {
  *   <xe-footer columns="5">
  *     <picture slot="logo">…</picture>          (or <xe-logo> when no logo is authored)
  *     <span slot="copyright">© 2026 Xcel Energy Inc. All rights reserved.</span>
- *     <xe-footer-column heading="Company">
+ *     <xe-footer-column heading="Company">                    (xe-footer-column-links)
  *       <xe-hyperlink href="…" variant="variant">Careers</xe-hyperlink>…
  *     </xe-footer-column>…
  *     <xe-icon-button slot="social" …>…</xe-icon-button>…       (xe-footer-social-links)
@@ -29,10 +29,10 @@ import decorateLegalLinks, {
  *
  * The block is a container (filter `xe-footer-v2`): its own fields (logo +
  * alt, copyright, banner background + tagline) render as rows first, then one
- * row per child item — one social profile or legal link each. Those items are
- * decorated by their own blocks (xe-footer-social-links /
- * xe-footer-legal-links); the live Xcel Energy footer's links render when
- * none are authored.
+ * row per child item — a link column, a social profile or a legal link. Those
+ * items are decorated by their own blocks (xe-footer-column-links /
+ * xe-footer-social-links / xe-footer-legal-links); the live Xcel Energy
+ * footer's social and legal links render when none are authored.
  *
  * Rows are recognized by what they hold rather than by position, so blank
  * fields can't shift the others and older footers still render: key-value
@@ -54,8 +54,8 @@ const COLUMN_SLOTS = 5;
 const ACCORDION_QUERY = window.matchMedia('(max-width: 1024px)');
 
 // Child item models (the xe-footer-v2 filter) → the footer area they fill.
-// Each item is one link (social profile or legal link).
 const ITEM_MODELS = {
+  'xe-footer-column-links': 'columns',
   'xe-footer-social-links': 'social',
   'xe-footer-legal-links': 'legal',
 };
@@ -107,11 +107,12 @@ function isLinkColumns(cell) {
 
 /**
  * Reads the authored rows into `{ normalizedName: valueElement }` plus
- * `items: { social: [row…], legal: [row…] }` (item rows are kept whole, since
- * the row carries the item's Universal Editor instrumentation).
+ * `items: { columns: [row…], social: [row…], legal: [row…] }` (item rows are
+ * kept whole, since the row carries the item's Universal Editor
+ * instrumentation).
  */
 function readFields(block) {
-  const fields = { items: { social: [], legal: [] } };
+  const fields = { items: { columns: [], social: [], legal: [] } };
   const addItem = (kind, row) => fields.items[kind].push(row);
   let seenCopyright = false;
 
@@ -149,7 +150,8 @@ function readFields(block) {
         fields.logo = cell;
       }
     } else if (isLinkColumns(cell)) {
-      fields.footerlinks = cell;
+      // A link column item (or an older footer's rich-text footer links).
+      addItem('columns', row);
     } else if (fields['banner-background']) {
       // Past the banner only child items follow (model order); one without a
       // link yet (e.g. a network chosen but no URL) renders nothing.
@@ -159,14 +161,6 @@ function readFields(block) {
     }
   });
   return fields;
-}
-
-/** An <xe-footer-column> holding the links found in `container`. */
-function buildColumn(heading, container) {
-  const column = document.createElement('xe-footer-column');
-  if (heading) column.setAttribute('heading', heading);
-  column.append(...[...container.querySelectorAll('a')].map((anchor) => hyperlink(anchor)));
-  return column;
 }
 
 /** Columns from a key-value footer's column slots, skipping slots without links. */
@@ -181,38 +175,6 @@ function buildSlotColumns(fields) {
       columns.push(column);
     }
   }
-  return columns;
-}
-
-/**
- * Columns from footer-links rich text: a flat sequence of heading (<p>/<hN>)
- * + link list pairs, one column per heading. Links before any heading get an
- * untitled column so they are kept.
- */
-function buildColumnsFromRichText(value) {
-  // Drill through wrapper divs to the element holding the heading/list sequence.
-  let content = value;
-  while (content.children.length === 1 && content.firstElementChild.matches('div')) {
-    content = content.firstElementChild;
-  }
-
-  const groups = [];
-  [...content.children].forEach((node) => {
-    const hasLinks = Boolean(node.querySelector('a'));
-    if (node.matches('p, h2, h3, h4, h5, h6') && !hasLinks) {
-      groups.push({ heading: node.textContent.trim(), nodes: [] });
-    } else if (hasLinks) {
-      if (!groups.length) groups.push({ heading: '', nodes: [] });
-      groups[groups.length - 1].nodes.push(node);
-    }
-  });
-
-  const columns = groups.map(({ heading, nodes }) => {
-    const container = document.createElement('div');
-    container.append(...nodes);
-    return buildColumn(heading, container);
-  });
-  if (columns.length) moveInstrumentation(value, columns[0]);
   return columns;
 }
 
@@ -256,8 +218,8 @@ function buildBannerImage(value) {
 }
 
 /**
- * The first non-empty result: the child items, then a legacy rich-text field
- * (decorated the same way), then the defaults.
+ * The first non-empty result of `sources`, tried in order: e.g. the child
+ * items, then an older footer's field (decorated the same way), then defaults.
  */
 function firstOf(...sources) {
   return sources.map((source) => source()).find((elements) => elements.length) || [];
@@ -299,13 +261,15 @@ export default async function decorate(block) {
 
   if (fields.copyright) footer.append(buildCopyright(fields.copyright));
 
-  // --- Link columns (default slot) ---
-  let columns = buildSlotColumns(fields);
-  if (!columns.length && fields.footerlinks) columns = buildColumnsFromRichText(fields.footerlinks);
-  if (columns.length) {
-    footer.setAttribute('columns', String(columns.length));
-    footer.append(...columns);
-  }
+  // --- Link columns (default slot): the column items, else a key-value
+  // footer's column slots ---
+  const columns = firstOf(
+    () => fields.items.columns.flatMap(decorateColumnLinks),
+    () => buildSlotColumns(fields),
+  );
+  const columnCount = columns.filter((column) => column.matches('xe-footer-column')).length;
+  if (columnCount) footer.setAttribute('columns', String(columnCount));
+  footer.append(...columns);
 
   // --- Social and legal links: the child items, decorated by their blocks ---
   footer.append(

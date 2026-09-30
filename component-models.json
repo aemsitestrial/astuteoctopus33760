@@ -1252,6 +1252,24 @@
     ]
   },
   {
+    "id": "xe-footer-column-links",
+    "fields": [
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "column_heading",
+        "label": "Heading"
+      },
+      {
+        "component": "richtext",
+        "valueType": "string",
+        "name": "column_links",
+        "label": "Links",
+        "description": "A bulleted list of links, one per line"
+      }
+    ]
+  },
+  {
     "id": "xe-footer-legal-links",
     "fields": [
       {

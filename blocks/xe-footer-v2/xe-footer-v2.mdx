@@ -49,47 +49,52 @@ one-to-one to the model (`blocks/xe-footer-v2/_xe-footer-v2.json`).
   </tbody>
 </table>
 
-### Child items: social and legal links
+### Child items: link columns, social and legal links
 
-Authors add **one item per link**:
+Authors add **one item per link column** and **one item per social or legal
+link**:
 
 <table>
   <thead>
     <tr><th>Item</th><th>Fields</th><th>Renders as</th></tr>
   </thead>
   <tbody>
+    <tr><td>XE Footer Link Column</td><td><code>column_heading</code> text + <code>column_links</code> rich text (a bulleted list of links)</td><td>An <code>&lt;xe-footer-column&gt;</code> with that heading and its links</td></tr>
     <tr><td>XE Footer Social Link</td><td><code>cta_linkText</code> network select + <code>cta_link</code> profile URL</td><td>A social icon button (Facebook, X, Instagram, LinkedIn or YouTube), opening in a new window</td></tr>
     <tr><td>XE Footer Legal Link</td><td><code>cta_linkText</code> text + <code>cta_link</code> link</td><td>A legal link with a trailing icon</td></tr>
   </tbody>
 </table>
 
-Each item's two fields collapse into a single link. The items deliberately use
-plain fields rather than a multi-field (`"component": "container"` with
+A social or legal item's two fields collapse into a single link; a link
+column's heading and links are grouped into one cell. The items deliberately
+use plain fields rather than a multi-field (`"component": "container"` with
 `"multi": true`): multi-fields are an **early-access** feature on aem.live and
-render empty unless Adobe enables them for the program.
+render empty unless Adobe enables them for the program — which is why a
+column's links are a rich-text list.
 
-Each item is decorated by its own block — `blocks/xe-footer-social-links` and
-`blocks/xe-footer-legal-links` export `decorate(item)`, returning the elements
-the footer slots in, and `decorateDefaults()`, the live Xcel Energy footer's
+Each item is decorated by its own block — `blocks/xe-footer-column-links`,
+`blocks/xe-footer-social-links` and `blocks/xe-footer-legal-links` export
+`decorate(item)`, returning the elements the footer slots in. The social and
+legal blocks also export `decorateDefaults()`, the live Xcel Energy footer's
 links used when no item is authored.
 
 In the Universal Editor each item row carries its model (`data-aue-model`), so
 it lands in the right place regardless of its link, and its instrumentation
 moves onto the button or link rendered from it, keeping every item in the
-editor's content tree. An item without a link yet shows an "Add a social link"
-/ "Add a legal link" placeholder (editor only) so it can be selected and filled
-in. On published pages rows carry no model, so a link to a social network is a
-social item and any other link is a legal item; an item without a link yet
-renders nothing.
+editor's content tree. An empty item shows an "Add a link column" / "Add a
+social link" / "Add a legal link" placeholder (editor only) so it can be
+selected and filled in. On published pages rows carry no model, so a heading
+with a list of links is a link column, a link to a social network is a social
+item and any other link is a legal item; an item without links yet renders
+nothing.
 
 ### Footers authored with earlier models
 
 Rows are recognized by what they hold, not by position, so earlier footers keep
 rendering: footers created while the block was **key-value** (`name | value`
 rows, including their five link-column slots and rich-text social / legal
-fields), and the original **positional** layout (rich-text social, legal and
-footer links). The current model has no link-column fields, so link columns
-render only from those earlier footers.
+ fields), and the original **positional** layout (rich-text social, legal and
+footer links).
 
 ## Live example
 

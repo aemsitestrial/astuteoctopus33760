@@ -724,6 +724,21 @@
           }
         },
         {
+          "title": "XE Footer Link Column",
+          "id": "xe-footer-column-links",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/block/v1/block/item",
+                "template": {
+                  "name": "XE Footer Link Column",
+                  "model": "xe-footer-column-links"
+                }
+              }
+            }
+          }
+        },
+        {
           "title": "XE Footer Legal Link",
           "id": "xe-footer-legal-links",
           "plugins": {

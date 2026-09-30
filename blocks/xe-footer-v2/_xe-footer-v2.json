@@ -63,8 +63,9 @@
     {
       "id": "xe-footer-v2",
       "components": [
-        "xe-footer-legal-links",
-        "xe-footer-social-links"
+        "xe-footer-column-links",
+        "xe-footer-social-links",
+        "xe-footer-legal-links"
       ]
     }
   ]

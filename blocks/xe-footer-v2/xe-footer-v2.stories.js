@@ -10,9 +10,10 @@
  *   banner_background       reference         -> "banner_background" (asset URL)
  *   banner_tagline          text              -> "banner_tagline" (grouped with the background)
  *
- * Child items (the block's filter), one per link — each item's link + text
- * fields collapse into one <a> in its own row:
+ * Child items (the block's filter), each in its own row:
  *
+ *   xe-footer-column-links  heading + links (rich-text list), grouped into one cell
+ *                             -> "linkColumns" (heading + list pairs, one item each)
  *   xe-footer-social-links  network select + profile URL -> "socialLinks" (links, one item each)
  *   xe-footer-legal-links   text + link                  -> "legalLinks" (links, one item each)
  *
@@ -63,6 +64,7 @@ const defaults = {
   copyright: '<p>© 2026 Xcel Energy. All rights reserved.</p>',
   banner_background: 'https://picsum.photos/1600/400?grayscale',
   banner_tagline: 'Our Energy, Your Power',
+  linkColumns: COLUMNS.map(([heading, links]) => `<p>${heading}</p>${list(links)}`).join(''),
   socialLinks: SOCIAL_ITEMS,
   legalLinks: LEGAL_ITEMS,
 };
@@ -81,6 +83,21 @@ function itemRows(html) {
 const itemCount = (html) => itemRows(html).length;
 
 /**
+ * One link column item row per heading in `html` (the linkColumns control):
+ * the item's heading + links are grouped into one cell, <p>heading</p><ul>…</ul>.
+ */
+function columnRows(html) {
+  if (!html) return [];
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const rows = [];
+  [...doc.body.children].forEach((node) => {
+    if (node.matches('p')) rows.push([node.outerHTML]);
+    else if (rows.length) rows[rows.length - 1][0] += node.outerHTML;
+  });
+  return rows;
+}
+
+/**
  * The container markup: one single-cell row per non-empty field in model
  * order — logo (alt collapsed in), copyright, banner (background + tagline
  * grouped) — then one row per child item (one per link).
@@ -93,7 +110,11 @@ function fieldsToRows(args) {
     const background = args.banner_background ? picture(args.banner_background, '') : '';
     rows.push([`${background}${args.banner_tagline ? `<p>${args.banner_tagline}</p>` : ''}`]);
   }
-  rows.push(...itemRows(args.socialLinks), ...itemRows(args.legalLinks));
+  rows.push(
+    ...columnRows(args.linkColumns),
+    ...itemRows(args.socialLinks),
+    ...itemRows(args.legalLinks),
+  );
   return rows;
 }
 
@@ -122,12 +143,17 @@ function legacyRows(args) {
   ];
 }
 
+const COLUMN = 'xe-footer-column-links';
 const SOCIAL = 'xe-footer-social-links';
 const LEGAL = 'xe-footer-legal-links';
-const ITEM_LABELS = { [SOCIAL]: 'XE Footer Social Link', [LEGAL]: 'XE Footer Legal Link' };
+const ITEM_LABELS = {
+  [COLUMN]: 'XE Footer Link Column', [SOCIAL]: 'XE Footer Social Link', [LEGAL]: 'XE Footer Legal Link',
+};
 
-/** The item models of a footer's item rows: `social` social items, then `legal` legal ones. */
-const itemModels = (social, legal) => [...Array(social).fill(SOCIAL), ...Array(legal).fill(LEGAL)];
+/** The item models of a footer's item rows, in order: link columns, social, legal. */
+const itemModels = (columns, social, legal) => [
+  ...Array(columns).fill(COLUMN), ...Array(social).fill(SOCIAL), ...Array(legal).fill(LEGAL),
+];
 
 /**
  * A decorate() that first instruments the last `models.length` rows (the
@@ -157,6 +183,7 @@ const argTypes = {
   copyright: { control: 'text', description: 'Copyright (rich text) — HTML.', table: { category: 'Brand' } },
   banner_background: { control: 'text', description: 'Background (reference) — asset URL for the full-bleed banner image.', table: { category: 'Banner' } },
   banner_tagline: { control: 'text', description: 'Tagline — centered banner overlay text.', table: { category: 'Banner' } },
+  linkColumns: { control: 'text', description: 'XE Footer Link Column items — one item per heading: <p>heading</p> followed by a <ul> of links.', table: { category: 'Child items' } },
   socialLinks: { control: 'text', description: 'XE Footer Social Link items — one item per link; the link text is the network (facebook, x, instagram, linkedin, youtube).', table: { category: 'Child items' } },
   legalLinks: { control: 'text', description: 'XE Footer Legal Link items — one item per link (text + link).', table: { category: 'Child items' } },
 };
@@ -229,11 +256,17 @@ const AUTHORED_LEGAL = [['Privacy Policy', '#'], ['Terms of Use', '#'], ['Cookie
 
 // --- Stories: the container model -------------------------------------------
 
-// The footer as authored now: its fields plus a social and a legal item.
+// The footer as authored now: its fields plus link column, social and legal items.
 export const Default = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await upgraded(canvasElement);
+    const footer = await upgraded(canvasElement);
+    // One <xe-footer-column heading="…"> per link column item, with direct
+    // <xe-hyperlink variant="variant"> children the column wraps in <li>s.
+    await expect(footer).toHaveAttribute('columns', '3');
+    await expect(columnHeadings(canvasElement)).toEqual(['Company', 'Services', 'Support']);
+    const firstColumn = canvasElement.querySelector('xe-footer > xe-footer-column');
+    await waitFor(() => expect(firstColumn.querySelectorAll(':scope > li > xe-hyperlink[variant="variant"]')).toHaveLength(4));
     await expect(canvasElement.querySelector('[slot="logo"] img')).toHaveAttribute('alt', 'Xcel');
     await expect(canvasElement.querySelector('xe-footer > span[slot="copyright"]'))
       .toHaveTextContent('© 2026 Xcel Energy. All rights reserved.');
@@ -317,6 +350,22 @@ export const IncompleteItem = {
   },
 };
 
+// A published link column item with a heading but no links yet renders
+// nothing; the other columns are unaffected.
+export const ColumnHeadingOnly = {
+  render: (args) => {
+    const rows = fieldsToRows({ ...args, socialLinks: '', legalLinks: '' });
+    rows.push(['<p>Investors</p>'], ...itemRows(args.socialLinks), ...itemRows(args.legalLinks));
+    return render(rows);
+  },
+  play: async ({ canvasElement }) => {
+    const footer = await upgraded(canvasElement);
+    await expect(footer).toHaveAttribute('columns', '3');
+    await expect(columnHeadings(canvasElement)).toEqual(['Company', 'Services', 'Support']);
+    await expect(canvasElement.querySelector('[slot="copyright"]')).toHaveTextContent('© 2026 Xcel Energy');
+  },
+};
+
 // No logo authored — Ignite's built-in Xcel Energy logo (inverse) is used.
 export const DefaultLogo = {
   args: { logo: '' },
@@ -334,17 +383,25 @@ export const DefaultLogo = {
 export const EditorItems = {
   render: (args) => render(
     fieldsToRows(args),
-    inEditor(itemModels(itemCount(args.socialLinks), itemCount(args.legalLinks))),
+    inEditor(itemModels(
+      columnRows(args.linkColumns).length,
+      itemCount(args.socialLinks),
+      itemCount(args.legalLinks),
+    )),
   ),
   play: async ({ canvasElement }) => {
     await upgraded(canvasElement);
-    // 5 social items (item_0–4) and 3 legal items (item_5–7), each its own element.
-    const elements = [...Array(8).keys()].map((index) => itemElement(canvasElement, index));
+    // 3 link columns (item_0–2), 5 social items (item_3–7) and 3 legal items
+    // (item_8–10), each its own element.
+    const elements = [...Array(11).keys()].map((index) => itemElement(canvasElement, index));
     await expect(elements.every(Boolean)).toBe(true);
-    await expect(elements.slice(0, 5).every((el) => el.matches('xe-footer > xe-icon-button[slot="social"]'))).toBe(true);
-    await expect(elements.slice(5).every((el) => el.matches('xe-footer > xe-hyperlink[slot="legal"]'))).toBe(true);
-    const social = itemElement(canvasElement, 0);
-    const legal = itemElement(canvasElement, 5);
+    await expect(elements.slice(0, 3).every((el) => el.matches('xe-footer > xe-footer-column'))).toBe(true);
+    await expect(elements.slice(3, 8).every((el) => el.matches('xe-footer > xe-icon-button[slot="social"]'))).toBe(true);
+    await expect(elements.slice(8).every((el) => el.matches('xe-footer > xe-hyperlink[slot="legal"]'))).toBe(true);
+    await expect(itemElement(canvasElement, 0)).toHaveAttribute('data-aue-model', 'xe-footer-column-links');
+    await expect(itemElement(canvasElement, 0)).toHaveAttribute('heading', 'Company');
+    const social = itemElement(canvasElement, 3);
+    const legal = itemElement(canvasElement, 8);
     await expect(social.matches('xe-footer > xe-icon-button[slot="social"]')).toBe(true);
     await expect(social).toHaveAttribute('data-aue-model', 'xe-footer-social-links');
     await expect(social).toHaveAttribute('data-aue-type', 'component');
@@ -363,14 +420,21 @@ export const EditorItems = {
 // instrumentation instead of disappearing — and don't fall back to defaults.
 export const EditorEmptyItems = {
   render: (args) => {
-    const rows = fieldsToRows({ ...args, socialLinks: '', legalLinks: '' });
-    rows.push([''], ['']);
-    return render(rows, inEditor(itemModels(1, 1)));
+    const rows = fieldsToRows({
+      ...args, linkColumns: '', socialLinks: '', legalLinks: '',
+    });
+    rows.push([''], [''], ['']);
+    return render(rows, inEditor(itemModels(1, 1, 1)));
   },
   play: async ({ canvasElement }) => {
     await upgraded(canvasElement);
-    const social = itemElement(canvasElement, 0);
-    const legal = itemElement(canvasElement, 1);
+    // The link column placeholder sits in the default slot (the columns grid).
+    const column = itemElement(canvasElement, 0);
+    await expect(column.matches('xe-footer > span.xe-footer-v2-placeholder:not([slot])')).toBe(true);
+    await expect(column).toHaveTextContent('Add a link column');
+    await expect(canvasElement.querySelectorAll('xe-footer-column')).toHaveLength(0);
+    const social = itemElement(canvasElement, 1);
+    const legal = itemElement(canvasElement, 2);
     await expect(social.matches('span.xe-footer-v2-placeholder[slot="social"]')).toBe(true);
     await expect(social).toHaveTextContent('Add a social link');
     await expect(legal.matches('span.xe-footer-v2-placeholder[slot="legal"]')).toBe(true);
@@ -385,7 +449,7 @@ export const EditorEmptyItems = {
 export const EditorModelWins = {
   render: (args) => render(
     fieldsToRows({ ...args, legalLinks: linkList([['Facebook terms', 'https://www.facebook.com/terms']]) }),
-    inEditor(itemModels(itemCount(args.socialLinks), 1)),
+    inEditor(itemModels(columnRows(args.linkColumns).length, itemCount(args.socialLinks), 1)),
   ),
   play: async ({ canvasElement }) => {
     await upgraded(canvasElement);

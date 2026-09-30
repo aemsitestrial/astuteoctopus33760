@@ -34,8 +34,8 @@ export function hyperlink(source, { slot, trailingIcon } = {}) {
  * moving it onto the first element built from it, so the item or field stays
  * in the editor's content tree and can be selected. A child item with nothing
  * to render yet (just added, no links) gets an editor-only placeholder in
- * `slot` instead of disappearing; on published pages there is no
- * instrumentation, so nothing is added.
+ * `slot` (or the default slot when `slot` is null) instead of disappearing;
+ * on published pages there is no instrumentation, so nothing is added.
  * @returns {Element[]} the elements to slot into the footer
  */
 export function keepInstrumentation(source, elements, slot, placeholderText) {
@@ -45,7 +45,7 @@ export function keepInstrumentation(source, elements, slot, placeholderText) {
   }
   if (!source.hasAttribute('data-aue-resource')) return elements;
   const placeholder = document.createElement('span');
-  placeholder.setAttribute('slot', slot);
+  if (slot) placeholder.setAttribute('slot', slot);
   placeholder.className = 'xe-footer-v2-placeholder';
   placeholder.textContent = placeholderText;
   moveInstrumentation(source, placeholder);
