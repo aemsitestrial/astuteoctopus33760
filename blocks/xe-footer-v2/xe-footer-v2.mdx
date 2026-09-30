@@ -51,8 +51,8 @@ one-to-one to the model (`blocks/xe-footer-v2/_xe-footer-v2.json`).
 
 ### Child items: link columns, social and legal links
 
-Authors add **one item per link column** and **one item per social or legal
-link**:
+Authors add **one item per link column**, **one item per social link**, and
+**one legal links item** holding the legal links as a list:
 
 <table>
   <thead>
@@ -61,16 +61,17 @@ link**:
   <tbody>
     <tr><td>XE Footer Link Column</td><td><code>column_heading</code> text + <code>column_links</code> rich text (a bulleted list of links)</td><td>An <code>&lt;xe-footer-column&gt;</code> with that heading and its links</td></tr>
     <tr><td>XE Footer Social Link</td><td><code>cta_linkText</code> network select + <code>cta_link</code> profile URL</td><td>A social icon button (Facebook, X, Instagram, LinkedIn or YouTube), opening in a new window</td></tr>
-    <tr><td>XE Footer Legal Link</td><td><code>cta_linkText</code> text + <code>cta_link</code> link</td><td>A legal link with a trailing icon</td></tr>
+    <tr><td>XE Footer Legal Links</td><td><code>links</code> rich text (a bulleted list of links)</td><td>Legal links, each with a trailing icon</td></tr>
   </tbody>
 </table>
 
-A social or legal item's two fields collapse into a single link; a link
-column's heading and links are grouped into one cell. The items deliberately
+A social item's two fields collapse into a single link; a link column's
+heading and links are grouped into one cell; the legal links are one
+rich-text list. The items deliberately
 use plain fields rather than a multi-field (`"component": "container"` with
 `"multi": true`): multi-fields are an **early-access** feature on aem.live and
 render empty unless Adobe enables them for the program — which is why a
-column's links are a rich-text list.
+column's links and the legal links are rich-text lists.
 
 Each item is decorated by its own block — `blocks/xe-footer-column-links`,
 `blocks/xe-footer-social-links` and `blocks/xe-footer-legal-links` export
@@ -82,11 +83,11 @@ In the Universal Editor each item row carries its model (`data-aue-model`), so
 it lands in the right place regardless of its link, and its instrumentation
 moves onto the button or link rendered from it, keeping every item in the
 editor's content tree. An empty item shows an "Add a link column" / "Add a
-social link" / "Add a legal link" placeholder (editor only) so it can be
+social link" / "Add legal links" placeholder (editor only) so it can be
 selected and filled in. On published pages rows carry no model, so a heading
 with a list of links is a link column, a link to a social network is a social
-item and any other link is a legal item; an item without links yet renders
-nothing.
+item and any other list of links is the legal links item; an item without
+links yet renders nothing.
 
 ### Footers authored with earlier models
 

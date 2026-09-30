@@ -1273,16 +1273,11 @@
     "id": "xe-footer-legal-links",
     "fields": [
       {
-        "component": "text",
+        "component": "richtext",
         "valueType": "string",
-        "name": "cta_linkText",
-        "label": "Text"
-      },
-      {
-        "component": "aem-content",
-        "valueType": "string",
-        "name": "cta_link",
-        "label": "Link"
+        "name": "links",
+        "label": "Legal links",
+        "description": "A bulleted list of links, one per line"
       }
     ]
   },

@@ -15,7 +15,7 @@
  *   xe-footer-column-links  heading + links (rich-text list), grouped into one cell
  *                             -> "linkColumns" (heading + list pairs, one item each)
  *   xe-footer-social-links  network select + profile URL -> "socialLinks" (links, one item each)
- *   xe-footer-legal-links   text + link                  -> "legalLinks" (links, one item each)
+ *   xe-footer-legal-links   links (rich-text list)       -> "legalLinks" (one item, the whole list)
  *
  * `fieldsToRows` renders the container markup AEM produces: one single-cell
  * row per field (logo, copyright, banner) followed by one row per child item.
@@ -70,8 +70,8 @@ const defaults = {
 };
 
 /**
- * One item row per link in `html` (the socialLinks / legalLinks controls):
- * each item's link + text collapse into a single <a>.
+ * One social item row per link in `html` (the socialLinks control): each
+ * item's network + profile URL collapse into a single <a>.
  */
 function itemRows(html) {
   if (!html) return [];
@@ -81,6 +81,9 @@ function itemRows(html) {
 
 /** How many item rows `html` renders as. */
 const itemCount = (html) => itemRows(html).length;
+
+/** The legal links item row: its one rich-text field holds the whole list. */
+const legalRows = (html) => (html ? [[html]] : []);
 
 /**
  * One link column item row per heading in `html` (the linkColumns control):
@@ -100,7 +103,8 @@ function columnRows(html) {
 /**
  * The container markup: one single-cell row per non-empty field in model
  * order — logo (alt collapsed in), copyright, banner (background + tagline
- * grouped) — then one row per child item (one per link).
+ * grouped) — then one row per child item: each link column, each social
+ * link, and the legal links.
  */
 function fieldsToRows(args) {
   const rows = [];
@@ -113,7 +117,7 @@ function fieldsToRows(args) {
   rows.push(
     ...columnRows(args.linkColumns),
     ...itemRows(args.socialLinks),
-    ...itemRows(args.legalLinks),
+    ...legalRows(args.legalLinks),
   );
   return rows;
 }
@@ -126,7 +130,7 @@ function keyValueRows(args, columns = COLUMNS) {
     rows.push([`column${index + 1}Heading`, heading], [`column${index + 1}Links`, list(links)]);
   });
   rows.push(['banner_background', picture(args.banner_background, '')], ['banner_tagline', args.banner_tagline]);
-  rows.push(...itemRows(args.socialLinks), ...itemRows(args.legalLinks));
+  rows.push(...itemRows(args.socialLinks), ...legalRows(args.legalLinks));
   return rows;
 }
 
@@ -147,7 +151,7 @@ const COLUMN = 'xe-footer-column-links';
 const SOCIAL = 'xe-footer-social-links';
 const LEGAL = 'xe-footer-legal-links';
 const ITEM_LABELS = {
-  [COLUMN]: 'XE Footer Link Column', [SOCIAL]: 'XE Footer Social Link', [LEGAL]: 'XE Footer Legal Link',
+  [COLUMN]: 'XE Footer Link Column', [SOCIAL]: 'XE Footer Social Link', [LEGAL]: 'XE Footer Legal Links',
 };
 
 /** The item models of a footer's item rows, in order: link columns, social, legal. */
@@ -185,7 +189,7 @@ const argTypes = {
   banner_tagline: { control: 'text', description: 'Tagline — centered banner overlay text.', table: { category: 'Banner' } },
   linkColumns: { control: 'text', description: 'XE Footer Link Column items — one item per heading: <p>heading</p> followed by a <ul> of links.', table: { category: 'Child items' } },
   socialLinks: { control: 'text', description: 'XE Footer Social Link items — one item per link; the link text is the network (facebook, x, instagram, linkedin, youtube).', table: { category: 'Child items' } },
-  legalLinks: { control: 'text', description: 'XE Footer Legal Link items — one item per link (text + link).', table: { category: 'Child items' } },
+  legalLinks: { control: 'text', description: 'XE Footer Legal Links item — one rich-text bulleted list of links.', table: { category: 'Child items' } },
 };
 
 export default {
@@ -301,7 +305,7 @@ export const DefaultLinks = {
 export const ItemsReversed = {
   render: (args) => {
     const rows = fieldsToRows({ ...args, socialLinks: '', legalLinks: '' });
-    rows.push(...itemRows(args.legalLinks), ...itemRows(args.socialLinks));
+    rows.push(...legalRows(args.legalLinks), ...itemRows(args.socialLinks));
     return render(rows);
   },
   play: async ({ canvasElement }) => {
@@ -355,7 +359,7 @@ export const IncompleteItem = {
 export const ColumnHeadingOnly = {
   render: (args) => {
     const rows = fieldsToRows({ ...args, socialLinks: '', legalLinks: '' });
-    rows.push(['<p>Investors</p>'], ...itemRows(args.socialLinks), ...itemRows(args.legalLinks));
+    rows.push(['<p>Investors</p>'], ...itemRows(args.socialLinks), ...legalRows(args.legalLinks));
     return render(rows);
   },
   play: async ({ canvasElement }) => {
@@ -386,14 +390,14 @@ export const EditorItems = {
     inEditor(itemModels(
       columnRows(args.linkColumns).length,
       itemCount(args.socialLinks),
-      itemCount(args.legalLinks),
+      legalRows(args.legalLinks).length,
     )),
   ),
   play: async ({ canvasElement }) => {
     await upgraded(canvasElement);
-    // 3 link columns (item_0–2), 5 social items (item_3–7) and 3 legal items
-    // (item_8–10), each its own element.
-    const elements = [...Array(11).keys()].map((index) => itemElement(canvasElement, index));
+    // 3 link columns (item_0–2), 5 social items (item_3–7) and the legal links
+    // item (item_8), each its own element.
+    const elements = [...Array(9).keys()].map((index) => itemElement(canvasElement, index));
     await expect(elements.every(Boolean)).toBe(true);
     await expect(elements.slice(0, 3).every((el) => el.matches('xe-footer > xe-footer-column'))).toBe(true);
     await expect(elements.slice(3, 8).every((el) => el.matches('xe-footer > xe-icon-button[slot="social"]'))).toBe(true);
@@ -438,7 +442,7 @@ export const EditorEmptyItems = {
     await expect(social.matches('span.xe-footer-v2-placeholder[slot="social"]')).toBe(true);
     await expect(social).toHaveTextContent('Add a social link');
     await expect(legal.matches('span.xe-footer-v2-placeholder[slot="legal"]')).toBe(true);
-    await expect(legal).toHaveTextContent('Add a legal link');
+    await expect(legal).toHaveTextContent('Add legal links');
     await expect(canvasElement.querySelectorAll('xe-icon-button')).toHaveLength(0);
     await expect(legalLinks(canvasElement)).toEqual([]);
   },

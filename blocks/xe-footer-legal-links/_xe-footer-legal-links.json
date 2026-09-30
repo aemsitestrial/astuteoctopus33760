@@ -1,14 +1,14 @@
 {
   "definitions": [
     {
-      "title": "XE Footer Legal Link",
+      "title": "XE Footer Legal Links",
       "id": "xe-footer-legal-links",
       "plugins": {
         "xwalk": {
           "page": {
             "resourceType": "core/franklin/components/block/v1/block/item",
             "template": {
-              "name": "XE Footer Legal Link",
+              "name": "XE Footer Legal Links",
               "model": "xe-footer-legal-links"
             }
           }
@@ -21,16 +21,11 @@
       "id": "xe-footer-legal-links",
       "fields": [
         {
-          "component": "text",
+          "component": "richtext",
           "valueType": "string",
-          "name": "cta_linkText",
-          "label": "Text"
-        },
-        {
-          "component": "aem-content",
-          "valueType": "string",
-          "name": "cta_link",
-          "label": "Link"
+          "name": "links",
+          "label": "Legal links",
+          "description": "A bulleted list of links, one per line"
         }
       ]
     }
