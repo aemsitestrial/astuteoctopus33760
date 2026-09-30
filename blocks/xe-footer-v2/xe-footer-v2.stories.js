@@ -6,7 +6,7 @@
  * editing that field in the Universal Editor:
  *
  *   logo + logoAlt          reference + text  -> "logo" / "logoAlt" (collapsed into one image)
- *   copyright               richtext          -> "copyright" (HTML)
+ *   copyright               text              -> "copyright" (plain text)
  *   banner_background       reference         -> "banner_background" (asset URL)
  *   banner_tagline          text              -> "banner_tagline" (grouped with the background)
  *
@@ -61,7 +61,7 @@ const SOCIAL_RICH_TEXT = [
 const defaults = {
   logo: '/icons/xcel-logo-white.svg',
   logoAlt: 'Xcel',
-  copyright: '<p>© 2026 Xcel Energy. All rights reserved.</p>',
+  copyright: '© 2026 Xcel Energy. All rights reserved.',
   banner_background: 'https://picsum.photos/1600/400?grayscale',
   banner_tagline: 'Our Energy, Your Power',
   linkColumns: COLUMNS.map(([heading, links]) => `<p>${heading}</p>${list(links)}`).join(''),
@@ -109,7 +109,7 @@ function columnRows(html) {
 function fieldsToRows(args) {
   const rows = [];
   if (args.logo) rows.push([picture(args.logo, args.logoAlt || '')]);
-  if (args.copyright) rows.push([args.copyright]);
+  if (args.copyright) rows.push([`<p>${args.copyright}</p>`]);
   if (args.banner_background || args.banner_tagline) {
     const background = args.banner_background ? picture(args.banner_background, '') : '';
     rows.push([`${background}${args.banner_tagline ? `<p>${args.banner_tagline}</p>` : ''}`]);
@@ -139,7 +139,7 @@ function legacyRows(args) {
   const footerlinks = COLUMNS.map(([heading, links]) => `<p>${heading}</p>${list(links)}`).join('');
   return [
     [picture(args.logo, args.logoAlt)],
-    [args.copyright],
+    [`<p>${args.copyright}</p>`],
     [SOCIAL_RICH_TEXT],
     [LEGAL_ITEMS],
     [footerlinks],
@@ -184,7 +184,7 @@ const render = (rows, decorator = decorate) => renderBlock({ name: 'xe-footer-v2
 const argTypes = {
   logo: { control: 'text', description: 'Logo (reference) — asset URL for the footer logo.', table: { category: 'Brand' } },
   logoAlt: { control: 'text', description: 'Logo alt text.', table: { category: 'Brand' } },
-  copyright: { control: 'text', description: 'Copyright (rich text) — HTML.', table: { category: 'Brand' } },
+  copyright: { control: 'text', description: 'Copyright (plain text).', table: { category: 'Brand' } },
   banner_background: { control: 'text', description: 'Background (reference) — asset URL for the full-bleed banner image.', table: { category: 'Banner' } },
   banner_tagline: { control: 'text', description: 'Tagline — centered banner overlay text.', table: { category: 'Banner' } },
   linkColumns: { control: 'text', description: 'XE Footer Link Column items — one item per heading: <p>heading</p> followed by a <ul> of links.', table: { category: 'Child items' } },
@@ -328,12 +328,17 @@ export const BlankFields = {
   },
 };
 
-// A copyright line containing a link stays the copyright, not a legal item.
-export const CopyrightWithLink = {
-  args: { copyright: '<p>© 2026 Xcel Energy Inc. <a href="#">Legal notices</a></p>' },
+// An older footer's rich-text copyright (here with a link) renders as its
+// plain text — and isn't read as a legal links item.
+export const RichTextCopyright = {
+  render: (args) => render(keyValueRows({
+    ...args, copyright: '<p>© 2026 Xcel Energy Inc. <a href="#">Legal notices</a></p>',
+  })),
   play: async ({ canvasElement }) => {
     await upgraded(canvasElement);
-    await expect(canvasElement.querySelector('span[slot="copyright"] a')).toHaveTextContent('Legal notices');
+    const copyright = canvasElement.querySelector('span[slot="copyright"]');
+    await expect(copyright).toHaveTextContent('© 2026 Xcel Energy Inc. Legal notices');
+    await expect(copyright.querySelector('a')).toBeNull();
     await expect(legalLinks(canvasElement)).toEqual(AUTHORED_LEGAL);
   },
 };
@@ -459,6 +464,47 @@ export const EditorModelWins = {
     await upgraded(canvasElement);
     await expect(legalLinks(canvasElement)).toEqual([['Facebook terms', 'https://www.facebook.com/terms']]);
     await expect(await socialLinks(canvasElement)).toEqual(EXPECTED_SOCIAL);
+  },
+};
+
+// Seven social link items: two more than the footer shows.
+const SEVEN_SOCIAL_ITEMS = SOCIAL_ITEMS.replace('</ul>', linkList([
+  ['facebook', 'https://www.facebook.com/XcelEnergyColorado'],
+  ['youtube', 'https://www.youtube.com/XcelEnergyCareers'],
+]).replace('<ul>', ''));
+
+// Published: only the first five social link items render.
+export const TooManySocialLinks = {
+  args: { socialLinks: SEVEN_SOCIAL_ITEMS },
+  play: async ({ canvasElement }) => {
+    await upgraded(canvasElement);
+    await expect(await socialLinks(canvasElement)).toEqual(EXPECTED_SOCIAL);
+    await expect(canvasElement.querySelector('.xe-footer-v2-placeholder')).toBeNull();
+  },
+};
+
+// In the editor, the 6th and 7th social link items show a notice (still
+// selectable, so the author can remove them) instead of rendering.
+export const EditorTooManySocialLinks = {
+  args: { socialLinks: SEVEN_SOCIAL_ITEMS },
+  render: (args) => render(
+    fieldsToRows(args),
+    inEditor(itemModels(
+      columnRows(args.linkColumns).length,
+      itemCount(args.socialLinks),
+      legalRows(args.legalLinks).length,
+    )),
+  ),
+  play: async ({ canvasElement }) => {
+    await upgraded(canvasElement);
+    // Link columns are item_0–2; social link items item_3–9.
+    await expect(await socialLinks(canvasElement)).toEqual(EXPECTED_SOCIAL);
+    [8, 9].forEach((index) => {
+      const notice = itemElement(canvasElement, index);
+      expect(notice.matches('span.xe-footer-v2-placeholder[slot="social"]')).toBe(true);
+      expect(notice).toHaveTextContent('Only 5 social links are shown — remove this one');
+      expect(notice).toHaveAttribute('data-aue-model', 'xe-footer-social-links');
+    });
   },
 };
 

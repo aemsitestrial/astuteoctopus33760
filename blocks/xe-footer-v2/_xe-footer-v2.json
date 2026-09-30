@@ -36,11 +36,11 @@
           "value": ""
         },
         {
-          "component": "richtext",
+          "component": "text",
+          "valueType": "string",
           "name": "copyright",
-          "value": "",
           "label": "Copyright",
-          "valueType": "string"
+          "value": ""
         },
         {
           "component": "reference",

@@ -44,7 +44,7 @@ one-to-one to the model (`blocks/xe-footer-v2/_xe-footer-v2.json`).
   </thead>
   <tbody>
     <tr><td><code>logo</code> + <code>logoAlt</code></td><td>reference + text</td><td>Footer logo image and its alt text</td></tr>
-    <tr><td><code>copyright</code></td><td>richtext</td><td>Copyright line</td></tr>
+    <tr><td><code>copyright</code></td><td>text</td><td>Copyright line (plain text)</td></tr>
     <tr><td><code>banner_background</code> + <code>banner_tagline</code></td><td>reference + text</td><td>Full-bleed banner image and its centered tagline</td></tr>
   </tbody>
 </table>
@@ -78,6 +78,13 @@ Each item is decorated by its own block — `blocks/xe-footer-column-links`,
 `decorate(item)`, returning the elements the footer slots in. The social and
 legal blocks also export `decorateDefaults()`, the live Xcel Energy footer's
 links used when no item is authored.
+
+The footer shows **at most 5 social links** (`MAX_SOCIAL_LINKS` in
+`blocks/xe-footer-social-links`). Universal Editor events fire after a change
+is saved and can't be cancelled, so the limit can't block an author from adding
+a sixth item; instead it's applied when rendering. In the editor each extra
+item shows an "Only 5 social links are shown — remove this one" notice (still
+selectable, so it can be deleted); published pages leave it out.
 
 In the Universal Editor each item row carries its model (`data-aue-model`), so
 it lands in the right place regardless of its link, and its instrumentation

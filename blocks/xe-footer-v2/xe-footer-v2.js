@@ -2,6 +2,7 @@ import { moveInstrumentation } from '../../scripts/scripts.js';
 import loadIgnite from '../../scripts/components/ignite.js';
 import decorateSocialLinks, {
   decorateDefaults as defaultSocialLinks,
+  decorateItems as decorateSocialItems,
   isSocialLinks,
 } from '../xe-footer-social-links/xe-footer-social-links.js';
 import decorateLegalLinks, {
@@ -178,14 +179,12 @@ function buildSlotColumns(fields) {
   return columns;
 }
 
-/** The copyright as a slotted <span>, keeping inline markup from a single paragraph. */
+/** The copyright (a plain-text field) as a slotted <span>. */
 function buildCopyright(value) {
   const span = document.createElement('span');
   span.setAttribute('slot', 'copyright');
   moveInstrumentation(value, span);
-  const paragraphs = value.querySelectorAll('p');
-  if (paragraphs.length === 1) span.append(...paragraphs[0].childNodes);
-  else span.textContent = value.textContent.trim();
+  span.textContent = value.textContent.trim();
   return span;
 }
 
@@ -271,10 +270,11 @@ export default async function decorate(block) {
   if (columnCount) footer.setAttribute('columns', String(columnCount));
   footer.append(...columns);
 
-  // --- Social and legal links: the child items, decorated by their blocks ---
+  // --- Social and legal links: the child items, decorated by their blocks
+  // (at most MAX_SOCIAL_LINKS social links) ---
   footer.append(
     ...firstOf(
-      () => fields.items.social.flatMap(decorateSocialLinks),
+      () => decorateSocialItems(fields.items.social),
       () => (fields.social ? decorateSocialLinks(fields.social) : []),
       defaultSocialLinks,
     ),

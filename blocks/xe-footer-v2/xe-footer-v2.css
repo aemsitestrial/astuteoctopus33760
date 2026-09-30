@@ -24,13 +24,6 @@ main > .section > .xe-footer-v2-wrapper {
   height: auto;
 }
 
-/* A link in the copyright line: the site's link blue fails contrast on the
-   dark footer, so it takes the copyright's color and an underline instead. */
-.xe-footer-v2 [slot="copyright"] a {
-  color: inherit;
-  text-decoration: underline;
-}
-
 /* Banner: the slot is positioned to fill the band; cover it with the image. */
 .xe-footer-v2 img[slot="banner-image"] {
   display: block;

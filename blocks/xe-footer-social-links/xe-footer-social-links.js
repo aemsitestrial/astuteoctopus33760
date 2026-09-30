@@ -30,6 +30,11 @@ const SOCIAL_NETWORKS = {
   youtube: { label: 'YouTube', icon: 'faYoutube', match: /youtube/i },
 };
 
+// The footer shows at most this many social links. Universal Editor events
+// fire after a change is saved and can't be cancelled, so the limit is applied
+// when rendering (see decorateItems) rather than by blocking the add.
+export const MAX_SOCIAL_LINKS = 5;
+
 // Rendered when no social links are authored (the live Xcel Energy footer's).
 const DEFAULT_SOCIAL_LINKS = [
   ['facebook', 'https://www.facebook.com/XcelEnergy'],
@@ -95,4 +100,19 @@ export default function decorate(item) {
     return anchor;
   });
   return keepInstrumentation(item, buttons, 'social', 'Add a social link');
+}
+
+/**
+ * Decorates the footer's social link items, rendering only the first
+ * MAX_SOCIAL_LINKS. In the Universal Editor each extra item shows an
+ * editor-only notice (keeping it selectable so the author can remove it); on
+ * published pages extra items are left out.
+ * @param {Element[]} items the authored item rows, in order
+ * @returns {Element[]} the elements to slot into <xe-footer>
+ */
+export function decorateItems(items) {
+  const notice = `Only ${MAX_SOCIAL_LINKS} social links are shown — remove this one`;
+  return items.flatMap((item, index) => (index < MAX_SOCIAL_LINKS
+    ? decorate(item)
+    : keepInstrumentation(item, [], 'social', notice)));
 }
