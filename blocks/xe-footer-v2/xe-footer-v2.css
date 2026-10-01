@@ -1,16 +1,18 @@
 /*
- * XE Footer V2
+ * XE Footer V2 — BACKUP of the EDS style overrides (not loaded).
  *
- * Intentionally empty: no EDS style overrides, so the block shows what the raw
- * @ignite/web <xe-footer> composition renders. The previous overrides (section
- * full bleed, logo and banner image sizing, the Universal Editor placeholder,
- * legacy social links) are kept in xe-footer-v2.overrides.css, which EDS does
- * not load; copy them back here to restore them.
+ * EDS only loads xe-footer-v2.css for this block, so these rules are inactive.
+ * They were removed from xe-footer-v2.css to review what the raw @ignite/web
+ * components render without EDS overrides. To restore them, copy the rules
+ * below back into xe-footer-v2.css.
  *
- * The file stays so EDS's request for the block stylesheet doesn't fail.
+ * Layout, colors and typography come from the @ignite/web <xe-footer>
+ * composition (shadow DOM, driven by the --xe-* tokens). These rules only
+ * cover the section wrapper and authored light-DOM content slotted into it
+ * that page-level rules would otherwise restyle (they outrank ::slotted()).
  */
 
- /* Full bleed: override the section's 1200px content cap. */
+/* Full bleed: override the section's 1200px content cap. */
 main > .section > .xe-footer-v2-wrapper {
   max-width: none;
   padding: 0;
@@ -18,4 +20,43 @@ main > .section > .xe-footer-v2-wrapper {
 
 .xe-footer-v2 xe-footer {
   display: block;
+}
+
+/* Logo: the slot sets the 218px width; keep the image inside it. */
+.xe-footer-v2 [slot="logo"] img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Banner: the slot is positioned to fill the band; cover it with the image. */
+.xe-footer-v2 img[slot="banner-image"] {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+}
+
+/* Universal Editor only: stands in for a just-added social/legal item that has
+   no links yet, so authors can see and select it. */
+.xe-footer-v2 .xe-footer-v2-placeholder {
+  display: inline-block;
+  padding: 4px 10px;
+  border: 1px dashed currentcolor;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1.4;
+  opacity: 0.8;
+}
+
+/* A rich-text social link to a network without an icon button, kept as authored. */
+.xe-footer-v2 a[slot="social"] {
+  display: inline-flex;
+  color: inherit;
+}
+
+.xe-footer-v2 a[slot="social"] img {
+  width: 22px;
+  height: 22px;
 }
