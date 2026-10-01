@@ -1617,6 +1617,47 @@
       },
       {
         "component": "tab",
+        "label": "Legal",
+        "name": "legal"
+      },
+      {
+        "component": "aem-content",
+        "valueType": "string",
+        "name": "legal_cta1",
+        "label": "Link URL"
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "legal_cta1Text",
+        "label": "Link Text"
+      },
+      {
+        "component": "aem-content",
+        "valueType": "string",
+        "name": "legal_cta2",
+        "label": "Link URL"
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "legal_cta2Text",
+        "label": "Link Text"
+      },
+      {
+        "component": "aem-content",
+        "valueType": "string",
+        "name": "legal_cta3",
+        "label": "Link URL"
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "legal_cta3Text",
+        "label": "Link Text"
+      },
+      {
+        "component": "tab",
         "label": "Banner",
         "name": "banner"
       },

@@ -170,9 +170,12 @@
   {
     "id": "xe-footer-v3",
     "components": [
-      "xe-footer-column-links",
-      "xe-footer-legal-links"
+      "xe-footer-column-links"
     ]
+  },
+  {
+    "id": "xe-footer",
+    "components": []
   },
   {
     "id": "xe-ignite-feature-cards-npm",

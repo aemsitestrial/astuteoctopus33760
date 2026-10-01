@@ -80,5 +80,11 @@
       ]
     }
   ],
-  "filters": []
+  "filters": [
+    {
+      "id": "xe-footer",
+      "components": [
+      ]
+    }
+  ]
 }
