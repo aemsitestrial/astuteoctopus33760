@@ -1396,224 +1396,179 @@
         "name": "social"
       },
       {
-        "component": "container",
-        "label": "Social Icon",
-        "name": "social1",
+        "component": "select",
         "valueType": "string",
-        "collapsible": false,
-        "fields": [
+        "name": "social_cta1Text",
+        "label": "Social1 Network",
+        "value": "",
+        "options": [
           {
-            "component": "select",
-            "valueType": "string",
-            "name": "social_cta1Text",
-            "label": "Network",
-            "value": "",
-            "options": [
-              {
-                "name": "Facebook",
-                "value": "facebook"
-              },
-              {
-                "name": "X (Twitter)",
-                "value": "x"
-              },
-              {
-                "name": "Instagram",
-                "value": "instagram"
-              },
-              {
-                "name": "LinkedIn",
-                "value": "linkedin"
-              },
-              {
-                "name": "YouTube",
-                "value": "youtube"
-              }
-            ]
+            "name": "Facebook",
+            "value": "facebook"
           },
           {
-            "component": "aem-content",
-            "valueType": "string",
-            "name": "social_cta1",
-            "label": "Link URL"
+            "name": "X (Twitter)",
+            "value": "x"
+          },
+          {
+            "name": "Instagram",
+            "value": "instagram"
+          },
+          {
+            "name": "LinkedIn",
+            "value": "linkedin"
+          },
+          {
+            "name": "YouTube",
+            "value": "youtube"
           }
         ]
       },
       {
-        "component": "container",
-        "label": "Social Icon 2",
-        "name": "social2",
+        "component": "aem-content",
         "valueType": "string",
-        "collapsible": false,
-        "fields": [
+        "name": "social_cta1",
+        "label": "Social1 Link URL"
+      },
+      {
+        "component": "select",
+        "valueType": "string",
+        "name": "social_cta2Text",
+        "label": "Social2 Network",
+        "value": "",
+        "options": [
           {
-            "component": "select",
-            "valueType": "string",
-            "name": "social_cta2Text",
-            "label": "Network",
-            "value": "",
-            "options": [
-              {
-                "name": "Facebook",
-                "value": "facebook"
-              },
-              {
-                "name": "X (Twitter)",
-                "value": "x"
-              },
-              {
-                "name": "Instagram",
-                "value": "instagram"
-              },
-              {
-                "name": "LinkedIn",
-                "value": "linkedin"
-              },
-              {
-                "name": "YouTube",
-                "value": "youtube"
-              }
-            ]
+            "name": "Facebook",
+            "value": "facebook"
           },
           {
-            "component": "aem-content",
-            "valueType": "string",
-            "name": "social_cta2",
-            "label": "Link URL"
+            "name": "X (Twitter)",
+            "value": "x"
+          },
+          {
+            "name": "Instagram",
+            "value": "instagram"
+          },
+          {
+            "name": "LinkedIn",
+            "value": "linkedin"
+          },
+          {
+            "name": "YouTube",
+            "value": "youtube"
           }
         ]
       },
       {
-        "component": "container",
-        "label": "Social Icon 3",
-        "name": "social3",
+        "component": "aem-content",
         "valueType": "string",
-        "collapsible": false,
-        "fields": [
+        "name": "social_cta2",
+        "label": "Social2 Link URL"
+      },
+      {
+        "component": "select",
+        "valueType": "string",
+        "name": "social_cta3Text",
+        "label": "Social3 Network",
+        "value": "",
+        "options": [
           {
-            "component": "select",
-            "valueType": "string",
-            "name": "social_cta3Text",
-            "label": "Network",
-            "value": "",
-            "options": [
-              {
-                "name": "Facebook",
-                "value": "facebook"
-              },
-              {
-                "name": "X (Twitter)",
-                "value": "x"
-              },
-              {
-                "name": "Instagram",
-                "value": "instagram"
-              },
-              {
-                "name": "LinkedIn",
-                "value": "linkedin"
-              },
-              {
-                "name": "YouTube",
-                "value": "youtube"
-              }
-            ]
+            "name": "Facebook",
+            "value": "facebook"
           },
           {
-            "component": "aem-content",
-            "valueType": "string",
-            "name": "social_cta3",
-            "label": "Link URL"
+            "name": "X (Twitter)",
+            "value": "x"
+          },
+          {
+            "name": "Instagram",
+            "value": "instagram"
+          },
+          {
+            "name": "LinkedIn",
+            "value": "linkedin"
+          },
+          {
+            "name": "YouTube",
+            "value": "youtube"
           }
         ]
       },
       {
-        "component": "container",
-        "label": "Social Icon 4",
-        "name": "social4",
+        "component": "aem-content",
         "valueType": "string",
-        "collapsible": false,
-        "fields": [
+        "name": "social_cta3",
+        "label": "Social3 Link URL"
+      },
+      {
+        "component": "select",
+        "valueType": "string",
+        "name": "social_cta4Text",
+        "label": "Social4 Network",
+        "value": "",
+        "options": [
           {
-            "component": "select",
-            "valueType": "string",
-            "name": "social_cta4Text",
-            "label": "Network",
-            "value": "",
-            "options": [
-              {
-                "name": "Facebook",
-                "value": "facebook"
-              },
-              {
-                "name": "X (Twitter)",
-                "value": "x"
-              },
-              {
-                "name": "Instagram",
-                "value": "instagram"
-              },
-              {
-                "name": "LinkedIn",
-                "value": "linkedin"
-              },
-              {
-                "name": "YouTube",
-                "value": "youtube"
-              }
-            ]
+            "name": "Facebook",
+            "value": "facebook"
           },
           {
-            "component": "aem-content",
-            "valueType": "string",
-            "name": "social_cta4",
-            "label": "Link URL"
+            "name": "X (Twitter)",
+            "value": "x"
+          },
+          {
+            "name": "Instagram",
+            "value": "instagram"
+          },
+          {
+            "name": "LinkedIn",
+            "value": "linkedin"
+          },
+          {
+            "name": "YouTube",
+            "value": "youtube"
           }
         ]
       },
       {
-        "component": "container",
-        "label": "Social Icon 5",
-        "name": "social5",
+        "component": "aem-content",
         "valueType": "string",
-        "collapsible": false,
-        "fields": [
+        "name": "social_cta4",
+        "label": "Social4 Link URL"
+      },
+      {
+        "component": "select",
+        "valueType": "string",
+        "name": "social_cta5Text",
+        "label": "Social5 Network",
+        "value": "",
+        "options": [
           {
-            "component": "select",
-            "valueType": "string",
-            "name": "social_cta5Text",
-            "label": "Network",
-            "value": "",
-            "options": [
-              {
-                "name": "Facebook",
-                "value": "facebook"
-              },
-              {
-                "name": "X (Twitter)",
-                "value": "x"
-              },
-              {
-                "name": "Instagram",
-                "value": "instagram"
-              },
-              {
-                "name": "LinkedIn",
-                "value": "linkedin"
-              },
-              {
-                "name": "YouTube",
-                "value": "youtube"
-              }
-            ]
+            "name": "Facebook",
+            "value": "facebook"
           },
           {
-            "component": "aem-content",
-            "valueType": "string",
-            "name": "social_cta5",
-            "label": "Link URL"
+            "name": "X (Twitter)",
+            "value": "x"
+          },
+          {
+            "name": "Instagram",
+            "value": "instagram"
+          },
+          {
+            "name": "LinkedIn",
+            "value": "linkedin"
+          },
+          {
+            "name": "YouTube",
+            "value": "youtube"
           }
         ]
+      },
+      {
+        "component": "aem-content",
+        "valueType": "string",
+        "name": "social_cta5",
+        "label": "Social5 Link URL"
       },
       {
         "component": "tab",
@@ -1624,37 +1579,37 @@
         "component": "aem-content",
         "valueType": "string",
         "name": "legal_cta1",
-        "label": "Link URL"
+        "label": "Legal1 Link URL"
       },
       {
         "component": "text",
         "valueType": "string",
         "name": "legal_cta1Text",
-        "label": "Link Text"
+        "label": "Legal1 Link Text"
       },
       {
         "component": "aem-content",
         "valueType": "string",
         "name": "legal_cta2",
-        "label": "Link URL"
+        "label": "Legal2 Link URL"
       },
       {
         "component": "text",
         "valueType": "string",
         "name": "legal_cta2Text",
-        "label": "Link Text"
+        "label": "Legal2 Link Text"
       },
       {
         "component": "aem-content",
         "valueType": "string",
         "name": "legal_cta3",
-        "label": "Link URL"
+        "label": "Legal3 Link URL"
       },
       {
         "component": "text",
         "valueType": "string",
         "name": "legal_cta3Text",
-        "label": "Link Text"
+        "label": "Legal3 Link Text"
       },
       {
         "component": "tab",
