@@ -1400,7 +1400,7 @@
         "label": "Social Icon 1",
         "name": "social1",
         "valueType": "string",
-        "collapsible": true,
+        "collapsible": false,
         "fields": [
           {
             "component": "select",
@@ -1444,7 +1444,7 @@
         "label": "Social Icon 2",
         "name": "social2",
         "valueType": "string",
-        "collapsible": true,
+        "collapsible": false,
         "fields": [
           {
             "component": "select",
@@ -1488,7 +1488,7 @@
         "label": "Social Icon 3",
         "name": "social3",
         "valueType": "string",
-        "collapsible": true,
+        "collapsible": false,
         "fields": [
           {
             "component": "select",
@@ -1532,7 +1532,7 @@
         "label": "Social Icon 4",
         "name": "social4",
         "valueType": "string",
-        "collapsible": true,
+        "collapsible": false,
         "fields": [
           {
             "component": "select",
@@ -1576,7 +1576,7 @@
         "label": "Social Icon 5",
         "name": "social5",
         "valueType": "string",
-        "collapsible": true,
+        "collapsible": false,
         "fields": [
           {
             "component": "select",
