@@ -282,9 +282,10 @@
         {
           "component": "richtext",
           "valueType": "string",
-          "name": "column_heading1Text",
+          "name": "column_links1",
           "label": "Column1 Links"
-        },{
+        },
+        {
           "component": "text",
           "valueType": "string",
           "name": "column_heading2",
@@ -293,7 +294,7 @@
         {
           "component": "richtext",
           "valueType": "string",
-          "name": "column_heading2Text",
+          "name": "column_links2",
           "label": "Column2 Links"
         },
         {
@@ -305,7 +306,7 @@
         {
           "component": "richtext",
           "valueType": "string",
-          "name": "column_heading3Text",
+          "name": "column_links3",
           "label": "Column3 Links"
         },
         {
@@ -317,10 +318,10 @@
         {
           "component": "richtext",
           "valueType": "string",
-          "name": "column_heading4Text",
+          "name": "column_links4",
           "label": "Column4 Links"
         },
-                {
+        {
           "component": "text",
           "valueType": "string",
           "name": "column_heading5",
@@ -329,7 +330,7 @@
         {
           "component": "richtext",
           "valueType": "string",
-          "name": "column_heading5Text",
+          "name": "column_links5",
           "label": "Column5 Links"
         },
         {
@@ -357,8 +358,7 @@
   "filters": [
     {
       "id": "xe-footer-v3",
-      "components": [
-      ]
+      "components": []
     }
   ]
 }
