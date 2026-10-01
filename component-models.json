@@ -1614,7 +1614,7 @@
       {
         "component": "tab",
         "label": "Column Links",
-        "name": "column_links"
+        "name": "column"
       },
       {
         "component": "text",
