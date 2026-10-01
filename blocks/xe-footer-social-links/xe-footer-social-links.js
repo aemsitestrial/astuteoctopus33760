@@ -1,3 +1,4 @@
+import { moveInstrumentation } from '../../scripts/scripts.js';
 import { keepInstrumentation } from '../../scripts/components/xe-footer-utils.js';
 
 /*
@@ -95,9 +96,13 @@ export function decorateDefaults() {
 export default function decorate(item) {
   const buttons = [...item.querySelectorAll('a')].map((anchor) => {
     const network = socialNetwork(anchor);
-    if (network) return socialButton(network, anchor.getAttribute('href') || '');
-    anchor.setAttribute('slot', 'social');
-    return anchor;
+    if (!network) {
+      anchor.setAttribute('slot', 'social');
+      return anchor;
+    }
+    const button = socialButton(network, anchor.getAttribute('href') || '');
+    moveInstrumentation(anchor, button);
+    return button;
   });
   return keepInstrumentation(item, buttons, 'social', 'Add a social link');
 }

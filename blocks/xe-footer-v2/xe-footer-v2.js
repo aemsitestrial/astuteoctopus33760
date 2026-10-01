@@ -1,5 +1,7 @@
 import { moveInstrumentation } from '../../scripts/scripts.js';
-import loadIgnite from '../../scripts/components/ignite.js';
+import {
+  buildBannerImage, buildCopyright, buildLogo, buildTagline, finishFooter, firstOf,
+} from '../../scripts/components/xe-footer-utils.js';
 import decorateSocialLinks, {
   decorateDefaults as defaultSocialLinks,
   decorateItems as decorateSocialItems,
@@ -51,9 +53,6 @@ import decorateColumnLinks, { buildColumn } from '../xe-footer-column-links/xe-f
 
 // Link-column slots of key-value footers (column1Heading/column1Links … column5…).
 const COLUMN_SLOTS = 5;
-
-// <xe-footer-column>'s accordion breakpoint (it hard-codes this media query).
-const ACCORDION_QUERY = window.matchMedia('(max-width: 1024px)');
 
 // Universal Editor filters (_xe-footer-v2.json): the block's own, and one
 // without the social link item for when the footer already has the most it
@@ -186,64 +185,6 @@ function buildSlotColumns(fields) {
   return columns;
 }
 
-/** The copyright (a plain-text field) as a slotted <span>. */
-function buildCopyright(value) {
-  const span = document.createElement('span');
-  span.setAttribute('slot', 'copyright');
-  moveInstrumentation(value, span);
-  span.textContent = value.textContent.trim();
-  return span;
-}
-
-/**
- * The banner as a bare slotted <img> (the component styles `::slotted(img)`).
- * The authored <picture>'s responsive sources are folded into the image's
- * srcset (widths from their `width=` parameter) so the full-bleed banner
- * doesn't fall back to the small default rendition.
- */
-function buildBannerImage(value) {
-  const img = value.querySelector('img');
-  if (!img) return null;
-  const candidates = [...value.querySelectorAll('source')]
-    .filter((source) => !source.type || source.type === 'image/webp')
-    .map((source) => {
-      const url = source.getAttribute('srcset') || '';
-      const width = url.match(/[?&]width=(\d+)/);
-      return width ? `${url} ${width[1]}w` : null;
-    })
-    .filter(Boolean);
-  if (candidates.length) {
-    img.setAttribute('srcset', [...new Set(candidates)].join(', '));
-    img.setAttribute('sizes', '100vw');
-  }
-  img.setAttribute('slot', 'banner-image');
-  img.setAttribute('alt', '');
-  img.setAttribute('loading', 'lazy');
-  moveInstrumentation(value, img);
-  return img;
-}
-
-/**
- * The first non-empty result of `sources`, tried in order: e.g. the child
- * items, then an older footer's field (decorated the same way), then defaults.
- */
-function firstOf(...sources) {
-  return sources.map((source) => source()).find((elements) => elements.length) || [];
-}
-
-/**
- * Keeps the column <li>s valid in both layouts. On desktop <xe-footer-column>
- * slots them into a <ul>, but its accordion (mobile) layout slots them without
- * one, which leaves orphaned list items (WCAG 1.3.1, axe `listitem`). Drop
- * their list semantics while the accordion layout is active.
- */
-function syncListSemantics(footer) {
-  footer.querySelectorAll('xe-footer-column > li').forEach((item) => {
-    if (ACCORDION_QUERY.matches) item.setAttribute('role', 'none');
-    else item.removeAttribute('role');
-  });
-}
-
 export default async function decorate(block) {
   const fields = readFields(block);
   const footer = document.createElement('xe-footer');
@@ -257,22 +198,8 @@ export default async function decorate(block) {
     block.dataset.aueFilter = SOCIAL_FULL_FILTER;
   }
 
-  // --- Logo: the authored image, or Ignite's built-in Xcel Energy logo ---
-  const logoPicture = fields.logo && fields.logo.querySelector('picture, img');
-  if (logoPicture) {
-    // Key-value rows may carry the alt text as its own `logoAlt` row.
-    const alt = fields.logoalt && fields.logoalt.textContent.trim();
-    const img = logoPicture.querySelector('img') || logoPicture;
-    if (alt) img.setAttribute('alt', alt);
-    logoPicture.setAttribute('slot', 'logo');
-    moveInstrumentation(fields.logo, logoPicture);
-    footer.append(logoPicture);
-  } else {
-    const logo = document.createElement('xe-logo');
-    logo.setAttribute('slot', 'logo');
-    logo.setAttribute('variant', 'inverse');
-    footer.append(logo);
-  }
+  // --- Logo (key-value rows may carry the alt text as its own `logoAlt` row) ---
+  footer.append(buildLogo(fields.logo, fields.logoalt && fields.logoalt.textContent.trim()));
 
   if (fields.copyright) footer.append(buildCopyright(fields.copyright));
 
@@ -303,30 +230,8 @@ export default async function decorate(block) {
 
   // --- Banner: background image + centered tagline ---
   const bannerImage = fields['banner-background'] && buildBannerImage(fields['banner-background']);
-  if (bannerImage) footer.append(bannerImage);
-  const taglineSource = fields['banner-tagline'];
-  const taglineText = taglineSource && taglineSource.textContent.trim();
-  if (taglineText) {
-    const tagline = document.createElement('span');
-    tagline.setAttribute('slot', 'tagline');
-    tagline.textContent = taglineText;
-    if (taglineSource.nodeType === Node.ELEMENT_NODE) moveInstrumentation(taglineSource, tagline);
-    footer.append(tagline);
-  }
+  const tagline = buildTagline(fields['banner-tagline']);
+  footer.append(...[bannerImage, tagline].filter(Boolean));
 
-  block.textContent = '';
-  block.append(footer);
-
-  // <xe-footer-column> wraps its links in <li>s once it renders; keep their
-  // list semantics in step with the layout as they appear and as it changes.
-  new MutationObserver(() => syncListSemantics(footer))
-    .observe(footer, { childList: true, subtree: true });
-  ACCORDION_QUERY.addEventListener('change', () => syncListSemantics(footer));
-
-  // Wait for the components to register so the section reveals the styled
-  // footer rather than its unstyled light DOM.
-  await loadIgnite(() => Promise.all([
-    import('../../scripts/ignite/bundle/compositions/footer/xe-footer.js'),
-    import('../../scripts/ignite/bundle/primitives/action/icon-button/xe-icon-button.js'),
-  ]));
+  await finishFooter(block, footer);
 }
