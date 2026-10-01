@@ -193,6 +193,41 @@
           "label": "Link URL"
         },
         {
+          "component": "select",
+          "valueType": "string",
+          "name": "cta5_linkText",
+          "label": "Network",
+          "value": "",
+          "options": [
+            {
+              "name": "Facebook",
+              "value": "facebook"
+            },
+            {
+              "name": "X (Twitter)",
+              "value": "x"
+            },
+            {
+              "name": "Instagram",
+              "value": "instagram"
+            },
+            {
+              "name": "LinkedIn",
+              "value": "linkedin"
+            },
+            {
+              "name": "YouTube",
+              "value": "youtube"
+            }
+          ]
+        },
+        {
+          "component": "aem-content",
+          "valueType": "string",
+          "name": "cta5_link",
+          "label": "Link URL"
+        },
+        {
           "component": "tab",
           "label": "Banner",
           "name": "banner"
