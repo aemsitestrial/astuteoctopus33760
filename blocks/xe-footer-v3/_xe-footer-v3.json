@@ -301,7 +301,7 @@
           "name": "legal_cta2Text",
           "label": "Link Text"
         },
-                {
+        {
           "component": "aem-content",
           "valueType": "string",
           "name": "legal_cta3",
@@ -312,6 +312,70 @@
           "valueType": "string",
           "name": "legal_cta3Text",
           "label": "Link Text"
+        },
+        {
+          "component": "tab",
+          "label": "Column Links",
+          "name": "column_links"
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "column_heading1",
+          "label": "Column1 Heading"
+        },
+        {
+          "component": "richtext",
+          "valueType": "string",
+          "name": "column_heading1Text",
+          "label": "Column1 Links"
+        },{
+          "component": "text",
+          "valueType": "string",
+          "name": "column_heading2",
+          "label": "Column2 Heading"
+        },
+        {
+          "component": "richtext",
+          "valueType": "string",
+          "name": "column_heading2Text",
+          "label": "Column2 Links"
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "column_heading3",
+          "label": "Column3 Heading"
+        },
+        {
+          "component": "richtext",
+          "valueType": "string",
+          "name": "column_heading3Text",
+          "label": "Column3 Links"
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "column_heading4",
+          "label": "Column4 Heading"
+        },
+        {
+          "component": "richtext",
+          "valueType": "string",
+          "name": "column_heading4Text",
+          "label": "Column4 Links"
+        },
+                {
+          "component": "text",
+          "valueType": "string",
+          "name": "column_heading5",
+          "label": "Column5 Heading"
+        },
+        {
+          "component": "richtext",
+          "valueType": "string",
+          "name": "column_heading5Text",
+          "label": "Column5 Links"
         },
         {
           "component": "tab",
@@ -339,7 +403,6 @@
     {
       "id": "xe-footer-v3",
       "components": [
-        "xe-footer-column-links"
       ]
     }
   ]

@@ -169,9 +169,7 @@
   },
   {
     "id": "xe-footer-v3",
-    "components": [
-      "xe-footer-column-links"
-    ]
+    "components": []
   },
   {
     "id": "xe-footer",
