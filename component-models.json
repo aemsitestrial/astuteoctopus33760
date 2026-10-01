@@ -1779,7 +1779,7 @@
           {
             "component": "text",
             "valueType": "string",
-            "name": "legal_cta1Text",
+            "name": "legal_ctaText",
             "label": "Legal Link Text"
           }
         ]
