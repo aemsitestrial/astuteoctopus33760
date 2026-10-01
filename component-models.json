@@ -1715,7 +1715,7 @@
         "value": ""
       },
       {
-        "component": "richtext",
+        "component": "text",
         "name": "copyright",
         "value": "",
         "label": "Copyright",
