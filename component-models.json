@@ -1397,7 +1397,7 @@
       },
       {
         "component": "container",
-        "label": "",
+        "label": "Social Icon",
         "name": "social1",
         "valueType": "string",
         "collapsible": false,
@@ -1441,7 +1441,7 @@
       },
       {
         "component": "container",
-        "label": "",
+        "label": "Social Icon 2",
         "name": "social2",
         "valueType": "string",
         "collapsible": false,
@@ -1485,7 +1485,7 @@
       },
       {
         "component": "container",
-        "label": "",
+        "label": "Social Icon 3",
         "name": "social3",
         "valueType": "string",
         "collapsible": false,
@@ -1529,7 +1529,7 @@
       },
       {
         "component": "container",
-        "label": "",
+        "label": "Social Icon 4",
         "name": "social4",
         "valueType": "string",
         "collapsible": false,
@@ -1573,7 +1573,7 @@
       },
       {
         "component": "container",
-        "label": "",
+        "label": "Social Icon 5",
         "name": "social5",
         "valueType": "string",
         "collapsible": false,
