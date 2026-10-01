@@ -1362,6 +1362,196 @@
     ]
   },
   {
+    "id": "xe-footer-v3",
+    "fields": [
+      {
+        "component": "reference",
+        "valueType": "string",
+        "name": "logo",
+        "label": "Logo",
+        "multi": false
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "logoAlt",
+        "label": "Logo alt text",
+        "value": ""
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "copyright",
+        "label": "Copyright",
+        "value": ""
+      },
+      {
+        "component": "tab",
+        "label": "Social",
+        "name": "social"
+      },
+      {
+        "component": "select",
+        "valueType": "string",
+        "name": "cta1_linkText",
+        "label": "Network",
+        "value": "",
+        "options": [
+          {
+            "name": "Facebook",
+            "value": "facebook"
+          },
+          {
+            "name": "X (Twitter)",
+            "value": "x"
+          },
+          {
+            "name": "Instagram",
+            "value": "instagram"
+          },
+          {
+            "name": "LinkedIn",
+            "value": "linkedin"
+          },
+          {
+            "name": "YouTube",
+            "value": "youtube"
+          }
+        ]
+      },
+      {
+        "component": "aem-content",
+        "valueType": "string",
+        "name": "cta1_link",
+        "label": "Link URL"
+      },
+      {
+        "component": "select",
+        "valueType": "string",
+        "name": "cta2_linkText",
+        "label": "Network",
+        "value": "",
+        "options": [
+          {
+            "name": "Facebook",
+            "value": "facebook"
+          },
+          {
+            "name": "X (Twitter)",
+            "value": "x"
+          },
+          {
+            "name": "Instagram",
+            "value": "instagram"
+          },
+          {
+            "name": "LinkedIn",
+            "value": "linkedin"
+          },
+          {
+            "name": "YouTube",
+            "value": "youtube"
+          }
+        ]
+      },
+      {
+        "component": "aem-content",
+        "valueType": "string",
+        "name": "cta2_link",
+        "label": "Link URL"
+      },
+      {
+        "component": "select",
+        "valueType": "string",
+        "name": "cta3_linkText",
+        "label": "Network",
+        "value": "",
+        "options": [
+          {
+            "name": "Facebook",
+            "value": "facebook"
+          },
+          {
+            "name": "X (Twitter)",
+            "value": "x"
+          },
+          {
+            "name": "Instagram",
+            "value": "instagram"
+          },
+          {
+            "name": "LinkedIn",
+            "value": "linkedin"
+          },
+          {
+            "name": "YouTube",
+            "value": "youtube"
+          }
+        ]
+      },
+      {
+        "component": "aem-content",
+        "valueType": "string",
+        "name": "cta3_link",
+        "label": "Link URL"
+      },
+      {
+        "component": "select",
+        "valueType": "string",
+        "name": "cta4_linkText",
+        "label": "Network",
+        "value": "",
+        "options": [
+          {
+            "name": "Facebook",
+            "value": "facebook"
+          },
+          {
+            "name": "X (Twitter)",
+            "value": "x"
+          },
+          {
+            "name": "Instagram",
+            "value": "instagram"
+          },
+          {
+            "name": "LinkedIn",
+            "value": "linkedin"
+          },
+          {
+            "name": "YouTube",
+            "value": "youtube"
+          }
+        ]
+      },
+      {
+        "component": "aem-content",
+        "valueType": "string",
+        "name": "cta4_link",
+        "label": "Link URL"
+      },
+      {
+        "component": "tab",
+        "label": "Banner",
+        "name": "banner"
+      },
+      {
+        "component": "reference",
+        "valueType": "string",
+        "name": "banner_background",
+        "label": "Background",
+        "multi": false
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "banner_tagline",
+        "label": "Tagline",
+        "value": "Our Energy, Your Power"
+      }
+    ]
+  },
+  {
     "id": "xe-footer",
     "fields": [
       {

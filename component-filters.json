@@ -25,6 +25,7 @@
       "usage-dashboard",
       "xe-footer",
       "xe-footer-v2",
+      "xe-footer-v3",
       "xe-feature-cards",
       "xe-ignite-feature-cards",
       "xe-ignite-feature-cards-npm",
@@ -161,6 +162,13 @@
   },
   {
     "id": "xe-footer-v2-social-full",
+    "components": [
+      "xe-footer-column-links",
+      "xe-footer-legal-links"
+    ]
+  },
+  {
+    "id": "xe-footer-v3",
     "components": [
       "xe-footer-column-links",
       "xe-footer-legal-links"

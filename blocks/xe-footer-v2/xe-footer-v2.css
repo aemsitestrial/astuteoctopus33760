@@ -9,3 +9,13 @@
  *
  * The file stays so EDS's request for the block stylesheet doesn't fail.
  */
+
+ /* Full bleed: override the section's 1200px content cap. */
+main > .section > .xe-footer-v2-wrapper {
+  max-width: none;
+  padding: 0;
+}
+
+.xe-footer-v2 xe-footer {
+  display: block;
+}
