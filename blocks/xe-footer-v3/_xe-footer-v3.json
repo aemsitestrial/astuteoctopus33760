@@ -55,7 +55,7 @@
         {
           "component": "select",
           "valueType": "string",
-          "name": "cta1_linkText",
+          "name": "social_cta1Text",
           "label": "Network",
           "value": "",
           "options": [
@@ -84,13 +84,13 @@
         {
           "component": "aem-content",
           "valueType": "string",
-          "name": "cta1_link",
+          "name": "social_cta1",
           "label": "Link URL"
         },
         {
           "component": "select",
           "valueType": "string",
-          "name": "cta2_linkText",
+          "name": "social_cta2Text",
           "label": "Network",
           "value": "",
           "options": [
@@ -119,13 +119,13 @@
         {
           "component": "aem-content",
           "valueType": "string",
-          "name": "cta2_link",
+          "name": "social_cta2",
           "label": "Link URL"
         },
         {
           "component": "select",
           "valueType": "string",
-          "name": "cta3_linkText",
+          "name": "social_cta3Text",
           "label": "Network",
           "value": "",
           "options": [
@@ -154,13 +154,13 @@
         {
           "component": "aem-content",
           "valueType": "string",
-          "name": "cta3_link",
+          "name": "social_cta3",
           "label": "Link URL"
         },
         {
           "component": "select",
           "valueType": "string",
-          "name": "cta4_linkText",
+          "name": "social_cta4Text",
           "label": "Network",
           "value": "",
           "options": [
@@ -189,13 +189,13 @@
         {
           "component": "aem-content",
           "valueType": "string",
-          "name": "cta4_link",
+          "name": "social_cta4",
           "label": "Link URL"
         },
         {
           "component": "select",
           "valueType": "string",
-          "name": "cta5_linkText",
+          "name": "social_cta5Text",
           "label": "Network",
           "value": "",
           "options": [
@@ -224,7 +224,7 @@
         {
           "component": "aem-content",
           "valueType": "string",
-          "name": "cta5_link",
+          "name": "social_cta5",
           "label": "Link URL"
         },
         {
