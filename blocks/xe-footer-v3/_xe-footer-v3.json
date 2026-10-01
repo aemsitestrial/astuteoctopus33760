@@ -22,6 +22,11 @@
       "id": "xe-footer-v3",
       "fields": [
         {
+          "component": "tab",
+          "label": "General",
+          "name": "general"
+        },
+        {
           "component": "reference",
           "valueType": "string",
           "name": "logo",
