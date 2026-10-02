@@ -66,10 +66,9 @@ main > .section > .xe-footer-wrapper {
     justify-content: space-between;
 }
 
-.xe-footer .xe-footer-logo img,
-.xe-footer .icon-xcel-logo-white {
-    width: 200px;
-    height: auto;
+/* The static Ignite logo (sized by its `size` attribute). */
+.xe-footer .xe-footer-logo {
+    display: block;
 }
 
 .xe-footer .xe-footer-copyright {

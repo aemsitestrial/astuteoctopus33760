@@ -10,6 +10,7 @@ composition, following its reference markup:
 
 ```html
 <xe-footer columns="5">
+  <xe-logo slot="logo" variant="inverse" size="md" href="/" label="Xcel Energy Home"></xe-logo>
   <span slot="copyright">© 2026 Xcel Energy Inc. All rights reserved.</span>
   <xe-footer-column heading="Company">
     <xe-hyperlink href="…" variant="variant">Careers</xe-hyperlink>
@@ -26,7 +27,7 @@ composition, following its reference markup:
 </xe-footer>
 ```
 
-The logo (Ignite's built-in Xcel Energy logo when none is authored) and the
+The logo is static — Ignite's Xcel Energy logo, linking to the homepage — and the
 banner tagline render too. Below 1024px each link column collapses into an
 accordion (`<xe-accordion>`). Colors, spacing and typography come from the
 Ignite design tokens (`scripts/ignite/bundle/themes/tokens.css`), loaded by
@@ -43,7 +44,6 @@ one-to-one to the model (`blocks/xe-footer-v2/_xe-footer-v2.json`).
     <tr><th>Field</th><th>Model type</th><th>Purpose</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>logo</code> + <code>logoAlt</code></td><td>reference + text</td><td>Footer logo image and its alt text</td></tr>
     <tr><td><code>copyright</code></td><td>text</td><td>Copyright line (plain text)</td></tr>
     <tr><td><code>banner_background</code> + <code>banner_tagline</code></td><td>reference + text</td><td>Full-bleed banner image and its centered tagline</td></tr>
   </tbody>
@@ -134,9 +134,9 @@ No copyright and no tagline; the banner image still lands as the banner.
 
 <Canvas of={XeFooterStories.BlankFields} />
 
-### Default logo
+### Static logo
 
-<Canvas of={XeFooterStories.DefaultLogo} />
+<Canvas of={XeFooterStories.StaticLogo} />
 
 ### Empty items in the Universal Editor
 

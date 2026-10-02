@@ -1,3 +1,6 @@
+import loadIgnite from '../../scripts/components/ignite.js';
+import { buildLogo } from '../../scripts/components/xe-footer-utils.js';
+
 /*
  * XE Footer block
  *
@@ -5,14 +8,17 @@
  * logo, copyright, social + legal links, alongside the link columns) above a
  * full-bleed solar-panel banner with a centered tagline.
  *
+ * The logo isn't authorable: it's Ignite's static <xe-logo> (the Xcel Energy
+ * logo, linking to the homepage), loaded from its primitive bundle.
+ *
  * EDS does not auto-apply block/item model names as CSS classes, so this
  * decorator classifies each authored row and tags it with a stable hook the
- * stylesheet targets. Container-level fields (logo, copyright, social, legal)
+ * stylesheet targets. Container-level fields (copyright, social, legal, links)
  * render first as single-cell rows in model order, followed by the banner and
  * columns items.
  */
 
-const CONTAINER_FIELDS = ['logo', 'copyright', 'social', 'legal', 'links'];
+const CONTAINER_FIELDS = ['copyright', 'social', 'legal', 'links'];
 
 // From this width up the link columns are static (see xe-footer.css); below it
 // each column is an accordion.
@@ -56,20 +62,24 @@ function renderColumnHeading(title, panel, state) {
 export default function decorate(block) {
   const rows = [...block.children];
 
-  // Container-level fields (logo, copyright, social, legal) render first, in
+  // Container-level fields (copyright, social, legal, links) render first, in
   // model order, followed by the item rows (banner, one or more columns).
   // Classify structurally rather than by content so empty authored blocks are
   // still recognized (and not silently dropped):
   //   - a columns row is built from the columns component: its cell holds
   //     multiple direct child <div> columns (or a .columns block / several
   //     headings). Every container-field row, by contrast, has a single cell.
-  //   - the banner is the LAST remaining image-bearing row (the logo, row 0,
-  //     is a leading field, so it is excluded here).
+  //   - the banner is the LAST remaining image-bearing row.
   //   - the leading rows that are left are the container fields, tagged by
   //     their model order.
 
+  // The static logo leads the logo + copyright group.
   const logoGroup = document.createElement('div');
   logoGroup.className = 'xe-footer-logo-wrapper';
+  const logo = buildLogo();
+  logo.removeAttribute('slot');
+  logo.classList.add('xe-footer-logo');
+  logoGroup.append(logo);
 
   const socialGroup = document.createElement('div');
   socialGroup.className = 'xe-footer-social-wrapper';
@@ -110,7 +120,6 @@ export default function decorate(block) {
 
   const brandRows = fieldRows.filter((row) => !row.classList.contains('xe-footer-links') && hasContent(row));
   const brandGroupMap = new Map([
-    ['xe-footer-logo', logoGroup],
     ['xe-footer-copyright', logoGroup],
     ['xe-footer-social', socialGroup],
     ['xe-footer-legal', socialGroup],
@@ -124,7 +133,7 @@ export default function decorate(block) {
 
   brandRows.forEach(appendBrandRow);
 
-  if (logoGroup.children.length) brand.append(logoGroup);
+  brand.append(logoGroup);
   if (socialGroup.children.length) brand.append(socialGroup);
 
   // The footer-links field is authored as one cell holding a flat sequence of
@@ -237,4 +246,7 @@ export default function decorate(block) {
   block.textContent = '';
   block.append(content);
   if (banner) block.append(banner);
+
+  // Register <xe-logo> (and the Ignite tokens it reads).
+  loadIgnite(() => import('../../scripts/ignite/bundle/primitives/media/logo/xe-logo.js'));
 }

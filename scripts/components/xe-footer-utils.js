@@ -66,22 +66,17 @@ export function firstOf(...sources) {
 }
 
 /**
- * The footer logo: the authored image in `value` (with `alt` applied when
- * given), or Ignite's built-in Xcel Energy logo when none is authored.
+ * The footer logo: Ignite's built-in Xcel Energy logo, linking to the
+ * homepage. It isn't authorable.
  */
-export function buildLogo(value, alt) {
-  const picture = value && value.querySelector('picture, img');
-  if (!picture) {
-    const logo = document.createElement('xe-logo');
-    logo.setAttribute('slot', 'logo');
-    logo.setAttribute('variant', 'inverse');
-    return logo;
-  }
-  const img = picture.querySelector('img') || picture;
-  if (alt) img.setAttribute('alt', alt);
-  picture.setAttribute('slot', 'logo');
-  moveInstrumentation(value, picture);
-  return picture;
+export function buildLogo() {
+  const logo = document.createElement('xe-logo');
+  logo.setAttribute('slot', 'logo');
+  logo.setAttribute('variant', 'inverse');
+  logo.setAttribute('size', 'md');
+  logo.setAttribute('href', '/');
+  logo.setAttribute('label', 'Xcel Energy Home');
+  return logo;
 }
 
 /**

@@ -6,8 +6,6 @@
  * that field in the Universal Editor. Each model field maps to a Storybook
  * control type:
  *
- *   logo              reference (image) -> text control (asset URL)
- *   logoAlt           text              -> text control
  *   copyright         richtext          -> text control (HTML)
  *   social            richtext          -> text control (HTML)
  *   legal             richtext          -> text control (HTML)
@@ -16,19 +14,18 @@
  *   banner_tagline    text              -> text control
  *
  * `fieldsToRows` assembles the args into the row/cell structure the block's
- * decorator expects (logo, copyright, social, legal, footerlinks, then the
- * banner as the last image-bearing row) — the same DOM AEM produces from these
- * fields at publish time. renderBlock() then wraps it in the real EDS chain,
- * loads the shipped CSS, and runs decorate().
+ * decorator expects (copyright, social, legal, footerlinks, then the banner as
+ * the last image-bearing row) — the same DOM AEM produces from these fields at
+ * publish time. renderBlock() then wraps it in the real EDS chain, loads the
+ * shipped CSS, and runs decorate(). The logo isn't authorable: the decorator
+ * adds Ignite's static <xe-logo>, linking to the homepage.
  */
-import { expect, within } from 'storybook/test';
+import { expect, within, waitFor } from 'storybook/test';
 import decorate from './xe-footer.js';
 import { renderBlock, picture } from '../../.storybook/eds.js';
 
 // --- Default field values (a realistic, fully-authored footer) --------------
 const defaults = {
-  logo: '/icons/xcel-logo-white.svg',
-  logoAlt: 'Xcel',
   copyright: '<p>© 2026 Xcel Energy. All rights reserved.</p>',
   social: [
     '<p>',
@@ -68,7 +65,6 @@ const defaults = {
  */
 function fieldsToRows(args) {
   const rows = [];
-  if (args.logo) rows.push([picture(args.logo, args.logoAlt)]);
   if (args.copyright) rows.push([args.copyright]);
   if (args.social) rows.push([args.social]);
   if (args.legal) rows.push([args.legal]);
@@ -82,16 +78,6 @@ function fieldsToRows(args) {
 // argTypes drive the Controls panel — the Storybook analogue of the Universal
 // Editor properties rail. Grouped by the two authoring zones of the block.
 const argTypes = {
-  logo: {
-    control: 'text',
-    description: 'Logo (reference) — asset URL for the footer logo.',
-    table: { category: 'Brand' },
-  },
-  logoAlt: {
-    control: 'text',
-    description: 'Logo alt text.',
-    table: { category: 'Brand' },
-  },
   copyright: {
     control: 'text',
     description: 'Copyright (rich text) — HTML.',
@@ -153,6 +139,13 @@ export const Default = {
     await expect(canvas.getByText('Company')).toBeInTheDocument();
     await expect(canvasElement.querySelectorAll('.xe-footer-links-col')).toHaveLength(3);
     await expect(canvas.getByText('Our Energy, Your Power')).toBeInTheDocument();
+    // The static Ignite logo leads the brand column, linking to the homepage.
+    const logo = canvasElement.querySelector('.xe-footer-logo-wrapper > xe-logo.xe-footer-logo');
+    await expect(logo).toHaveAttribute('variant', 'inverse');
+    await expect(logo).toHaveAttribute('size', 'md');
+    await expect(logo).toHaveAttribute('href', '/');
+    await expect(logo).toHaveAttribute('label', 'Xcel Energy Home');
+    await waitFor(() => expect(logo.shadowRoot?.querySelector('a')).toHaveAttribute('href', '/'), { timeout: 8000 });
     // Column titles are real headings. Only the mobile accordion wraps them in
     // a toggle button; from tablet up they are plain text, panels always shown.
     const titles = [...canvasElement.querySelectorAll('h2.xe-footer-links-title')];

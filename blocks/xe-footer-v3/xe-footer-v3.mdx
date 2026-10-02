@@ -11,7 +11,7 @@ block in fixed slots instead of child items:
 
 ```html
 <xe-footer columns="3">
-  <picture slot="logo">…</picture>
+  <xe-logo slot="logo" variant="inverse" size="md" href="/" label="Xcel Energy Home"></xe-logo>
   <span slot="copyright">© 2026 Xcel Energy Inc. All rights reserved.</span>
   <xe-footer-column heading="Company">
     <xe-hyperlink href="…" variant="variant">Careers</xe-hyperlink>
@@ -39,7 +39,7 @@ tabs. Element grouping renders each group as one row, in model order:
     <tr><th>Tab</th><th>Fields</th><th>Renders as</th></tr>
   </thead>
   <tbody>
-    <tr><td>General</td><td><code>logo</code> + <code>logoAlt</code>, <code>copyright</code> (text)</td><td>The logo (Ignite's built-in Xcel Energy logo when none is authored) and the copyright</td></tr>
+    <tr><td>General</td><td><code>copyright</code> (text)</td><td>The copyright; the logo is static (Ignite's Xcel Energy logo, linking to the homepage)</td></tr>
     <tr><td>Social</td><td>5 slots: <code>social_ctaN</code> URL + <code>social_ctaNText</code> network select</td><td>Social icon buttons, opening in a new window</td></tr>
     <tr><td>Legal</td><td>3 slots: <code>legal_ctaN</code> URL + <code>legal_ctaNText</code> text</td><td>Legal links with a trailing icon</td></tr>
     <tr><td>Column Links</td><td>5 slots: <code>column_headingN</code> text + <code>column_linksN</code> rich text (a bulleted list of links)</td><td>One <code>&lt;xe-footer-column&gt;</code> per filled slot</td></tr>
@@ -70,7 +70,7 @@ logo, copyright, banner and loading helpers live in
 
 ### Empty footer
 
-Nothing authored — the built-in logo and the default social and legal links.
+Nothing authored — the static logo and the default social and legal links.
 
 <Canvas of={XeFooterV3Stories.EmptyFooter} />
 

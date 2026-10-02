@@ -17,13 +17,6 @@ main > .section > .xe-footer-v3-wrapper {
   display: block;
 }
 
-/* Logo: the slot sets the 218px width; keep the image inside it. */
-.xe-footer-v3 [slot="logo"] img {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
 /* Banner: the slot is positioned to fill the band; cover it with the image. */
 .xe-footer-v3 img[slot="banner-image"] {
   display: block;

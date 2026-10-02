@@ -16,7 +16,7 @@ import decorateLegalLinks, {
  * (scripts/ignite/bundle/compositions/footer):
  *
  *   <xe-footer columns="5">
- *     <picture slot="logo">…</picture>          (or <xe-logo> when no logo is authored)
+ *     <xe-logo slot="logo" variant="inverse" size="md" href="/" label="Xcel Energy Home"></xe-logo>
  *     <span slot="copyright">© 2026 Xcel Energy Inc. All rights reserved.</span>
  *     <xe-footer-column heading="Company">
  *       <xe-hyperlink href="…" variant="variant">Careers</xe-hyperlink>…
@@ -31,7 +31,6 @@ import decorateLegalLinks, {
  * itself, in fixed slots (_xe-footer-v3.json). Element grouping renders each
  * group as one row, in model order, empty or not:
  *
- *   logo + logoAlt                        → <picture> with alt
  *   copyright                             → plain text
  *   social_cta1…5 (+ …Text network)       → up to 5 links, <a href="URL">network</a>
  *   legal_cta1…3 (+ …Text)                → up to 3 links
@@ -46,7 +45,7 @@ import decorateLegalLinks, {
  */
 
 // The rows the model renders, in order (see the comment above).
-const ROWS = ['logo', 'copyright', 'social', 'legal', 'columns', 'banner'];
+const ROWS = ['copyright', 'social', 'legal', 'columns', 'banner'];
 
 /** The element holding a row's authored content (its single cell). */
 function cellOf(row) {
@@ -60,7 +59,7 @@ export default async function decorate(block) {
   });
 
   const footer = document.createElement('xe-footer');
-  footer.append(buildLogo(fields.logo));
+  footer.append(buildLogo()); // static: the Xcel Energy logo, linking to the homepage
   if (fields.copyright && fields.copyright.textContent.trim()) {
     footer.append(buildCopyright(fields.copyright));
   }

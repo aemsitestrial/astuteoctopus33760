@@ -22,20 +22,6 @@
       "id": "xe-footer",
       "fields": [
         {
-          "component": "reference",
-          "valueType": "string",
-          "name": "logo",
-          "label": "Logo",
-          "multi": false
-        },
-        {
-          "component": "text",
-          "valueType": "string",
-          "name": "logoAlt",
-          "label": "Logo alt text",
-          "value": ""
-        },
-        {
           "component": "text",
           "name": "copyright",
           "value": "",
@@ -83,8 +69,7 @@
   "filters": [
     {
       "id": "xe-footer",
-      "components": [
-      ]
+      "components": []
     }
   ]
 }

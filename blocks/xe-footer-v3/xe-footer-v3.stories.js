@@ -4,15 +4,15 @@
  * The controls mirror the block's authoring model (blocks/xe-footer-v3/
  * _xe-footer-v3.json), grouped by its editor tabs:
  *
- *   General       logo + logoAlt (collapsed into one image), copyright (text)
+ *   General       copyright (text); the logo is static, not authorable
  *   Social        social_cta1…5 URL + social_cta1…5Text network (select)
  *   Legal         legal_cta1…3 URL + legal_cta1…3Text text
  *   Column Links  column_heading1…5 (text) + column_links1…5 (rich-text list)
  *   Banner        banner_background (reference) + banner_tagline (text)
  *
  * `fieldsToRows` renders the markup AEM produces: one row per field or
- * element group, in model order, empty or not — logo, copyright, social,
- * legal, columns, banner. Within a group each link + text pair collapses into
+ * element group, in model order, empty or not — copyright, social, legal,
+ * columns, banner. Within a group each link + text pair collapses into
  * one <a>, and a network chosen without a URL renders as text only.
  */
 import { expect, within, waitFor } from 'storybook/test';
@@ -66,8 +66,6 @@ function slotArgs({ social = [], legal = [], columns = [] } = {}) {
 }
 
 const defaults = {
-  logo: '/icons/xcel-logo-white.svg',
-  logoAlt: 'Xcel Energy',
   copyright: '© 2026 Xcel Energy Inc. All rights reserved.',
   ...slotArgs({ social: SOCIAL, legal: LEGAL, columns: COLUMNS }),
   banner_background: 'https://picsum.photos/1600/400?grayscale',
@@ -80,7 +78,7 @@ function collapsed(url, text) {
   return text ? `<p>${text}</p>` : '';
 }
 
-/** The six rows AEM renders for the model, in order (blank groups are empty cells). */
+/** The five rows AEM renders for the model, in order (blank groups are empty cells). */
 function fieldsToRows(args) {
   const social = [];
   for (let i = 1; i <= SOCIAL_SLOTS; i += 1) social.push(collapsed(args[`social_cta${i}`], args[`social_cta${i}Text`]));
@@ -96,7 +94,6 @@ function fieldsToRows(args) {
     args.banner_tagline ? `<p>${args.banner_tagline}</p>` : '',
   ].join('');
   return [
-    [args.logo ? picture(args.logo, args.logoAlt || '') : ''],
     [args.copyright ? `<p>${args.copyright}</p>` : ''],
     [social.join('')],
     [legal.join('')],
@@ -107,8 +104,6 @@ function fieldsToRows(args) {
 
 // argTypes drive the Controls panel, grouped like the editor's tabs.
 const argTypes = {
-  logo: { control: 'text', description: 'Logo (reference) — asset URL.', table: { category: 'General' } },
-  logoAlt: { control: 'text', description: 'Logo alt text.', table: { category: 'General' } },
   copyright: { control: 'text', description: 'Copyright (plain text).', table: { category: 'General' } },
   banner_background: { control: 'text', description: 'Background (reference) — asset URL.', table: { category: 'Banner' } },
   banner_tagline: { control: 'text', description: 'Tagline (text).', table: { category: 'Banner' } },
@@ -143,7 +138,7 @@ export default {
         component:
           'The Xcel footer rendered with the @ignite/web footer composition, '
           + 'authored entirely on the block in fixed slots: up to 5 social links, '
-          + '3 legal links and 5 link columns, plus logo, copyright and banner. '
+          + '3 legal links and 5 link columns, plus copyright and banner, with the static Xcel Energy logo. '
           + 'Controls map one-to-one to the authoring model.',
       },
     },
@@ -157,6 +152,19 @@ async function upgraded(canvasElement) {
   const footer = canvasElement.querySelector('xe-footer');
   await waitFor(() => expect(footer.shadowRoot?.querySelector('footer')).toBeTruthy(), { timeout: 8000 });
   return footer;
+}
+
+/**
+ * The static Ignite logo: inverse, medium, labelled, linking to the homepage
+ * (the link renders in its shadow root).
+ */
+async function expectStaticLogo(canvasElement, selector = 'xe-footer > xe-logo[slot="logo"]') {
+  const logo = canvasElement.querySelector(selector);
+  await expect(logo).toHaveAttribute('variant', 'inverse');
+  await expect(logo).toHaveAttribute('size', 'md');
+  await expect(logo).toHaveAttribute('href', '/');
+  await expect(logo).toHaveAttribute('label', 'Xcel Energy Home');
+  await waitFor(() => expect(logo.shadowRoot?.querySelector('a')).toHaveAttribute('href', '/'), { timeout: 8000 });
 }
 
 const columnHeadings = (canvasElement) => [...canvasElement.querySelectorAll('xe-footer > xe-footer-column')]
@@ -192,7 +200,7 @@ export const Default = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const footer = await upgraded(canvasElement);
-    await expect(canvasElement.querySelector('[slot="logo"] img')).toHaveAttribute('alt', 'Xcel Energy');
+    await expectStaticLogo(canvasElement);
     await expect(canvasElement.querySelector('xe-footer > span[slot="copyright"]'))
       .toHaveTextContent('© 2026 Xcel Energy Inc. All rights reserved.');
     await expect(canvas.getByText('© 2026 Xcel Energy Inc. All rights reserved.')).toBeInTheDocument();
@@ -212,15 +220,15 @@ export const Default = {
   },
 };
 
-// Nothing authored: Ignite's built-in logo, the default social / legal links,
-// no columns, copyright or banner.
+// Nothing authored: the static logo, the default social / legal links, no
+// columns, copyright or banner.
 export const EmptyFooter = {
   args: {
-    logo: '', copyright: '', banner_background: '', banner_tagline: '', ...slotArgs(),
+    copyright: '', banner_background: '', banner_tagline: '', ...slotArgs(),
   },
   play: async ({ canvasElement }) => {
     const footer = await upgraded(canvasElement);
-    await expect(canvasElement.querySelector('xe-logo[slot="logo"]')).toHaveAttribute('variant', 'inverse');
+    await expectStaticLogo(canvasElement);
     await expect(canvasElement.querySelector('[slot="copyright"]')).toBeNull();
     await expect(footer).not.toHaveAttribute('columns');
     await expect(canvasElement.querySelectorAll('xe-footer-column')).toHaveLength(0);
@@ -256,7 +264,7 @@ export const PartialSlots = {
 // the elements rendered from them, so each field stays selectable.
 export const EditorInstrumentation = {
   render: (args) => render(fieldsToRows(args), (block) => {
-    const [, copyrightRow, socialRow, legalRow] = block.children;
+    const [copyrightRow, socialRow, legalRow] = block.children;
     copyrightRow.querySelector('p').setAttribute('data-aue-prop', 'copyright');
     socialRow.querySelector('a').setAttribute('data-aue-prop', 'social_cta1');
     legalRow.querySelector('a').setAttribute('data-aue-prop', 'legal_cta1');

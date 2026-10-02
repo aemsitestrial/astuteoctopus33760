@@ -5,7 +5,6 @@
  * _xe-footer-v2.json) one-to-one, so editing a control here is the same as
  * editing that field in the Universal Editor:
  *
- *   logo + logoAlt          reference + text  -> "logo" / "logoAlt" (collapsed into one image)
  *   copyright               text              -> "copyright" (plain text)
  *   banner_background       reference         -> "banner_background" (asset URL)
  *   banner_tagline          text              -> "banner_tagline" (grouped with the background)
@@ -18,7 +17,8 @@
  *   xe-footer-legal-links   links (rich-text list)       -> "legalLinks" (one item, the whole list)
  *
  * `fieldsToRows` renders the container markup AEM produces: one single-cell
- * row per field (logo, copyright, banner) followed by one row per child item.
+ * row per field (copyright, banner), empty or not, followed by one row per
+ * child item. The logo isn't authorable: it's the static Ignite logo.
  * Other stories cover footers created while the block was key-value
  * (`name | value` rows, with link columns) and the original positional layout.
  */
@@ -29,6 +29,9 @@ import { renderBlock, picture } from '../../.storybook/eds.js';
 /** A <ul> of [text, href] links (rich-text lists, and the link sets split into items). */
 const linkList = (pairs) => `<ul>${pairs.map(([text, href]) => `<li><a href="${href}">${text}</a></li>`).join('')}</ul>`;
 const list = (labels) => linkList(labels.map((label) => [label, '#']));
+
+// The authored logo of footers created before the logo became static.
+const LEGACY_LOGO = '/icons/xcel-logo-white.svg';
 
 const COLUMNS = [
   ['Company', ['About us', 'Careers', 'Newsroom', 'Sustainability']],
@@ -59,8 +62,6 @@ const SOCIAL_RICH_TEXT = [
 
 // --- Default field values (a realistic, fully-authored footer) --------------
 const defaults = {
-  logo: '/icons/xcel-logo-white.svg',
-  logoAlt: 'Xcel',
   copyright: '© 2026 Xcel Energy. All rights reserved.',
   banner_background: 'https://picsum.photos/1600/400?grayscale',
   banner_tagline: 'Our Energy, Your Power',
@@ -101,19 +102,15 @@ function columnRows(html) {
 }
 
 /**
- * The container markup: one single-cell row per non-empty field in model
- * order — logo (alt collapsed in), copyright, banner (background + tagline
- * grouped) — then one row per child item: each link column, each social
- * link, and the legal links.
+ * The container markup: one single-cell row per field in model order, empty
+ * or not — copyright, banner (background + tagline grouped) — then one row
+ * per child item: each link column, each social link, and the legal links.
  */
 function fieldsToRows(args) {
   const rows = [];
-  if (args.logo) rows.push([picture(args.logo, args.logoAlt || '')]);
-  if (args.copyright) rows.push([`<p>${args.copyright}</p>`]);
-  if (args.banner_background || args.banner_tagline) {
-    const background = args.banner_background ? picture(args.banner_background, '') : '';
-    rows.push([`${background}${args.banner_tagline ? `<p>${args.banner_tagline}</p>` : ''}`]);
-  }
+  rows.push([args.copyright ? `<p>${args.copyright}</p>` : '']);
+  const background = args.banner_background ? picture(args.banner_background, '') : '';
+  rows.push([`${background}${args.banner_tagline ? `<p>${args.banner_tagline}</p>` : ''}`]);
   rows.push(
     ...columnRows(args.linkColumns),
     ...itemRows(args.socialLinks),
@@ -124,7 +121,7 @@ function fieldsToRows(args) {
 
 /** Key-value rows of a footer created while the block was key-value (with column slots). */
 function keyValueRows(args, columns = COLUMNS) {
-  const rows = [['logo', picture(args.logo, '')], ['logoAlt', args.logoAlt], ['copyright', args.copyright]];
+  const rows = [['logo', picture(LEGACY_LOGO, '')], ['logoAlt', 'Xcel'], ['copyright', args.copyright]];
   columns.forEach(([heading, links], index) => {
     if (!links.length) return;
     rows.push([`column${index + 1}Heading`, heading], [`column${index + 1}Links`, list(links)]);
@@ -138,7 +135,7 @@ function keyValueRows(args, columns = COLUMNS) {
 function legacyRows(args) {
   const footerlinks = COLUMNS.map(([heading, links]) => `<p>${heading}</p>${list(links)}`).join('');
   return [
-    [picture(args.logo, args.logoAlt)],
+    [picture(LEGACY_LOGO, 'Xcel')],
     [`<p>${args.copyright}</p>`],
     [SOCIAL_RICH_TEXT],
     [LEGAL_ITEMS],
@@ -186,8 +183,6 @@ const render = (rows, decorator = decorate) => renderBlock({ name: 'xe-footer-v2
 // argTypes drive the Controls panel — the Storybook analogue of the Universal
 // Editor properties rail.
 const argTypes = {
-  logo: { control: 'text', description: 'Logo (reference) — asset URL for the footer logo.', table: { category: 'Brand' } },
-  logoAlt: { control: 'text', description: 'Logo alt text.', table: { category: 'Brand' } },
   copyright: { control: 'text', description: 'Copyright (plain text).', table: { category: 'Brand' } },
   banner_background: { control: 'text', description: 'Background (reference) — asset URL for the full-bleed banner image.', table: { category: 'Banner' } },
   banner_tagline: { control: 'text', description: 'Tagline — centered banner overlay text.', table: { category: 'Banner' } },
@@ -208,7 +203,7 @@ export default {
       description: {
         component:
           'The Xcel footer rendered with the @ignite/web footer composition: '
-          + '<xe-footer> with the slotted logo and copyright, social icon buttons '
+          + '<xe-footer> with the static logo and copyright, social icon buttons '
           + 'and legal links from its XE Footer Social Links / Legal Links child '
           + 'items, link columns (an accordion below 1024px), and a full-bleed '
           + 'banner with a centered tagline. Controls map one-to-one to the '
@@ -225,6 +220,20 @@ async function upgraded(canvasElement) {
   const footer = canvasElement.querySelector('xe-footer');
   await waitFor(() => expect(footer.shadowRoot?.querySelector('footer')).toBeTruthy(), { timeout: 8000 });
   return footer;
+}
+
+/**
+ * The static Ignite logo: inverse, medium, labelled, linking to the homepage
+ * (the link renders in its shadow root).
+ */
+async function expectStaticLogo(canvasElement) {
+  const logo = canvasElement.querySelector('xe-footer > xe-logo[slot="logo"]');
+  await expect(logo).toHaveAttribute('variant', 'inverse');
+  await expect(logo).toHaveAttribute('size', 'md');
+  await expect(logo).toHaveAttribute('href', '/');
+  await expect(logo).toHaveAttribute('label', 'Xcel Energy Home');
+  await waitFor(() => expect(logo.shadowRoot?.querySelector('a')).toHaveAttribute('href', '/'));
+  await expect(canvasElement.querySelector('[slot="logo"] img, picture[slot="logo"]')).toBeNull();
 }
 
 const columnHeadings = (canvasElement) => [...canvasElement.querySelectorAll('xe-footer-column')]
@@ -275,7 +284,7 @@ export const Default = {
     await expect(columnHeadings(canvasElement)).toEqual(['Company', 'Services', 'Support']);
     const firstColumn = canvasElement.querySelector('xe-footer > xe-footer-column');
     await waitFor(() => expect(firstColumn.querySelectorAll(':scope > li > xe-hyperlink[variant="variant"]')).toHaveLength(4));
-    await expect(canvasElement.querySelector('[slot="logo"] img')).toHaveAttribute('alt', 'Xcel');
+    await expectStaticLogo(canvasElement);
     await expect(canvasElement.querySelector('xe-footer > span[slot="copyright"]'))
       .toHaveTextContent('© 2026 Xcel Energy. All rights reserved.');
     await expect(canvas.getByText('© 2026 Xcel Energy. All rights reserved.')).toBeInTheDocument();
@@ -319,14 +328,14 @@ export const ItemsReversed = {
   },
 };
 
-// Blank fields don't shift the rest: no copyright and a banner without a
-// tagline still land as banner, not logo.
+// Blank fields don't shift the rest: with no copyright (an empty first row)
+// and no tagline, the banner image still lands as the banner.
 export const BlankFields = {
   args: { copyright: '', banner_tagline: '' },
   play: async ({ canvasElement }) => {
     await upgraded(canvasElement);
     await expect(canvasElement.querySelector('[slot="copyright"]')).toBeNull();
-    await expect(canvasElement.querySelector('[slot="logo"] img')).toHaveAttribute('alt', 'Xcel');
+    await expectStaticLogo(canvasElement);
     await expect(canvasElement.querySelector('img[slot="banner-image"]')).toBeInTheDocument();
     await expect(canvasElement.querySelector('[slot="tagline"]')).toBeNull();
   },
@@ -379,20 +388,14 @@ export const ColumnHeadingOnly = {
   },
 };
 
-// No logo authored — Ignite's built-in Xcel Energy logo (inverse) is used.
-export const DefaultLogo = {
-  args: { logo: '' },
+// The logo is static: Ignite's Xcel Energy logo, linking to the homepage.
+export const StaticLogo = {
   play: async ({ canvasElement }) => {
     await upgraded(canvasElement);
-    await expect(canvasElement.querySelector('xe-logo[slot="logo"]')).toHaveAttribute('variant', 'inverse');
-    await expect(canvasElement.querySelector('img[slot="banner-image"]')).toBeInTheDocument();
+    await expectStaticLogo(canvasElement);
   },
 };
 
-// --- Stories: the Universal Editor --------------------------------------------
-
-// Each child item keeps its instrumentation on the element rendered from it,
-// so every item appears in the editor's content tree.
 export const EditorItems = {
   render: (args) => render(
     fieldsToRows(args),
@@ -421,7 +424,7 @@ export const EditorItems = {
     await expect(legal.matches('xe-footer > xe-hyperlink[slot="legal"]')).toBe(true);
     await expect(legal).toHaveAttribute('data-aue-model', 'xe-footer-legal-links');
     // The block's own fields are still read with instrumented item rows present.
-    await expect(canvasElement.querySelector('[slot="logo"] img')).toHaveAttribute('alt', 'Xcel');
+    await expectStaticLogo(canvasElement);
     await expect(canvasElement.querySelector('span[slot="copyright"]')).toBeInTheDocument();
     await expect(canvasElement.querySelector('img[slot="banner-image"]')).toBeInTheDocument();
     await expect(await socialLinks(canvasElement)).toEqual(EXPECTED_SOCIAL);
@@ -541,7 +544,7 @@ export const KeyValueFooter = {
     await expect(columnHeadings(canvasElement)).toEqual(['Company', 'Services', 'Support']);
     const firstColumn = canvasElement.querySelector('xe-footer > xe-footer-column');
     await waitFor(() => expect(firstColumn.querySelectorAll(':scope > li > xe-hyperlink[variant="variant"]')).toHaveLength(4));
-    await expect(canvasElement.querySelector('[slot="logo"] img')).toHaveAttribute('alt', 'Xcel');
+    await expectStaticLogo(canvasElement);
     await expect(await socialLinks(canvasElement)).toEqual(EXPECTED_SOCIAL);
     await expect(legalLinks(canvasElement)).toEqual(AUTHORED_LEGAL);
     await expect(canvasElement.querySelector('[slot="tagline"]')).toHaveTextContent('Our Energy, Your Power');
@@ -580,7 +583,7 @@ export const LegacyContent = {
     const footer = await upgraded(canvasElement);
     await expect(footer).toHaveAttribute('columns', '3');
     await expect(columnHeadings(canvasElement)).toEqual(['Company', 'Services', 'Support']);
-    await expect(canvasElement.querySelector('[slot="logo"] img')).toHaveAttribute('alt', 'Xcel');
+    await expectStaticLogo(canvasElement);
     await expect(legalLinks(canvasElement)).toEqual(AUTHORED_LEGAL);
     await expect(await socialLinks(canvasElement)).toEqual(EXPECTED_SOCIAL.map(([label, , icon]) => [label, '#', icon]));
     await expect(canvasElement.querySelector('[slot="tagline"]')).toHaveTextContent('Our Energy, Your Power');

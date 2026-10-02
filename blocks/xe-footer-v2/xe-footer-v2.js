@@ -20,7 +20,7 @@ import decorateColumnLinks, { buildColumn } from '../xe-footer-column-links/xe-f
  * (scripts/ignite/bundle/compositions/footer), following its reference markup:
  *
  *   <xe-footer columns="5">
- *     <picture slot="logo">…</picture>          (or <xe-logo> when no logo is authored)
+ *     <xe-logo slot="logo" variant="inverse" size="md" href="/" label="Xcel Energy Home"></xe-logo>
  *     <span slot="copyright">© 2026 Xcel Energy Inc. All rights reserved.</span>
  *     <xe-footer-column heading="Company">                    (xe-footer-column-links)
  *       <xe-hyperlink href="…" variant="variant">Careers</xe-hyperlink>…
@@ -31,8 +31,8 @@ import decorateColumnLinks, { buildColumn } from '../xe-footer-column-links/xe-f
  *     <span slot="tagline">Our Energy, Your Power</span>
  *   </xe-footer>
  *
- * The block is a container (filter `xe-footer-v2`): its own fields (logo +
- * alt, copyright, banner background + tagline) render as rows first, then one
+ * The block is a container (filter `xe-footer-v2`): its own fields
+ * (copyright, banner background + tagline) render as rows first, then one
  * row per child item — a link column, a social profile or a legal link. Those
  * items are decorated by their own blocks (xe-footer-column-links /
  * xe-footer-social-links / xe-footer-legal-links); the live Xcel Energy
@@ -43,7 +43,8 @@ import decorateColumnLinks, { buildColumn } from '../xe-footer-column-links/xe-f
  * rows (`name | value`, footers created while the block was key-value) by
  * name, a row instrumented with an item model (Universal Editor) as that item,
  * a row of only links as an item, headings + link lists as link columns, and
- * images / text as the logo, banner and copyright.
+ * images / text as the banner and copyright. The logo is static (not
+ * authorable): Ignite's Xcel Energy logo, linking to the homepage.
  *
  * <xe-footer-column> wraps each link in an <li> inside its list; below 1024px
  * it switches to an accordion. Styling comes from the Ignite tokens (loaded by
@@ -121,9 +122,8 @@ function isLinkColumns(cell) {
 function readFields(block) {
   const fields = { items: { columns: [], social: [], legal: [] } };
   const addItem = (kind, row) => fields.items[kind].push(row);
-  let seenCopyright = false;
 
-  [...block.children].forEach((row) => {
+  [...block.children].forEach((row, index) => {
     const model = ITEM_MODELS[row.getAttribute('data-aue-model')];
     if (model) {
       addItem(model, row);
@@ -139,7 +139,7 @@ function readFields(block) {
     }
 
     // Plain row: recognize by content. Social icon links hold images too, so
-    // link lists are checked before the logo / banner.
+    // link lists are checked before the banner.
     const cell = cellOf(row);
     if (!hasContent(cell)) return;
     const image = cell.querySelector('picture, img');
@@ -147,15 +147,13 @@ function readFields(block) {
     if (linkList && (!image || isSocialLinks(cell))) {
       addItem(isSocialLinks(cell) ? 'social' : 'legal', row);
     } else if (image) {
-      // The logo comes before the copyright; the banner (image + tagline) after.
-      const isBanner = fields.logo || seenCopyright || cell.textContent.trim();
-      if (isBanner) {
-        fields['banner-background'] = cell;
-        const tagline = [...cell.childNodes].find((node) => node.textContent.trim());
-        if (tagline) fields['banner-tagline'] = tagline;
-      } else {
-        fields.logo = cell;
-      }
+      // The banner (image + tagline). The logo isn't authorable any more; in
+      // older footers it was the first row, so an image there is skipped (the
+      // current model's first row is the copyright, rendered even when empty).
+      if (index === 0) return;
+      fields['banner-background'] = cell;
+      const tagline = [...cell.childNodes].find((node) => node.textContent.trim());
+      if (tagline) fields['banner-tagline'] = tagline;
     } else if (isLinkColumns(cell)) {
       // A link column item (or an older footer's rich-text footer links).
       addItem('columns', row);
@@ -164,7 +162,6 @@ function readFields(block) {
       // link yet (e.g. a network chosen but no URL) renders nothing.
     } else if (!fields.copyright) {
       fields.copyright = cell;
-      seenCopyright = true;
     }
   });
   return fields;
@@ -198,8 +195,8 @@ export default async function decorate(block) {
     block.dataset.aueFilter = SOCIAL_FULL_FILTER;
   }
 
-  // --- Logo (key-value rows may carry the alt text as its own `logoAlt` row) ---
-  footer.append(buildLogo(fields.logo, fields.logoalt && fields.logoalt.textContent.trim()));
+  // --- Logo: the static Xcel Energy logo, linking to the homepage ---
+  footer.append(buildLogo());
 
   if (fields.copyright) footer.append(buildCopyright(fields.copyright));
 
