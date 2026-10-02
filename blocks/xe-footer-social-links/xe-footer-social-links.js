@@ -47,11 +47,16 @@ const DEFAULT_SOCIAL_LINKS = [
 
 /**
  * The network key for a social link (or null), from its text, its accessible
- * name or icon alt text (icon-only rich-text links), or its URL.
+ * name or icon alt text (icon-only rich-text links), an EDS icon's name
+ * (`:facebook:` → <span class="icon icon-facebook">), or its URL.
  */
 export function socialNetwork(anchor) {
   const img = anchor.querySelector('img');
-  const names = [anchor.textContent, anchor.getAttribute('aria-label'), img && img.alt]
+  const icon = anchor.querySelector('.icon');
+  const iconName = icon && [...icon.classList].find((name) => name.startsWith('icon-'));
+  const names = [
+    anchor.textContent, anchor.getAttribute('aria-label'), img && img.alt, iconName && iconName.slice(5),
+  ]
     .map((name) => (name || '').trim())
     .filter(Boolean);
   const href = anchor.getAttribute('href') || '';

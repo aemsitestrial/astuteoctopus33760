@@ -52,7 +52,8 @@ export default function decorate(item) {
     }
   });
 
-  const columns = groups.map(({ heading, nodes }) => {
+  // A heading without links yet renders no column.
+  const columns = groups.filter(({ nodes }) => nodes.length).map(({ heading, nodes }) => {
     const container = document.createElement('div');
     container.append(...nodes);
     return buildColumn(heading, container);
