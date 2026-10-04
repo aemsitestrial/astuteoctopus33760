@@ -27,6 +27,7 @@
       "xe-footer-v2",
       "xe-footer-v3",
       "xe-footer-v4",
+      "xe-footer-v5",
       "xe-feature-cards",
       "xe-ignite-feature-cards",
       "xe-ignite-feature-cards-npm",
@@ -174,6 +175,10 @@
   },
   {
     "id": "xe-footer-v4",
+    "components": []
+  },
+  {
+    "id": "xe-footer-v5",
     "components": []
   },
   {

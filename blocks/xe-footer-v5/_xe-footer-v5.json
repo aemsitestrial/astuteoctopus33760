@@ -1,0 +1,158 @@
+{
+  "definitions": [
+    {
+      "title": "XE Footer V5",
+      "id": "xe-footer-v5",
+      "plugins": {
+        "xwalk": {
+          "page": {
+            "resourceType": "core/franklin/components/block/v1/block",
+            "template": {
+              "name": "XE Footer V5",
+              "model": "xe-footer-v5",
+              "filter": "xe-footer-v5"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "models": [
+    {
+      "id": "xe-footer-v5",
+      "fields": [
+        {
+          "component": "reference",
+          "valueType": "string",
+          "name": "logo",
+          "label": "Logo",
+          "multi": false
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "logoAlt",
+          "label": "Logo alt text",
+          "value": ""
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "copyright",
+          "label": "Copyright",
+          "value": ""
+        },
+        {
+          "component": "container",
+          "name": "social",
+          "label": "Social Icons",
+          "multi": true,
+          "fields": [
+            {
+              "component": "select",
+              "valueType": "string",
+              "name": "social_ctaText",
+              "label": "Network",
+              "value": "",
+              "options": [
+                {
+                  "name": "Facebook",
+                  "value": "facebook"
+                },
+                {
+                  "name": "X (Twitter)",
+                  "value": "x"
+                },
+                {
+                  "name": "Instagram",
+                  "value": "instagram"
+                },
+                {
+                  "name": "LinkedIn",
+                  "value": "linkedin"
+                },
+                {
+                  "name": "YouTube",
+                  "value": "youtube"
+                }
+              ]
+            },
+            {
+              "component": "aem-content",
+              "valueType": "string",
+              "name": "social_cta",
+              "label": "Link URL"
+            }
+          ]
+        },
+        {
+          "component": "container",
+          "name": "legal",
+          "label": "Legal",
+          "multi": true,
+          "fields": [
+            {
+              "component": "aem-content",
+              "valueType": "string",
+              "name": "legal_cta",
+              "label": "Legal Link URL"
+            },
+            {
+              "component": "text",
+              "valueType": "string",
+              "name": "legal_ctaText",
+              "label": "Legal Link Text"
+            }
+          ]
+        },
+        {
+          "component": "container",
+          "name": "columns",
+          "label": "Column Links",
+          "multi": true,
+          "fields": [
+            {
+              "component": "text",
+              "valueType": "string",
+              "name": "column_heading",
+              "label": "Column Heading"
+            },
+            {
+              "component": "richtext",
+              "valueType": "string",
+              "name": "column_links",
+              "label": "Column Links"
+            }
+          ]
+        },
+        {
+          "component": "reference",
+          "valueType": "string",
+          "name": "banner_background",
+          "label": "Background",
+          "multi": false
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "banner_backgroundAlt",
+          "label": "Background alt text",
+          "value": ""
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "banner_tagline",
+          "label": "Tagline",
+          "value": "Our Energy, Your Power"
+        }
+      ]
+    }
+  ],
+  "filters": [
+    {
+      "id": "xe-footer-v5",
+      "components": []
+    }
+  ]
+}
