@@ -57,7 +57,7 @@ export default async function decorate(block) {
 
   // --- Link columns (default slot): one per authored heading + list pair ---
   const columns = fields.columns ? decorateColumnLinks(fields.columns) : [];
-  if (columns.length) footer.setAttribute('columns', String(columns.length));
+  if (columns.length) footer.setAttribute('columns', 5);
   footer.append(...columns);
 
   // --- Social and legal links: the authored slots, else the defaults ---

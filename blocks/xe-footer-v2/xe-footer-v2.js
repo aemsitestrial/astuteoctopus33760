@@ -251,7 +251,7 @@ export default async function decorate(block) {
   const itemColumns = await decorateColumnItems(fields.items.columns);
   const columns = firstOf(() => itemColumns, () => buildSlotColumns(fields));
   const columnCount = columns.filter((column) => column.matches('xe-footer-column')).length;
-  if (columnCount) footer.setAttribute('columns', String(columnCount));
+  if (columnCount) footer.setAttribute('columns', 5);
   footer.append(...columns);
 
   // --- Social and legal links: the child items, decorated by their blocks

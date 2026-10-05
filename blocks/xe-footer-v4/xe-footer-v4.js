@@ -65,7 +65,7 @@ export default async function decorate(block) {
   // path's child pages from the query index ---
   const hasPaths = fields.columns && fields.columns.querySelector('a');
   const columns = hasPaths ? decoratePathColumns(fields.columns, await fetchQueryIndex()) : [];
-  if (columns.length) footer.setAttribute('columns', String(columns.length));
+  if (columns.length) footer.setAttribute('columns', 5);
   footer.append(...columns);
 
   // --- Social and legal links: the authored slots, else the defaults ---
