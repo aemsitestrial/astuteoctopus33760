@@ -10,8 +10,15 @@ import decorateSocialLinks, {
 } from '../xe-footer-social-links/xe-footer-social-links.js';
 import decorateLegalLinks, {
   decorateDefaults as defaultLegalLinks,
+  decorateItems as decorateLegalItems,
+  MAX_LEGAL_LINKS,
 } from '../xe-footer-legal-links/xe-footer-legal-links.js';
-import decorateColumnLinks, { buildColumn } from '../xe-footer-column-links/xe-footer-column-links.js';
+import {
+  buildColumn,
+  decorateItems as decorateColumnItems,
+  isPathLinks,
+  MAX_COLUMN_LINKS,
+} from '../xe-footer-column-links/xe-footer-column-links.js';
 
 /*
  * XE Footer V2
@@ -36,7 +43,11 @@ import decorateColumnLinks, { buildColumn } from '../xe-footer-column-links/xe-f
  * row per child item — a link column, a social profile or a legal link. Those
  * items are decorated by their own blocks (xe-footer-column-links /
  * xe-footer-social-links / xe-footer-legal-links); the live Xcel Energy
- * footer's social and legal links render when none are authored.
+ * footer's social and legal links render when none are authored. A link
+ * column item is a heading + page: the column lists the page's published
+ * child pages from the query index (/query-index.json), or a single link to
+ * the page when it has none; items authored as a rich-text link list render
+ * as authored.
  *
  * Rows are recognized by what they hold rather than by position, so blank
  * fields can't shift the others and older footers still render: key-value
@@ -55,11 +66,18 @@ import decorateColumnLinks, { buildColumn } from '../xe-footer-column-links/xe-f
 // Link-column slots of key-value footers (column1Heading/column1Links … column5…).
 const COLUMN_SLOTS = 5;
 
-// Universal Editor filters (_xe-footer-v2.json): the block's own, and one
-// without the social link item for when the footer already has the most it
-// shows, so the editor's (+) menu stops offering it.
+// Universal Editor filters (_xe-footer-v2.json): the block's own, and one per
+// combination of child items the footer already has the most of it shows,
+// without those items, so the editor's (+) menu stops offering them:
+// xe-footer-v2-{columns-}{social-}{legal-}full (e.g. xe-footer-v2-social-full).
 const FILTER = 'xe-footer-v2';
-const SOCIAL_FULL_FILTER = 'xe-footer-v2-social-full';
+
+// The most items of each kind the footer shows (the kinds in filter-name order).
+const ITEM_LIMITS = {
+  columns: MAX_COLUMN_LINKS,
+  social: MAX_SOCIAL_LINKS,
+  legal: MAX_LEGAL_LINKS,
+};
 
 // Child item models (the xe-footer-v2 filter) → the footer area they fill.
 const ITEM_MODELS = {
@@ -144,7 +162,10 @@ function readFields(block) {
     if (!hasContent(cell)) return;
     const image = cell.querySelector('picture, img');
     const linkList = isLinkList(cell);
-    if (linkList && (!image || isSocialLinks(cell))) {
+    if (linkList && isPathLinks(cell)) {
+      // A link column item without a heading: just its page path.
+      addItem('columns', row);
+    } else if (linkList && (!image || isSocialLinks(cell))) {
       addItem(isSocialLinks(cell) ? 'social' : 'legal', row);
     } else if (image) {
       // The banner (image + tagline). The logo isn't authorable any more; in
@@ -186,13 +207,15 @@ export default async function decorate(block) {
   const fields = readFields(block);
   const footer = document.createElement('xe-footer');
 
-  // Universal Editor: with MAX_SOCIAL_LINKS social links already added, switch
-  // to the filter without the social link item so (+) no longer offers it.
-  // The block is re-rendered with its original filter after every add or
-  // remove (scripts/editor-support.js), so this re-evaluates each time.
-  // Published pages carry no data-aue-filter; nothing changes there.
-  if (block.dataset.aueFilter === FILTER && fields.items.social.length >= MAX_SOCIAL_LINKS) {
-    block.dataset.aueFilter = SOCIAL_FULL_FILTER;
+  // Universal Editor: for each kind of child item already at its limit, switch
+  // to the filter without it so (+) no longer offers it. The block is
+  // re-rendered with its original filter after every add or remove
+  // (scripts/editor-support.js), so this re-evaluates each time. Published
+  // pages carry no data-aue-filter; nothing changes there.
+  const full = Object.keys(ITEM_LIMITS)
+    .filter((kind) => fields.items[kind].length >= ITEM_LIMITS[kind]);
+  if (block.dataset.aueFilter === FILTER && full.length) {
+    block.dataset.aueFilter = `${FILTER}-${full.join('-')}-full`;
   }
 
   // --- Logo: the static Xcel Energy logo, linking to the homepage ---
@@ -200,18 +223,17 @@ export default async function decorate(block) {
 
   if (fields.copyright) footer.append(buildCopyright(fields.copyright));
 
-  // --- Link columns (default slot): the column items, else a key-value
-  // footer's column slots ---
-  const columns = firstOf(
-    () => fields.items.columns.flatMap(decorateColumnLinks),
-    () => buildSlotColumns(fields),
-  );
+  // --- Link columns (default slot): the column items (at most
+  // MAX_COLUMN_LINKS, each listing its page's child pages from the query
+  // index), else a key-value footer's column slots ---
+  const itemColumns = await decorateColumnItems(fields.items.columns);
+  const columns = firstOf(() => itemColumns, () => buildSlotColumns(fields));
   const columnCount = columns.filter((column) => column.matches('xe-footer-column')).length;
   if (columnCount) footer.setAttribute('columns', String(columnCount));
   footer.append(...columns);
 
   // --- Social and legal links: the child items, decorated by their blocks
-  // (at most MAX_SOCIAL_LINKS social links) ---
+  // (at most MAX_SOCIAL_LINKS social links and MAX_LEGAL_LINKS legal items) ---
   footer.append(
     ...firstOf(
       () => decorateSocialItems(fields.items.social),
@@ -219,7 +241,7 @@ export default async function decorate(block) {
       defaultSocialLinks,
     ),
     ...firstOf(
-      () => fields.items.legal.flatMap(decorateLegalLinks),
+      () => decorateLegalItems(fields.items.legal),
       () => (fields.legal ? decorateLegalLinks(fields.legal) : []),
       defaultLegalLinks,
     ),

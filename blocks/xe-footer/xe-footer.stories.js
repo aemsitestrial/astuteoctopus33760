@@ -71,12 +71,12 @@ function fieldsToRows(args) {
 // argTypes drive the Controls panel — the Storybook analogue of the Universal
 // Editor properties rail.
 const argTypes = {
-  copyright: { control: 'text', description: 'Copyright (plain text).', table: { category: 'Brand' } },
-  social: { control: 'text', description: 'Social links (rich text) — HTML with linked social icons.', table: { category: 'Brand' } },
-  legal: { control: 'text', description: 'Legal links (rich text) — HTML list of legal links.', table: { category: 'Brand' } },
-  footerlinks: { control: 'text', description: 'Footer links (rich text) — heading + link-list pairs; each heading becomes a column.', table: { category: 'Links' } },
-  banner_background: { control: 'text', description: 'Background (reference) — asset URL for the banner image.', table: { category: 'Banner' } },
-  banner_tagline: { control: 'text', description: 'Tagline — centered banner overlay text.', table: { category: 'Banner' } },
+  copyright: { control: 'text', description: 'Copyright Text (plain text).', table: { category: 'General' } },
+  social: { control: 'text', description: 'Social Media Links (rich text) — linked social icons.', table: { category: 'Social Media' } },
+  legal: { control: 'text', description: 'Legal Links (rich text) — a bulleted list of links.', table: { category: 'Legal Links' } },
+  footerlinks: { control: 'text', description: 'Link Columns (rich text) — heading + link-list pairs; each heading becomes a column.', table: { category: 'Link Columns' } },
+  banner_background: { control: 'text', description: 'Banner Image (reference) — asset URL for the full-width background image.', table: { category: 'Banner' } },
+  banner_tagline: { control: 'text', description: 'Banner Tagline (text) — centered over the banner image.', table: { category: 'Banner' } },
 };
 
 const render = (rows, decorator = decorate) => renderBlock({ name: 'xe-footer', rows, decorate: decorator });

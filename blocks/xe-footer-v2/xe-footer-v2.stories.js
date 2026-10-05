@@ -11,8 +11,8 @@
  *
  * Child items (the block's filter), each in its own row:
  *
- *   xe-footer-column-links  heading + links (rich-text list), grouped into one cell
- *                             -> "linkColumns" (heading + list pairs, one item each)
+ *   xe-footer-column-links  heading + page (aem-content), grouped into one cell
+ *                             -> "linkColumns" (heading + page path pairs, one item each)
  *   xe-footer-social-links  network select + profile URL -> "socialLinks" (links, one item each)
  *   xe-footer-legal-links   links (rich-text list)       -> "legalLinks" (one item, the whole list)
  *
@@ -20,7 +20,11 @@
  * row per field (copyright, banner), empty or not, followed by one row per
  * child item. The logo isn't authorable: it's the static Ignite logo.
  * Other stories cover footers created while the block was key-value
- * (`name | value` rows, with link columns) and the original positional layout.
+ * (`name | value` rows, with link columns), link column items authored as a
+ * rich-text link list, and the original positional layout.
+ *
+ * Each link column lists its page's child pages from the query index, which
+ * is mocked: requests for /query-index.json return INDEX below.
  */
 import { expect, within, waitFor } from 'storybook/test';
 import decorate from './xe-footer-v2.js';
@@ -33,10 +37,69 @@ const list = (labels) => linkList(labels.map((label) => [label, '#']));
 // The authored logo of footers created before the logo became static.
 const LEGACY_LOGO = '/icons/xcel-logo-white.svg';
 
+// Link columns as rich-text lists: key-value footers' column slots, the
+// original layout's footer links, and items authored before Page.
 const COLUMNS = [
   ['Company', ['About us', 'Careers', 'Newsroom', 'Sustainability']],
   ['Services', ['Residential', 'Business', 'Renewable plans', 'Usage insights']],
   ['Support', ['Contact us', 'Help center', 'Report an outage', 'Billing &amp; payments']],
+];
+const LIST_COLUMNS = COLUMNS.map(([heading, links]) => `<p>${heading}</p>${list(links)}`).join('');
+
+// The mocked query index: published pages, some with a title, some without.
+const INDEX = [
+  { path: '/', title: 'Home', robots: '' },
+  { path: '/company', title: 'Company', robots: '' },
+  { path: '/company/community', title: 'Community', robots: '' },
+  { path: '/company/careers', title: 'Careers', robots: '' },
+  { path: '/company/careers/open-roles', title: 'Open Roles', robots: '' }, // grandchild: not listed
+  { path: '/company/newsroom', title: 'Newsroom', robots: 'noindex' }, // noindex: not listed
+  { path: '/energy-environment', title: 'Energy & Environment', robots: '' },
+  { path: '/energy-environment/sustainability', title: 'Sustainability', robots: '' },
+  { path: '/energy-environment/net-zero-plan', robots: '' }, // no title: labelled from its URL
+  { path: '/partner-resources', title: 'Partner Resources', robots: '' }, // no child pages
+];
+
+/** Serves /query-index.json from INDEX (with offset / limit paging). */
+function mockQueryIndex() {
+  if (window.fetch.queryIndexMock) return;
+  const realFetch = window.fetch.bind(window);
+  const mock = (input, init) => {
+    const url = new URL(typeof input === 'string' ? input : input.url, window.location.href);
+    if (url.pathname !== '/query-index.json') return realFetch(input, init);
+    const offset = Number(url.searchParams.get('offset') || 0);
+    const limit = Number(url.searchParams.get('limit') || 1000);
+    const body = {
+      total: INDEX.length, offset, limit, data: INDEX.slice(offset, offset + limit), ':type': 'sheet',
+    };
+    return Promise.resolve(new Response(JSON.stringify(body), { headers: { 'Content-Type': 'application/json' } }));
+  };
+  mock.queryIndexMock = true;
+  window.fetch = mock;
+}
+
+/** A link column item as AEM renders it: heading + the page link (its text is the content path). */
+const pathColumn = (heading, path) => `${heading ? `<p>${heading}</p>` : ''}<p><a href="${path}">${path}</a></p>`;
+
+const PATH_COLUMNS = [
+  pathColumn('Company', '/company'),
+  // In the Universal Editor, links use AEM content paths.
+  pathColumn('Energy &amp; Environment', '/content/2026/38/astuteoctopus33760/energy-environment.html'),
+  pathColumn('Partner Resources', '/partner-resources'),
+].join('');
+
+// The columns PATH_COLUMNS renders: each page's published child pages.
+const EXPECTED_PATH_COLUMNS = [
+  // Direct children only (not /company/careers/open-roles), and not noindex pages.
+  { heading: 'Company', links: [['Careers', '/company/careers'], ['Community', '/company/community']] },
+  // An AEM content path resolves to the site path; a page without a title is
+  // labelled from its URL.
+  {
+    heading: 'Energy & Environment',
+    links: [['Net Zero Plan', '/energy-environment/net-zero-plan'], ['Sustainability', '/energy-environment/sustainability']],
+  },
+  // No child pages: a single link to the page itself, with its title.
+  { heading: 'Partner Resources', links: [['Partner Resources', '/partner-resources']] },
 ];
 
 // xe-footer-social-links: the link text is the "Network" select value.
@@ -65,7 +128,7 @@ const defaults = {
   copyright: '© 2026 Xcel Energy. All rights reserved.',
   banner_background: 'https://picsum.photos/1600/400?grayscale',
   banner_tagline: 'Our Energy, Your Power',
-  linkColumns: COLUMNS.map(([heading, links]) => `<p>${heading}</p>${list(links)}`).join(''),
+  linkColumns: PATH_COLUMNS,
   socialLinks: SOCIAL_ITEMS,
   legalLinks: LEGAL_ITEMS,
 };
@@ -88,15 +151,17 @@ const legalRows = (html) => (html ? [[html]] : []);
 
 /**
  * One link column item row per heading in `html` (the linkColumns control):
- * the item's heading + links are grouped into one cell, <p>heading</p><ul>…</ul>.
+ * the item's heading + page are grouped into one cell,
+ * <p>heading</p><p><a>…</a></p> (or <p>heading</p><ul>…</ul> for a rich-text list).
  */
 function columnRows(html) {
   if (!html) return [];
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const rows = [];
   [...doc.body.children].forEach((node) => {
-    if (node.matches('p')) rows.push([node.outerHTML]);
-    else if (rows.length) rows[rows.length - 1][0] += node.outerHTML;
+    const isHeading = node.matches('p') && !node.querySelector('a');
+    if (isHeading || !rows.length) rows.push([node.outerHTML]);
+    else rows[rows.length - 1][0] += node.outerHTML;
   });
   return rows;
 }
@@ -133,13 +198,12 @@ function keyValueRows(args, columns = COLUMNS) {
 
 /** The original positional layout: logo, copyright, social, legal, footer links, banner. */
 function legacyRows(args) {
-  const footerlinks = COLUMNS.map(([heading, links]) => `<p>${heading}</p>${list(links)}`).join('');
   return [
     [picture(LEGACY_LOGO, 'Xcel')],
     [`<p>${args.copyright}</p>`],
     [SOCIAL_RICH_TEXT],
     [LEGAL_ITEMS],
-    [footerlinks],
+    [LIST_COLUMNS],
     [`${picture(args.banner_background, 'Banner')}<p>${args.banner_tagline}</p>`],
   ];
 }
@@ -178,17 +242,20 @@ const inEditor = (models) => (block) => {
   return decorate(block);
 };
 
-const render = (rows, decorator = decorate) => renderBlock({ name: 'xe-footer-v2', rows, decorate: decorator });
+const render = (rows, decorator = decorate) => {
+  mockQueryIndex();
+  return renderBlock({ name: 'xe-footer-v2', rows, decorate: decorator });
+};
 
 // argTypes drive the Controls panel — the Storybook analogue of the Universal
 // Editor properties rail.
 const argTypes = {
-  copyright: { control: 'text', description: 'Copyright (plain text).', table: { category: 'Brand' } },
-  banner_background: { control: 'text', description: 'Background (reference) — asset URL for the full-bleed banner image.', table: { category: 'Banner' } },
-  banner_tagline: { control: 'text', description: 'Tagline — centered banner overlay text.', table: { category: 'Banner' } },
-  linkColumns: { control: 'text', description: 'XE Footer Link Column items — one item per heading: <p>heading</p> followed by a <ul> of links.', table: { category: 'Child items' } },
-  socialLinks: { control: 'text', description: 'XE Footer Social Link items — one item per link; the link text is the network (facebook, x, instagram, linkedin, youtube).', table: { category: 'Child items' } },
-  legalLinks: { control: 'text', description: 'XE Footer Legal Links item — one rich-text bulleted list of links.', table: { category: 'Child items' } },
+  copyright: { control: 'text', description: 'Copyright Text (plain text).', table: { category: 'General' } },
+  banner_background: { control: 'text', description: 'Banner Image (reference) — asset URL for the full-width background image.', table: { category: 'Banner' } },
+  banner_tagline: { control: 'text', description: 'Banner Tagline (text) — centered over the banner image.', table: { category: 'Banner' } },
+  linkColumns: { control: 'text', description: 'XE Footer Link Column items (Column Heading + Parent Page) — one item per heading: <p>heading</p> followed by the page link (<p><a href="path">path</a></p>); the column lists the page\'s child pages.', table: { category: 'Child items' } },
+  socialLinks: { control: 'text', description: 'XE Footer Social Link items (Social Network + Social Link URL) — one item per link; the link text is the network (facebook, x, instagram, linkedin, youtube).', table: { category: 'Child items' } },
+  legalLinks: { control: 'text', description: 'XE Footer Legal Links item (Legal Links) — one rich-text bulleted list of links.', table: { category: 'Child items' } },
 };
 
 export default {
@@ -215,12 +282,21 @@ export default {
 
 // --- Helpers for the play functions -----------------------------------------
 
-/** Waits for the Ignite footer to register and render its shadow DOM. */
+/**
+ * Waits for the Ignite footer to render its shadow DOM (it's added once the
+ * link columns are built, after the query index loads).
+ */
 async function upgraded(canvasElement) {
-  const footer = canvasElement.querySelector('xe-footer');
-  await waitFor(() => expect(footer.shadowRoot?.querySelector('footer')).toBeTruthy(), { timeout: 8000 });
-  return footer;
+  await waitFor(() => expect(canvasElement.querySelector('xe-footer')?.shadowRoot?.querySelector('footer')).toBeTruthy(), { timeout: 8000 });
+  return canvasElement.querySelector('xe-footer');
 }
+
+/** Each column as { heading, links: [[text, href]] }. */
+const columnsOf = (canvasElement) => [...canvasElement.querySelectorAll('xe-footer > xe-footer-column')]
+  .map((col) => ({
+    heading: col.getAttribute('heading'),
+    links: [...col.querySelectorAll('xe-hyperlink')].map((link) => [link.textContent, link.getAttribute('href')]),
+  }));
 
 /**
  * The static Ignite logo: inverse, medium, labelled, linking to the homepage
@@ -278,12 +354,13 @@ export const Default = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const footer = await upgraded(canvasElement);
-    // One <xe-footer-column heading="…"> per link column item, with direct
-    // <xe-hyperlink variant="variant"> children the column wraps in <li>s.
+    // One <xe-footer-column heading="…"> per link column item, listing its
+    // page's child pages as direct <xe-hyperlink variant="variant"> children
+    // the column wraps in <li>s.
     await expect(footer).toHaveAttribute('columns', '3');
-    await expect(columnHeadings(canvasElement)).toEqual(['Company', 'Services', 'Support']);
+    await expect(columnsOf(canvasElement)).toEqual(EXPECTED_PATH_COLUMNS);
     const firstColumn = canvasElement.querySelector('xe-footer > xe-footer-column');
-    await waitFor(() => expect(firstColumn.querySelectorAll(':scope > li > xe-hyperlink[variant="variant"]')).toHaveLength(4));
+    await waitFor(() => expect(firstColumn.querySelectorAll(':scope > li > xe-hyperlink[variant="variant"]')).toHaveLength(2));
     await expectStaticLogo(canvasElement);
     await expect(canvasElement.querySelector('xe-footer > span[slot="copyright"]'))
       .toHaveTextContent('© 2026 Xcel Energy. All rights reserved.');
@@ -383,8 +460,35 @@ export const ColumnHeadingOnly = {
   play: async ({ canvasElement }) => {
     const footer = await upgraded(canvasElement);
     await expect(footer).toHaveAttribute('columns', '3');
-    await expect(columnHeadings(canvasElement)).toEqual(['Company', 'Services', 'Support']);
+    await expect(columnHeadings(canvasElement)).toEqual(['Company', 'Energy & Environment', 'Partner Resources']);
     await expect(canvasElement.querySelector('[slot="copyright"]')).toHaveTextContent('© 2026 Xcel Energy');
+  },
+};
+
+// A published link column item with a page but no heading yet renders an
+// untitled column of the page's child pages — not a legal link.
+export const ColumnPageOnly = {
+  args: { linkColumns: pathColumn('', '/company') },
+  play: async ({ canvasElement }) => {
+    const footer = await upgraded(canvasElement);
+    await expect(footer).toHaveAttribute('columns', '1');
+    await expect(columnsOf(canvasElement)).toEqual([
+      { heading: null, links: [['Careers', '/company/careers'], ['Community', '/company/community']] },
+    ]);
+    await expect(legalLinks(canvasElement)).toEqual(AUTHORED_LEGAL);
+  },
+};
+
+// Link column items authored while Links was a rich-text list render their
+// links as authored.
+export const ListColumnItems = {
+  args: { linkColumns: LIST_COLUMNS },
+  play: async ({ canvasElement }) => {
+    const footer = await upgraded(canvasElement);
+    await expect(footer).toHaveAttribute('columns', '3');
+    await expect(columnHeadings(canvasElement)).toEqual(['Company', 'Services', 'Support']);
+    const firstColumn = canvasElement.querySelector('xe-footer > xe-footer-column');
+    await waitFor(() => expect(firstColumn.querySelectorAll(':scope > li > xe-hyperlink[variant="variant"]')).toHaveLength(4));
   },
 };
 
@@ -429,10 +533,11 @@ export const EditorItems = {
     await expect(canvasElement.querySelector('img[slot="banner-image"]')).toBeInTheDocument();
     await expect(await socialLinks(canvasElement)).toEqual(EXPECTED_SOCIAL);
     await expect(legalLinks(canvasElement)).toEqual(AUTHORED_LEGAL);
-    // Five social links is the most the footer shows, so the block switches to
-    // the filter without the social link item: (+) no longer offers it.
+    // Five social links and one legal links item are the most the footer
+    // shows, so the block switches to the filter without those items: (+)
+    // only offers link columns.
     await expect(canvasElement.querySelector('.xe-footer-v2.block'))
-      .toHaveAttribute('data-aue-filter', 'xe-footer-v2-social-full');
+      .toHaveAttribute('data-aue-filter', 'xe-footer-v2-social-legal-full');
   },
 };
 
@@ -461,7 +566,22 @@ export const EditorEmptyItems = {
     await expect(legal).toHaveTextContent('Add legal links');
     await expect(canvasElement.querySelectorAll('xe-icon-button')).toHaveLength(0);
     await expect(legalLinks(canvasElement)).toEqual([]);
-    // One social link item: below the limit, the block keeps its own filter.
+    // One link column and one social link item are below their limits; the
+    // legal links item, even empty, is the one the footer shows.
+    await expect(canvasElement.querySelector('.xe-footer-v2.block'))
+      .toHaveAttribute('data-aue-filter', 'xe-footer-v2-legal-full');
+  },
+};
+
+// Below every limit, the block keeps its own filter.
+export const EditorBelowLimits = {
+  args: { legalLinks: '' },
+  render: (args) => render(
+    fieldsToRows({ ...args, socialLinks: linkList([['facebook', 'https://www.facebook.com/XcelEnergy']]) }),
+    inEditor(itemModels(columnRows(args.linkColumns).length, 1, 0)),
+  ),
+  play: async ({ canvasElement }) => {
+    await upgraded(canvasElement);
     await expect(canvasElement.querySelector('.xe-footer-v2.block'))
       .toHaveAttribute('data-aue-filter', 'xe-footer-v2');
   },
@@ -500,7 +620,7 @@ export const TooManySocialLinks = {
 // In the editor, the 6th and 7th social link items show a notice (still
 // selectable, so the author can remove them) instead of rendering.
 export const EditorTooManySocialLinks = {
-  args: { socialLinks: SEVEN_SOCIAL_ITEMS },
+  args: { socialLinks: SEVEN_SOCIAL_ITEMS, legalLinks: '' },
   render: (args) => render(
     fieldsToRows(args),
     inEditor(itemModels(
@@ -521,6 +641,95 @@ export const EditorTooManySocialLinks = {
     });
     await expect(canvasElement.querySelector('.xe-footer-v2.block'))
       .toHaveAttribute('data-aue-filter', 'xe-footer-v2-social-full');
+  },
+};
+
+// Seven link column items: two more than the footer shows.
+const SEVEN_COLUMNS = PATH_COLUMNS + [
+  pathColumn('Outages &amp; Safety', '/outages-safety'),
+  pathColumn('Customer Support', '/customer-support'),
+  pathColumn('Investors', '/investors'),
+  pathColumn('Newsroom', '/newsroom'),
+].join('');
+const FIRST_FIVE_HEADINGS = [
+  'Company', 'Energy & Environment', 'Partner Resources', 'Outages & Safety', 'Customer Support',
+];
+
+// Published: only the first five link column items render.
+export const TooManyColumns = {
+  args: { linkColumns: SEVEN_COLUMNS },
+  play: async ({ canvasElement }) => {
+    const footer = await upgraded(canvasElement);
+    await expect(footer).toHaveAttribute('columns', '5');
+    await expect(columnHeadings(canvasElement)).toEqual(FIRST_FIVE_HEADINGS);
+    await expect(canvasElement.querySelector('.xe-footer-v2-placeholder')).toBeNull();
+  },
+};
+
+// In the editor, the 6th and 7th link column items show a notice (still
+// selectable, so the author can remove them) instead of rendering.
+export const EditorTooManyColumns = {
+  args: { linkColumns: SEVEN_COLUMNS, socialLinks: '', legalLinks: '' },
+  render: (args) => render(fieldsToRows(args), inEditor(itemModels(7, 0, 0))),
+  play: async ({ canvasElement }) => {
+    const footer = await upgraded(canvasElement);
+    await expect(footer).toHaveAttribute('columns', '5');
+    await expect(columnHeadings(canvasElement)).toEqual(FIRST_FIVE_HEADINGS);
+    [5, 6].forEach((index) => {
+      const notice = itemElement(canvasElement, index);
+      expect(notice.matches('xe-footer > span.xe-footer-v2-placeholder:not([slot])')).toBe(true);
+      expect(notice).toHaveTextContent('Only 5 link columns are shown — remove this one');
+      expect(notice).toHaveAttribute('data-aue-model', 'xe-footer-column-links');
+    });
+    await expect(canvasElement.querySelector('.xe-footer-v2.block'))
+      .toHaveAttribute('data-aue-filter', 'xe-footer-v2-columns-full');
+  },
+};
+
+// A second legal links item: one more than the footer shows.
+const EXTRA_LEGAL_ITEM = linkList([['Cookie Notice', '#cookies']]);
+
+// Published: only the first legal links item renders.
+export const TooManyLegalLinks = {
+  render: (args) => render([...fieldsToRows(args), [EXTRA_LEGAL_ITEM]]),
+  play: async ({ canvasElement }) => {
+    await upgraded(canvasElement);
+    await expect(legalLinks(canvasElement)).toEqual(AUTHORED_LEGAL);
+    await expect(canvasElement.querySelector('.xe-footer-v2-placeholder')).toBeNull();
+  },
+};
+
+// In the editor, the second legal links item shows a notice (still
+// selectable, so the author can remove it) instead of rendering.
+export const EditorTooManyLegalLinks = {
+  args: { linkColumns: '', socialLinks: '' },
+  render: (args) => render(
+    [...fieldsToRows(args), [EXTRA_LEGAL_ITEM]],
+    inEditor(itemModels(0, 0, 2)),
+  ),
+  play: async ({ canvasElement }) => {
+    await upgraded(canvasElement);
+    await expect(legalLinks(canvasElement)).toEqual(AUTHORED_LEGAL);
+    const notice = itemElement(canvasElement, 1);
+    await expect(notice.matches('xe-footer > span.xe-footer-v2-placeholder[slot="legal"]')).toBe(true);
+    await expect(notice).toHaveTextContent('Only one legal links item is shown');
+    await expect(notice).toHaveAttribute('data-aue-model', 'xe-footer-legal-links');
+    await expect(canvasElement.querySelector('.xe-footer-v2.block'))
+      .toHaveAttribute('data-aue-filter', 'xe-footer-v2-legal-full');
+  },
+};
+
+// Every kind of item at its limit: (+) offers nothing more.
+export const EditorAllFull = {
+  args: { linkColumns: SEVEN_COLUMNS },
+  render: (args) => render(
+    fieldsToRows(args),
+    inEditor(itemModels(7, itemCount(args.socialLinks), legalRows(args.legalLinks).length)),
+  ),
+  play: async ({ canvasElement }) => {
+    await upgraded(canvasElement);
+    await expect(canvasElement.querySelector('.xe-footer-v2.block'))
+      .toHaveAttribute('data-aue-filter', 'xe-footer-v2-columns-social-legal-full');
   },
 };
 

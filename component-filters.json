@@ -163,11 +163,47 @@
     ]
   },
   {
+    "id": "xe-footer-v2-columns-full",
+    "components": [
+      "xe-footer-social-links",
+      "xe-footer-legal-links"
+    ]
+  },
+  {
     "id": "xe-footer-v2-social-full",
     "components": [
       "xe-footer-column-links",
       "xe-footer-legal-links"
     ]
+  },
+  {
+    "id": "xe-footer-v2-legal-full",
+    "components": [
+      "xe-footer-column-links",
+      "xe-footer-social-links"
+    ]
+  },
+  {
+    "id": "xe-footer-v2-columns-social-full",
+    "components": [
+      "xe-footer-legal-links"
+    ]
+  },
+  {
+    "id": "xe-footer-v2-columns-legal-full",
+    "components": [
+      "xe-footer-social-links"
+    ]
+  },
+  {
+    "id": "xe-footer-v2-social-legal-full",
+    "components": [
+      "xe-footer-column-links"
+    ]
+  },
+  {
+    "id": "xe-footer-v2-columns-social-legal-full",
+    "components": []
   },
   {
     "id": "xe-footer-v3",

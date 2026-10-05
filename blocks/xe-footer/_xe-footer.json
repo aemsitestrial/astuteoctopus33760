@@ -25,42 +25,48 @@
           "component": "text",
           "name": "copyright",
           "value": "",
-          "label": "Copyright",
+          "label": "Copyright Text",
+          "description": "Plain text, e.g. © 2026 Xcel Energy Inc. All rights reserved.",
           "valueType": "string"
         },
         {
           "component": "richtext",
           "name": "social",
           "value": "",
-          "label": "Social links",
+          "label": "Social Media Links",
+          "description": "Links to the Facebook, X, Instagram, LinkedIn and YouTube profiles; each renders as an icon.",
           "valueType": "string"
         },
         {
           "component": "richtext",
           "name": "legal",
           "value": "",
-          "label": "Legal links",
+          "label": "Legal Links",
+          "description": "A bulleted list of links, e.g. Privacy and Terms of Use.",
           "valueType": "string"
         },
         {
           "component": "richtext",
           "name": "footerlinks",
           "value": "",
-          "label": "Footer links",
+          "label": "Link Columns",
+          "description": "For each column, a heading followed by a bulleted list of links.",
           "valueType": "string"
         },
         {
           "component": "reference",
           "valueType": "string",
           "name": "banner_background",
-          "label": "Background",
+          "label": "Banner Image",
+          "description": "Full-width background image behind the tagline.",
           "multi": false
         },
         {
           "component": "text",
           "valueType": "string",
           "name": "banner_tagline",
-          "label": "Tagline",
+          "label": "Banner Tagline",
+          "description": "Short line centered over the banner image.",
           "value": "Our Energy, Your Power"
         }
       ]

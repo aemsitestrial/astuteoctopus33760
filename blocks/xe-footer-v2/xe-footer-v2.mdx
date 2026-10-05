@@ -59,39 +59,54 @@ Authors add **one item per link column**, **one item per social link**, and
     <tr><th>Item</th><th>Fields</th><th>Renders as</th></tr>
   </thead>
   <tbody>
-    <tr><td>XE Footer Link Column</td><td><code>column_heading</code> text + <code>column_links</code> rich text (a bulleted list of links)</td><td>An <code>&lt;xe-footer-column&gt;</code> with that heading and its links</td></tr>
+    <tr><td>XE Footer Link Column</td><td><code>column_heading</code> text + <code>column_links</code> page (aem-content)</td><td>An <code>&lt;xe-footer-column&gt;</code> with that heading, listing the page's published child pages</td></tr>
     <tr><td>XE Footer Social Link</td><td><code>cta_linkText</code> network select + <code>cta_link</code> profile URL</td><td>A social icon button (Facebook, X, Instagram, LinkedIn or YouTube), opening in a new window</td></tr>
     <tr><td>XE Footer Legal Links</td><td><code>links</code> rich text (a bulleted list of links)</td><td>Legal links, each with a trailing icon</td></tr>
   </tbody>
 </table>
 
 A social item's two fields collapse into a single link; a link column's
-heading and links are grouped into one cell; the legal links are one
+heading and page are grouped into one cell; the legal links are one
 rich-text list. The items deliberately
 use plain fields rather than a multi-field (`"component": "container"` with
 `"multi": true`): multi-fields are an **early-access** feature on aem.live and
-render empty unless Adobe enables them for the program — which is why a
-column's links and the legal links are rich-text lists.
+render empty unless Adobe enables them for the program — which is why the
+legal links are a rich-text list.
+
+A link column lists the pages **directly under its page** that are in the
+site's query index (`/query-index.json`, published pages only), sorted by
+title; pages marked `noindex` are left out, and a page without a title is
+labelled from its URL. A page with no published child pages shows a single
+link to itself. Link column items authored while the field was a rich-text
+list keep rendering their links as authored.
 
 Each item is decorated by its own block — `blocks/xe-footer-column-links`,
-`blocks/xe-footer-social-links` and `blocks/xe-footer-legal-links` export
-`decorate(item)`, returning the elements the footer slots in. The social and
+`blocks/xe-footer-social-links` and `blocks/xe-footer-legal-links` each
+export `decorateItems(items)` (applying the limits below) and `decorate(item)`,
+returning the elements the footer slots in. The social and
 legal blocks also export `decorateDefaults()`, the live Xcel Energy footer's
 links used when no item is authored.
 
-The footer shows **at most 5 social links** (`MAX_SOCIAL_LINKS` in
-`blocks/xe-footer-social-links`). Universal Editor events fire after a change
-is saved and can't be cancelled, so the limit is enforced two other ways:
+The footer shows **at most 5 link columns** (`MAX_COLUMN_LINKS` in
+`blocks/xe-footer-column-links`), **5 social links** (`MAX_SOCIAL_LINKS` in
+`blocks/xe-footer-social-links`) and **1 legal links item**
+(`MAX_LEGAL_LINKS` in `blocks/xe-footer-legal-links`; it holds all the legal
+links). Universal Editor events fire after a change is saved and can't be
+cancelled, so the limits are enforced two other ways:
 
-- **The (+) menu:** once five social links exist, the decorator switches the
-  block's `data-aue-filter` from `xe-footer-v2` to `xe-footer-v2-social-full`
-  (link columns and legal links only), so the editor stops offering the social
-  link item. After any add or remove the block is re-rendered with its
-  original filter and the count is checked again.
+- **The (+) menu:** once a kind of item is at its limit, the decorator
+  switches the block's `data-aue-filter` from `xe-footer-v2` to the filter
+  without it, so the editor stops offering that item. There's one filter per
+  combination, named after the full kinds in order:
+  `xe-footer-v2-columns-full`, `xe-footer-v2-social-full`,
+  `xe-footer-v2-legal-full`, `xe-footer-v2-columns-social-full` … up to
+  `xe-footer-v2-columns-social-legal-full` (nothing more to add). After any
+  add or remove the block is re-rendered with its original filter and the
+  counts are checked again.
 - **Rendering, as a safety net** (for example a duplicated item): each extra
-  item shows an "Only 5 social links are shown — remove this one" notice in
-  the editor (still selectable, so it can be deleted); published pages leave
-  it out.
+  item shows an "Only 5 link columns are shown" / "Only 5 social links are
+  shown" / "Only one legal links item is shown" notice in the editor (still
+  selectable, so it can be deleted); published pages leave it out.
 
 In the Universal Editor each item row carries its model (`data-aue-model`), so
 it lands in the right place regardless of its link, and its instrumentation

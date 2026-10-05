@@ -1,26 +1,32 @@
 import { hyperlink, keepInstrumentation } from '../../scripts/components/xe-footer-utils.js';
+import fetchQueryIndex from '../../scripts/components/query-index.js';
 
 /*
  * XE Footer Link Column — child item of XE Footer V2, one per link column.
  *
- * The item's Heading (text) and Links (rich text, a bulleted list) are grouped
- * (`column_*`) into one cell: <p>Company</p><ul><li><a …>…</a></li>…</ul>.
- * decorate(item) turns it into the footer's link column, which XE Footer V2
- * slots into <xe-footer>'s default slot:
+ * The item's Heading (text) and Page (aem-content) are grouped (`column_*`)
+ * into one cell: <p>Company</p><p><a href="/company">…/company</a></p>.
+ * decorateItems(items) turns each into the footer's link column, listing the
+ * page's child pages from the query index, which XE Footer V2 slots into
+ * <xe-footer>'s default slot:
  *
  *   <xe-footer-column heading="Company">
- *     <xe-hyperlink href="…" variant="variant">Careers</xe-hyperlink>…
+ *     <xe-hyperlink href="/company/careers" variant="variant">Careers</xe-hyperlink>…
  *   </xe-footer-column>
  *
- * decoratePathColumns(cell, index) builds the same columns from a heading +
- * page path pair instead, listing the path's child pages from the query index
- * (XE Footer V4).
+ * decoratePathColumns(cell, index) does the same for any cell of heading +
+ * page path pairs (XE Footer V4's column slots). decorate(item) builds columns
+ * from heading + rich-text link lists as authored: XE Footer and V3's
+ * rich-text fields, and V2 items created while Links was a rich-text list.
  *
  * The item's Universal Editor instrumentation moves onto the column (or an
- * editor-only placeholder while the item is empty). The links are a rich-text
- * list rather than a multi-field: multi-fields are an early-access feature and
- * render empty unless Adobe enables them for the program.
+ * editor-only placeholder while the item is empty).
  */
+
+// The footer shows at most this many link column items. Universal Editor
+// events fire after a change is saved and can't be cancelled, so the limit is
+// applied when rendering (see decorateItems) rather than by blocking the add.
+export const MAX_COLUMN_LINKS = 5;
 
 /** An <xe-footer-column> with `heading` and the links found in `container`. */
 export function buildColumn(heading, container) {
@@ -153,4 +159,42 @@ export function decoratePathColumns(cell, index) {
     return buildColumn(heading, container);
   });
   return keepInstrumentation(cell, columns, null, 'Add a link column');
+}
+
+/**
+ * True when an item is a heading + page path (the current model) rather than
+ * a heading + rich-text link list (items authored before the model changed).
+ */
+const isPathItem = (item) => !item.querySelector('ul, ol');
+
+/**
+ * True when `cell` holds only page path links, as an aem-content field renders
+ * them (the link text is the path: /content/…/company), so a path column
+ * without a heading can be told apart from a list of named links.
+ */
+export function isPathLinks(cell) {
+  const anchors = [...cell.querySelectorAll('a')];
+  return anchors.length > 0
+    && anchors.every((anchor) => /^\/\S*$/.test(anchor.textContent.trim()));
+}
+
+/**
+ * Builds the link columns for XE Footer V2's link column items, rendering only
+ * the first MAX_COLUMN_LINKS: page path items list the page's child pages from
+ * the query index (fetched only when one has a path); rich-text link list
+ * items render as authored. In the Universal Editor each extra item shows an
+ * editor-only notice (keeping it selectable so the author can remove it); on
+ * published pages extra items are left out.
+ * @param {Element[]} items the authored item rows, in order
+ * @returns {Promise<Element[]>} the elements to slot into <xe-footer>
+ */
+export async function decorateItems(items) {
+  const shown = items.slice(0, MAX_COLUMN_LINKS);
+  const hasPaths = shown.some((item) => isPathItem(item) && item.querySelector('a'));
+  const index = hasPaths ? await fetchQueryIndex() : [];
+  const notice = `Only ${MAX_COLUMN_LINKS} link columns are shown — remove this one`;
+  return items.flatMap((item, position) => {
+    if (position >= MAX_COLUMN_LINKS) return keepInstrumentation(item, [], null, notice);
+    return isPathItem(item) ? decoratePathColumns(item, index) : decorate(item);
+  });
 }
