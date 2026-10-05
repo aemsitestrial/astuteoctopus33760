@@ -30,19 +30,20 @@
           "component": "text",
           "valueType": "string",
           "name": "copyright",
-          "label": "Copyright",
+          "label": "Copyright Text",
+          "description": "Plain text, e.g. © 2026 Xcel Energy Inc. All rights reserved.",
           "value": ""
         },
         {
           "component": "tab",
-          "label": "Social",
+          "label": "Social Media",
           "name": "social"
         },
         {
           "component": "select",
           "valueType": "string",
           "name": "social_cta1Text",
-          "label": "Social1 Network",
+          "label": "Social Link 1 Network",
           "value": "",
           "options": [
             {
@@ -71,13 +72,13 @@
           "component": "aem-content",
           "valueType": "string",
           "name": "social_cta1",
-          "label": "Social1 Link URL"
+          "label": "Social Link 1 URL"
         },
         {
           "component": "select",
           "valueType": "string",
           "name": "social_cta2Text",
-          "label": "Social2 Network",
+          "label": "Social Link 2 Network",
           "value": "",
           "options": [
             {
@@ -106,13 +107,13 @@
           "component": "aem-content",
           "valueType": "string",
           "name": "social_cta2",
-          "label": "Social2 Link URL"
+          "label": "Social Link 2 URL"
         },
         {
           "component": "select",
           "valueType": "string",
           "name": "social_cta3Text",
-          "label": "Social3 Network",
+          "label": "Social Link 3 Network",
           "value": "",
           "options": [
             {
@@ -141,13 +142,13 @@
           "component": "aem-content",
           "valueType": "string",
           "name": "social_cta3",
-          "label": "Social3 Link URL"
+          "label": "Social Link 3 URL"
         },
         {
           "component": "select",
           "valueType": "string",
           "name": "social_cta4Text",
-          "label": "Social4 Network",
+          "label": "Social Link 4 Network",
           "value": "",
           "options": [
             {
@@ -176,13 +177,13 @@
           "component": "aem-content",
           "valueType": "string",
           "name": "social_cta4",
-          "label": "Social4 Link URL"
+          "label": "Social Link 4 URL"
         },
         {
           "component": "select",
           "valueType": "string",
           "name": "social_cta5Text",
-          "label": "Social5 Network",
+          "label": "Social Link 5 Network",
           "value": "",
           "options": [
             {
@@ -211,113 +212,118 @@
           "component": "aem-content",
           "valueType": "string",
           "name": "social_cta5",
-          "label": "Social5 Link URL"
+          "label": "Social Link 5 URL"
         },
         {
           "component": "tab",
-          "label": "Legal",
+          "label": "Legal Links",
           "name": "legal"
         },
         {
           "component": "aem-content",
           "valueType": "string",
           "name": "legal_cta1",
-          "label": "Legal1 Link URL"
+          "label": "Legal Link 1 URL"
         },
         {
           "component": "text",
           "valueType": "string",
           "name": "legal_cta1Text",
-          "label": "Legal1 Link Text"
+          "label": "Legal Link 1 Text"
         },
         {
           "component": "aem-content",
           "valueType": "string",
           "name": "legal_cta2",
-          "label": "Legal2 Link URL"
+          "label": "Legal Link 2 URL"
         },
         {
           "component": "text",
           "valueType": "string",
           "name": "legal_cta2Text",
-          "label": "Legal2 Link Text"
+          "label": "Legal Link 2 Text"
         },
         {
           "component": "aem-content",
           "valueType": "string",
           "name": "legal_cta3",
-          "label": "Legal3 Link URL"
+          "label": "Legal Link 3 URL"
         },
         {
           "component": "text",
           "valueType": "string",
           "name": "legal_cta3Text",
-          "label": "Legal3 Link Text"
+          "label": "Legal Link 3 Text"
         },
         {
           "component": "tab",
-          "label": "Column Links",
+          "label": "Link Columns",
           "name": "column"
         },
         {
           "component": "text",
           "valueType": "string",
           "name": "column_heading1",
-          "label": "Column1 Heading"
+          "label": "Column 1 Heading"
         },
         {
           "component": "richtext",
           "valueType": "string",
           "name": "column_links1",
-          "label": "Column1 Links"
+          "label": "Column 1 Links",
+          "description": "A bulleted list of links."
         },
         {
           "component": "text",
           "valueType": "string",
           "name": "column_heading2",
-          "label": "Column2 Heading"
+          "label": "Column 2 Heading"
         },
         {
           "component": "richtext",
           "valueType": "string",
           "name": "column_links2",
-          "label": "Column2 Links"
+          "label": "Column 2 Links",
+          "description": "A bulleted list of links."
         },
         {
           "component": "text",
           "valueType": "string",
           "name": "column_heading3",
-          "label": "Column3 Heading"
+          "label": "Column 3 Heading"
         },
         {
           "component": "richtext",
           "valueType": "string",
           "name": "column_links3",
-          "label": "Column3 Links"
+          "label": "Column 3 Links",
+          "description": "A bulleted list of links."
         },
         {
           "component": "text",
           "valueType": "string",
           "name": "column_heading4",
-          "label": "Column4 Heading"
+          "label": "Column 4 Heading"
         },
         {
           "component": "richtext",
           "valueType": "string",
           "name": "column_links4",
-          "label": "Column4 Links"
+          "label": "Column 4 Links",
+          "description": "A bulleted list of links."
         },
         {
           "component": "text",
           "valueType": "string",
           "name": "column_heading5",
-          "label": "Column5 Heading"
+          "label": "Column 5 Heading"
         },
         {
           "component": "richtext",
           "valueType": "string",
           "name": "column_links5",
-          "label": "Column5 Links"
+          "label": "Column 5 Links",
+          "description": "A bulleted list of links."
         },
         {
           "component": "tab",
@@ -328,14 +334,16 @@
           "component": "reference",
           "valueType": "string",
           "name": "banner_background",
-          "label": "Background",
+          "label": "Banner Image",
+          "description": "Full-width background image behind the tagline.",
           "multi": false
         },
         {
           "component": "text",
           "valueType": "string",
           "name": "banner_tagline",
-          "label": "Tagline",
+          "label": "Banner Tagline",
+          "description": "Short line centered over the banner image.",
           "value": "Our Energy, Your Power"
         }
       ]

@@ -25,21 +25,24 @@
           "component": "text",
           "valueType": "string",
           "name": "copyright",
-          "label": "Copyright",
+          "label": "Copyright Text",
+          "description": "Plain text, e.g. © 2026 Xcel Energy Inc. All rights reserved.",
           "value": ""
         },
         {
           "component": "reference",
           "valueType": "string",
           "name": "banner_background",
-          "label": "Background",
+          "label": "Banner Image",
+          "description": "Full-width background image behind the tagline.",
           "multi": false
         },
         {
           "component": "text",
           "valueType": "string",
           "name": "banner_tagline",
-          "label": "Tagline",
+          "label": "Banner Tagline",
+          "description": "Short line centered over the banner image.",
           "value": "Our Energy, Your Power"
         }
       ]

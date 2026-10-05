@@ -104,23 +104,23 @@ function fieldsToRows(args) {
 
 // argTypes drive the Controls panel, grouped like the editor's tabs.
 const argTypes = {
-  copyright: { control: 'text', description: 'Copyright (plain text).', table: { category: 'General' } },
-  banner_background: { control: 'text', description: 'Background (reference) — asset URL.', table: { category: 'Banner' } },
-  banner_tagline: { control: 'text', description: 'Tagline (text).', table: { category: 'Banner' } },
+  copyright: { control: 'text', description: 'Copyright Text (plain text).', table: { category: 'General' } },
+  banner_background: { control: 'text', description: 'Banner Image (reference) — asset URL for the full-width background image.', table: { category: 'Banner' } },
+  banner_tagline: { control: 'text', description: 'Banner Tagline (text) — centered over the banner image.', table: { category: 'Banner' } },
 };
 for (let i = 1; i <= SOCIAL_SLOTS; i += 1) {
   argTypes[`social_cta${i}Text`] = {
-    control: 'select', options: NETWORKS, description: `Social${i} Network (select).`, table: { category: 'Social' },
+    control: 'select', options: NETWORKS, description: `Social Link ${i} Network (select).`, table: { category: 'Social Media' },
   };
-  argTypes[`social_cta${i}`] = { control: 'text', description: `Social${i} Link URL.`, table: { category: 'Social' } };
+  argTypes[`social_cta${i}`] = { control: 'text', description: `Social Link ${i} URL.`, table: { category: 'Social Media' } };
 }
 for (let i = 1; i <= LEGAL_SLOTS; i += 1) {
-  argTypes[`legal_cta${i}`] = { control: 'text', description: `Legal${i} Link URL.`, table: { category: 'Legal' } };
-  argTypes[`legal_cta${i}Text`] = { control: 'text', description: `Legal${i} Link Text.`, table: { category: 'Legal' } };
+  argTypes[`legal_cta${i}`] = { control: 'text', description: `Legal Link ${i} URL.`, table: { category: 'Legal Links' } };
+  argTypes[`legal_cta${i}Text`] = { control: 'text', description: `Legal Link ${i} Text.`, table: { category: 'Legal Links' } };
 }
 for (let i = 1; i <= COLUMN_SLOTS; i += 1) {
-  argTypes[`column_heading${i}`] = { control: 'text', description: `Column${i} Heading (text).`, table: { category: 'Column Links' } };
-  argTypes[`column_links${i}`] = { control: 'text', description: `Column${i} Links (rich text) — a bulleted list of links.`, table: { category: 'Column Links' } };
+  argTypes[`column_heading${i}`] = { control: 'text', description: `Column ${i} Heading (text).`, table: { category: 'Link Columns' } };
+  argTypes[`column_links${i}`] = { control: 'text', description: `Column ${i} Links (rich text) — a bulleted list of links.`, table: { category: 'Link Columns' } };
 }
 
 const render = (rows, decorator = decorate) => renderBlock({ name: 'xe-footer-v3', rows, decorate: decorator });

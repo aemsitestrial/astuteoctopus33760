@@ -24,14 +24,14 @@
           "component": "text",
           "valueType": "string",
           "name": "column_heading",
-          "label": "Heading"
+          "label": "Column Heading"
         },
         {
           "component": "aem-content",
           "valueType": "string",
           "name": "column_links",
-          "label": "Page",
-          "description": "The column lists the published pages directly under this page"
+          "label": "Parent Page",
+          "description": "Lists the published pages directly under this page."
         }
       ]
     }

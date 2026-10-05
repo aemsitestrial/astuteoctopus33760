@@ -24,8 +24,8 @@
           "component": "richtext",
           "valueType": "string",
           "name": "links",
-          "label": "Legal links",
-          "description": "A bulleted list of links, one per line"
+          "label": "Legal Links",
+          "description": "A bulleted list of links, e.g. Privacy and Terms of Use. Only one Legal Links item is shown."
         }
       ]
     }

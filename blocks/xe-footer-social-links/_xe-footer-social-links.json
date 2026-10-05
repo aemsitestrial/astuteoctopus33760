@@ -24,7 +24,7 @@
           "component": "select",
           "valueType": "string",
           "name": "cta_linkText",
-          "label": "Network",
+          "label": "Social Network",
           "value": "facebook",
           "options": [
             {
@@ -53,7 +53,7 @@
           "component": "aem-content",
           "valueType": "string",
           "name": "cta_link",
-          "label": "Profile URL"
+          "label": "Social Link URL"
         }
       ]
     }

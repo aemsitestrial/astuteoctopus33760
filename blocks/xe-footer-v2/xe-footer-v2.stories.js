@@ -250,12 +250,12 @@ const render = (rows, decorator = decorate) => {
 // argTypes drive the Controls panel — the Storybook analogue of the Universal
 // Editor properties rail.
 const argTypes = {
-  copyright: { control: 'text', description: 'Copyright (plain text).', table: { category: 'Brand' } },
-  banner_background: { control: 'text', description: 'Background (reference) — asset URL for the full-bleed banner image.', table: { category: 'Banner' } },
-  banner_tagline: { control: 'text', description: 'Tagline — centered banner overlay text.', table: { category: 'Banner' } },
-  linkColumns: { control: 'text', description: 'XE Footer Link Column items — one item per heading: <p>heading</p> followed by the page link (<p><a href="path">path</a></p>); the column lists the page\'s child pages.', table: { category: 'Child items' } },
-  socialLinks: { control: 'text', description: 'XE Footer Social Link items — one item per link; the link text is the network (facebook, x, instagram, linkedin, youtube).', table: { category: 'Child items' } },
-  legalLinks: { control: 'text', description: 'XE Footer Legal Links item — one rich-text bulleted list of links.', table: { category: 'Child items' } },
+  copyright: { control: 'text', description: 'Copyright Text (plain text).', table: { category: 'General' } },
+  banner_background: { control: 'text', description: 'Banner Image (reference) — asset URL for the full-width background image.', table: { category: 'Banner' } },
+  banner_tagline: { control: 'text', description: 'Banner Tagline (text) — centered over the banner image.', table: { category: 'Banner' } },
+  linkColumns: { control: 'text', description: 'XE Footer Link Column items (Column Heading + Parent Page) — one item per heading: <p>heading</p> followed by the page link (<p><a href="path">path</a></p>); the column lists the page\'s child pages.', table: { category: 'Child items' } },
+  socialLinks: { control: 'text', description: 'XE Footer Social Link items (Social Network + Social Link URL) — one item per link; the link text is the network (facebook, x, instagram, linkedin, youtube).', table: { category: 'Child items' } },
+  legalLinks: { control: 'text', description: 'XE Footer Legal Links item (Legal Links) — one rich-text bulleted list of links.', table: { category: 'Child items' } },
 };
 
 export default {

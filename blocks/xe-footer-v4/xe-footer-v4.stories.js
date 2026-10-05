@@ -79,10 +79,10 @@ function fieldsToRows(args) {
 }
 
 const argTypes = {
-  copyright: { control: 'text', description: 'Copyright (plain text).', table: { category: 'General' } },
-  columns: { control: 'text', description: 'Column Links — heading + page path pairs (<p>heading</p><p><a href="path">…</a></p>).', table: { category: 'Column Links' } },
-  banner_background: { control: 'text', description: 'Background (reference) — asset URL.', table: { category: 'Banner' } },
-  banner_tagline: { control: 'text', description: 'Tagline (text).', table: { category: 'Banner' } },
+  copyright: { control: 'text', description: 'Copyright Text (plain text).', table: { category: 'General' } },
+  columns: { control: 'text', description: 'Column N Heading + Column N Parent Page pairs (<p>heading</p><p><a href="path">…</a></p>); each column lists the page\'s child pages.', table: { category: 'Link Columns' } },
+  banner_background: { control: 'text', description: 'Banner Image (reference) — asset URL for the full-width background image.', table: { category: 'Banner' } },
+  banner_tagline: { control: 'text', description: 'Banner Tagline (text) — centered over the banner image.', table: { category: 'Banner' } },
 };
 
 export default {
