@@ -62,7 +62,7 @@
         {
           "component": "select",
           "valueType": "string",
-          "name": "classes_linkType",
+          "name": "classes_destination",
           "label": "Link Type",
           "description": "With a trailing icon: a chevron for internal links, an outbound arrow for external ones.",
           "value": "",
