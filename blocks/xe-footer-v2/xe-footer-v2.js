@@ -65,7 +65,7 @@ import {
  */
 
 // Link-column slots of key-value footers (column1Heading/column1Links … column5…).
-const COLUMN_SLOTS = 5;
+const COLUMN_SLOTS = 6;
 
 // Universal Editor filters (_xe-footer-v2.json): the block's own, and one per
 // combination of child items the footer already has the most of it shows,

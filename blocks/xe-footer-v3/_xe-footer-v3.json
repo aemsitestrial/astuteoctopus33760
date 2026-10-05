@@ -243,6 +243,30 @@
           "label": "Legal Link 3 Text"
         },
         {
+          "component": "aem-content",
+          "valueType": "string",
+          "name": "legal_cta4",
+          "label": "Legal Link 4 URL"
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "legal_cta4Text",
+          "label": "Legal Link 4 Text"
+        },
+        {
+          "component": "aem-content",
+          "valueType": "string",
+          "name": "legal_cta5",
+          "label": "Legal Link 5 URL"
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "legal_cta5Text",
+          "label": "Legal Link 5 Text"
+        },
+        {
           "component": "tab",
           "label": "Link Columns",
           "name": "column"
@@ -310,6 +334,19 @@
           "valueType": "string",
           "name": "column_links5",
           "label": "Column 5 Links",
+          "description": "A bulleted list of links."
+        },
+                {
+          "component": "text",
+          "valueType": "string",
+          "name": "column_heading6",
+          "label": "Column 6 Heading"
+        },
+        {
+          "component": "richtext",
+          "valueType": "string",
+          "name": "column_links6",
+          "label": "Column 6 Links",
           "description": "A bulleted list of links."
         },
         {

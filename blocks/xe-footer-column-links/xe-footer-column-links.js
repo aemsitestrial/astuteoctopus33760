@@ -26,7 +26,7 @@ import fetchQueryIndex from '../../scripts/components/query-index.js';
 // The footer shows at most this many link column items. Universal Editor
 // events fire after a change is saved and can't be cancelled, so the limit is
 // applied when rendering (see decorateItems) rather than by blocking the add.
-export const MAX_COLUMN_LINKS = 5;
+export const MAX_COLUMN_LINKS = 6;
 
 /** An <xe-footer-column> with `heading` and the links found in `container`. */
 export function buildColumn(heading, container) {
