@@ -39,7 +39,7 @@ import {
  *   </xe-footer>
  *
  * The block is a container (filter `xe-footer-v2`): its own fields
- * (copyright, banner background + tagline) render as rows first, then one
+ * (banner background + tagline) render as a row first, then one
  * row per child item — a link column, a social profile or a legal link. Those
  * items are decorated by their own blocks (xe-footer-column-links /
  * xe-footer-social-links / xe-footer-legal-links); the live Xcel Energy
@@ -54,8 +54,9 @@ import {
  * rows (`name | value`, footers created while the block was key-value) by
  * name, a row instrumented with an item model (Universal Editor) as that item,
  * a row of only links as an item, headings + link lists as link columns, and
- * images / text as the banner and copyright. The logo is static (not
- * authorable): Ignite's Xcel Energy logo, linking to the homepage.
+ * images / text as the banner. The logo and the copyright are static (not
+ * authorable): Ignite's Xcel Energy logo, linking to the homepage, and
+ * "© <current year> Xcel Energy Inc. All rights reserved."
  *
  * <xe-footer-column> wraps each link in an <li> inside its list; below 1024px
  * it switches to an accordion. Styling comes from the Ignite tokens (loaded by
@@ -132,6 +133,21 @@ function isLinkColumns(cell) {
 }
 
 /**
+ * True when an image in a footer's first row is an older footer's authored
+ * logo rather than the banner: it's named a logo, or another image follows.
+ */
+function isLegacyLogo(image, imageCount) {
+  const img = image.matches('img') ? image : image.querySelector('img');
+  const name = img ? `${img.getAttribute('src') || ''} ${img.getAttribute('alt') || ''}` : '';
+  return imageCount > 1 || /logo/i.test(name);
+}
+
+/** True when a text row is an older footer's authored copyright line. */
+function isCopyright(cell) {
+  return /^\s*(©|\(c\)|copyright\b)|all rights reserved/i.test(cell.textContent);
+}
+
+/**
  * Reads the authored rows into `{ normalizedName: valueElement }` plus
  * `items: { columns: [row…], social: [row…], legal: [row…] }` (item rows are
  * kept whole, since the row carries the item's Universal Editor
@@ -140,8 +156,10 @@ function isLinkColumns(cell) {
 function readFields(block) {
   const fields = { items: { columns: [], social: [], legal: [] } };
   const addItem = (kind, row) => fields.items[kind].push(row);
+  const rows = [...block.children];
+  const imageRows = rows.filter((row) => row.querySelector('picture, img'));
 
-  [...block.children].forEach((row, index) => {
+  rows.forEach((row, index) => {
     const model = ITEM_MODELS[row.getAttribute('data-aue-model')];
     if (model) {
       addItem(model, row);
@@ -168,21 +186,24 @@ function readFields(block) {
     } else if (linkList && (!image || isSocialLinks(cell))) {
       addItem(isSocialLinks(cell) ? 'social' : 'legal', row);
     } else if (image) {
-      // The banner (image + tagline). The logo isn't authorable any more; in
-      // older footers it was the first row, so an image there is skipped (the
-      // current model's first row is the copyright, rendered even when empty).
-      if (index === 0) return;
+      // The banner (image + tagline), the current model's first row. The logo
+      // isn't authorable any more; older footers held it in their first row,
+      // so an image there that is a logo, or is followed by another image (the
+      // banner), is skipped.
+      if (index === 0 && isLegacyLogo(image, imageRows.length)) return;
       fields['banner-background'] = cell;
       const tagline = [...cell.childNodes].find((node) => node.textContent.trim());
       if (tagline) fields['banner-tagline'] = tagline;
     } else if (isLinkColumns(cell)) {
       // A link column item (or an older footer's rich-text footer links).
       addItem('columns', row);
-    } else if (fields['banner-background']) {
+    } else if (fields['banner-background'] || fields['banner-tagline']) {
       // Past the banner only child items follow (model order); one without a
       // link yet (e.g. a network chosen but no URL) renders nothing.
-    } else if (!fields.copyright) {
-      fields.copyright = cell;
+    } else if (!isCopyright(cell)) {
+      // The banner's tagline without a background image. (The copyright isn't
+      // authorable any more: an older footer's copyright row is skipped.)
+      fields['banner-tagline'] = cell;
     }
   });
   return fields;
@@ -221,7 +242,8 @@ export default async function decorate(block) {
   // --- Logo: the static Xcel Energy logo, linking to the homepage ---
   footer.append(buildLogo());
 
-  if (fields.copyright) footer.append(buildCopyright(fields.copyright));
+  // --- Copyright: static, with the current year ---
+  footer.append(buildCopyright());
 
   // --- Link columns (default slot): the column items (at most
   // MAX_COLUMN_LINKS, each listing its page's child pages from the query

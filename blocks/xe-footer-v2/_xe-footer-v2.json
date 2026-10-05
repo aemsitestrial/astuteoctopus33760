@@ -22,14 +22,6 @@
       "id": "xe-footer-v2",
       "fields": [
         {
-          "component": "text",
-          "valueType": "string",
-          "name": "copyright",
-          "label": "Copyright Text",
-          "description": "Plain text, e.g. © 2026 Xcel Energy Inc. All rights reserved.",
-          "value": ""
-        },
-        {
           "component": "reference",
           "valueType": "string",
           "name": "banner_background",

@@ -1,5 +1,5 @@
 import {
-  buildBannerImage, buildCopyright, buildLogo, buildTagline, finishFooter, firstOf,
+  buildBannerImage, buildCopyright, buildLogo, buildTagline, finishFooter, firstOf, readFieldRows,
 } from '../../scripts/components/xe-footer-utils.js';
 import decorateColumnLinks from '../xe-footer-column-links/xe-footer-column-links.js';
 import decorateSocialLinks, {
@@ -31,7 +31,6 @@ import decorateLegalLinks, {
  * itself, in fixed slots (_xe-footer-v3.json). Element grouping renders each
  * group as one row, in model order, empty or not:
  *
- *   copyright                             → plain text
  *   social_cta1…5 (+ …Text network)       → up to 5 links, <a href="URL">network</a>
  *   legal_cta1…3 (+ …Text)                → up to 3 links
  *   column_heading1…5 + column_links1…5   → heading + rich-text link list pairs
@@ -41,28 +40,20 @@ import decorateLegalLinks, {
  * V2's child items (xe-footer-social-links / -legal-links / -column-links),
  * since each just turns a container of links into footer elements. Slots left
  * empty (or with a network chosen but no URL) render nothing; with no social
- * or legal links at all, the live Xcel Energy footer's render.
+ * or legal links at all, the live Xcel Energy footer's render. The logo and
+ * the copyright ("© <current year> Xcel Energy Inc. All rights reserved.")
+ * are static, not authorable.
  */
 
 // The rows the model renders, in order (see the comment above).
-const ROWS = ['copyright', 'social', 'legal', 'columns', 'banner'];
-
-/** The element holding a row's authored content (its single cell). */
-function cellOf(row) {
-  return row.children.length === 1 ? row.firstElementChild : row;
-}
+const ROWS = ['social', 'legal', 'columns', 'banner'];
 
 export default async function decorate(block) {
-  const fields = {};
-  [...block.children].forEach((row, index) => {
-    if (ROWS[index]) fields[ROWS[index]] = cellOf(row);
-  });
+  const fields = readFieldRows(block, ROWS);
 
   const footer = document.createElement('xe-footer');
   footer.append(buildLogo()); // static: the Xcel Energy logo, linking to the homepage
-  if (fields.copyright && fields.copyright.textContent.trim()) {
-    footer.append(buildCopyright(fields.copyright));
-  }
+  footer.append(buildCopyright()); // static, with the current year
 
   // --- Link columns (default slot): one per authored heading + list pair ---
   const columns = fields.columns ? decorateColumnLinks(fields.columns) : [];

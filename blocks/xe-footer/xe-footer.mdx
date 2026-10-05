@@ -30,8 +30,11 @@ fields:
 ```
 
 The logo isn't authorable: it's Ignite's static Xcel Energy logo, linking to
-the homepage. Below 1024px each link column collapses into an accordion
-(`<xe-accordion>`). Colors, spacing and typography come from the Ignite design
+the homepage. The copyright isn't authorable either: it always reads
+`© YYYY Xcel Energy Inc. All rights reserved.`, with `YYYY` the
+current year, set when the page loads, so it never goes out of date.
+
+Below 1024px each link column collapses into an accordion (`<xe-accordion>`). Colors, spacing and typography come from the Ignite design
 tokens, loaded by `scripts/components/ignite.js`.
 
 ## Authoring model
@@ -45,7 +48,6 @@ one row, in model order, empty or not:
     <tr><th>Field</th><th>Model type</th><th>Renders as</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>copyright</code></td><td>text</td><td>The copyright line</td></tr>
     <tr><td><code>social</code></td><td>richtext</td><td>Social icon buttons (Facebook, X, Instagram, LinkedIn, YouTube), opening in a new window</td></tr>
     <tr><td><code>legal</code></td><td>richtext</td><td>Legal links with a trailing icon</td></tr>
     <tr><td><code>footerlinks</code></td><td>richtext</td><td>One link column per heading + link-list pair</td></tr>

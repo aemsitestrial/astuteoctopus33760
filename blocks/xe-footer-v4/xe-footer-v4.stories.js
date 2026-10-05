@@ -1,8 +1,9 @@
 /*
  * Storybook stories for the XE Footer V4 block (@ignite/web footer composition).
  *
- * The model (blocks/xe-footer-v4/_xe-footer-v4.json) renders five rows, in
- * order, empty or not: copyright, social, legal, columns, banner. Each link
+ * The model (blocks/xe-footer-v4/_xe-footer-v4.json) renders four rows, in
+ * order, empty or not: social, legal, columns, banner (the logo and the
+ * copyright, with the current year, are static). Each link
  * column is a heading + a page path (column_headingN + column_linksN, an
  * aem-content link); the decorator lists the path's child pages from the
  * query index.
@@ -14,6 +15,10 @@
 import { expect, waitFor } from 'storybook/test';
 import decorate from './xe-footer-v4.js';
 import { renderBlock, picture } from '../../.storybook/eds.js';
+import { copyrightText } from '../../scripts/components/xe-footer-utils.js';
+
+// The static copyright, with the current year.
+const COPYRIGHT = copyrightText();
 
 // The mocked query index: published pages, some with a title, some without.
 const INDEX = [
@@ -52,7 +57,6 @@ function mockQueryIndex() {
 const column = (heading, path) => (heading && path ? `<p>${heading}</p><p><a href="${path}">${path}</a></p>` : '');
 
 const defaults = {
-  copyright: '© 2026 Xcel Energy Inc. All rights reserved.',
   columns: [
     column('Company', '/company'),
     // In the Universal Editor, links use AEM content paths.
@@ -63,14 +67,13 @@ const defaults = {
   banner_tagline: 'Our Energy, Your Power',
 };
 
-/** The five rows AEM renders for the model (blank groups are empty cells). */
+/** The four rows AEM renders for the model (blank groups are empty cells). */
 function fieldsToRows(args) {
   const banner = [
     args.banner_background ? picture(args.banner_background, '') : '',
     args.banner_tagline ? `<p>${args.banner_tagline}</p>` : '',
   ].join('');
   return [
-    [args.copyright ? `<p>${args.copyright}</p>` : ''],
     [''], // social: none authored, so the defaults render
     [''], // legal: none authored, so the defaults render
     [args.columns || ''],
@@ -79,7 +82,6 @@ function fieldsToRows(args) {
 }
 
 const argTypes = {
-  copyright: { control: 'text', description: 'Copyright Text (plain text).', table: { category: 'General' } },
   columns: { control: 'text', description: 'Column N Heading + Column N Parent Page pairs (<p>heading</p><p><a href="path">…</a></p>); each column lists the page\'s child pages.', table: { category: 'Link Columns' } },
   banner_background: { control: 'text', description: 'Banner Image (reference) — asset URL for the full-width background image.', table: { category: 'Banner' } },
   banner_tagline: { control: 'text', description: 'Banner Tagline (text) — centered over the banner image.', table: { category: 'Banner' } },
@@ -125,6 +127,8 @@ export const Default = {
     const footer = await upgraded(canvasElement);
     await waitFor(() => expect(canvasElement.querySelectorAll('xe-footer > xe-footer-column')).toHaveLength(3));
     await expect(footer).toHaveAttribute('columns', '3');
+    // The copyright is static, with the current year.
+    await expect(canvasElement.querySelector('xe-footer > span[slot="copyright"]')).toHaveTextContent(COPYRIGHT);
     await expect(columns(canvasElement)).toEqual([
       // Direct children only (not /company/careers/open-roles), and not noindex pages.
       { heading: 'Company', links: [['Careers', '/company/careers'], ['Community', '/company/community']] },
@@ -161,5 +165,25 @@ export const HeadingWithoutPath = {
     await upgraded(canvasElement);
     await waitFor(() => expect(canvasElement.querySelectorAll('xe-footer > xe-footer-column')).toHaveLength(1));
     await expect(columns(canvasElement).map(({ heading }) => heading)).toEqual(['Company']);
+  },
+};
+
+// Published before the copyright became static: the old copyright row comes
+// first. It's skipped — the columns and banner still land in place and the
+// static copyright, with the current year, renders.
+export const LegacyCopyrightRow = {
+  render: (args) => {
+    mockQueryIndex();
+    return renderBlock({
+      name: 'xe-footer-v4',
+      rows: [['<p>© 2024 Xcel Energy Inc. All rights reserved.</p>'], ...fieldsToRows(args)],
+      decorate,
+    });
+  },
+  play: async ({ canvasElement }) => {
+    const footer = await upgraded(canvasElement);
+    await expect(canvasElement.querySelector('[slot="copyright"]')).toHaveTextContent(COPYRIGHT);
+    await waitFor(() => expect(footer).toHaveAttribute('columns', '3'));
+    await expect(canvasElement.querySelector('img[slot="banner-image"]')).toBeInTheDocument();
   },
 };

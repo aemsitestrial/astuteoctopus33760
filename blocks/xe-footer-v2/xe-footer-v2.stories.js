@@ -5,7 +5,6 @@
  * _xe-footer-v2.json) one-to-one, so editing a control here is the same as
  * editing that field in the Universal Editor:
  *
- *   copyright               text              -> "copyright" (plain text)
  *   banner_background       reference         -> "banner_background" (asset URL)
  *   banner_tagline          text              -> "banner_tagline" (grouped with the background)
  *
@@ -17,8 +16,9 @@
  *   xe-footer-legal-links   links (rich-text list)       -> "legalLinks" (one item, the whole list)
  *
  * `fieldsToRows` renders the container markup AEM produces: one single-cell
- * row per field (copyright, banner), empty or not, followed by one row per
- * child item. The logo isn't authorable: it's the static Ignite logo.
+ * row for the banner (background + tagline), empty or not, followed by one row
+ * per child item. The logo and the copyright aren't authorable: the static
+ * Ignite logo, and the copyright line with the current year.
  * Other stories cover footers created while the block was key-value
  * (`name | value` rows, with link columns), link column items authored as a
  * rich-text link list, and the original positional layout.
@@ -29,13 +29,18 @@
 import { expect, within, waitFor } from 'storybook/test';
 import decorate from './xe-footer-v2.js';
 import { renderBlock, picture } from '../../.storybook/eds.js';
+import { copyrightText } from '../../scripts/components/xe-footer-utils.js';
+
+// The static copyright, with the current year.
+const COPYRIGHT = copyrightText();
 
 /** A <ul> of [text, href] links (rich-text lists, and the link sets split into items). */
 const linkList = (pairs) => `<ul>${pairs.map(([text, href]) => `<li><a href="${href}">${text}</a></li>`).join('')}</ul>`;
 const list = (labels) => linkList(labels.map((label) => [label, '#']));
 
-// The authored logo of footers created before the logo became static.
+// The authored logo and copyright of footers created before they became static.
 const LEGACY_LOGO = '/icons/xcel-logo-white.svg';
+const LEGACY_COPYRIGHT = '© 2024 Xcel Energy Inc. All rights reserved.';
 
 // Link columns as rich-text lists: key-value footers' column slots, the
 // original layout's footer links, and items authored before Page.
@@ -125,7 +130,6 @@ const SOCIAL_RICH_TEXT = [
 
 // --- Default field values (a realistic, fully-authored footer) --------------
 const defaults = {
-  copyright: '© 2026 Xcel Energy. All rights reserved.',
   banner_background: 'https://picsum.photos/1600/400?grayscale',
   banner_tagline: 'Our Energy, Your Power',
   linkColumns: PATH_COLUMNS,
@@ -167,13 +171,12 @@ function columnRows(html) {
 }
 
 /**
- * The container markup: one single-cell row per field in model order, empty
- * or not — copyright, banner (background + tagline grouped) — then one row
- * per child item: each link column, each social link, and the legal links.
+ * The container markup: the banner row (background + tagline grouped), empty
+ * or not, then one row per child item: each link column, each social link,
+ * and the legal links.
  */
 function fieldsToRows(args) {
   const rows = [];
-  rows.push([args.copyright ? `<p>${args.copyright}</p>` : '']);
   const background = args.banner_background ? picture(args.banner_background, '') : '';
   rows.push([`${background}${args.banner_tagline ? `<p>${args.banner_tagline}</p>` : ''}`]);
   rows.push(
@@ -186,7 +189,7 @@ function fieldsToRows(args) {
 
 /** Key-value rows of a footer created while the block was key-value (with column slots). */
 function keyValueRows(args, columns = COLUMNS) {
-  const rows = [['logo', picture(LEGACY_LOGO, '')], ['logoAlt', 'Xcel'], ['copyright', args.copyright]];
+  const rows = [['logo', picture(LEGACY_LOGO, '')], ['logoAlt', 'Xcel'], ['copyright', args.copyright || LEGACY_COPYRIGHT]];
   columns.forEach(([heading, links], index) => {
     if (!links.length) return;
     rows.push([`column${index + 1}Heading`, heading], [`column${index + 1}Links`, list(links)]);
@@ -200,7 +203,7 @@ function keyValueRows(args, columns = COLUMNS) {
 function legacyRows(args) {
   return [
     [picture(LEGACY_LOGO, 'Xcel')],
-    [`<p>${args.copyright}</p>`],
+    [`<p>${LEGACY_COPYRIGHT}</p>`],
     [SOCIAL_RICH_TEXT],
     [LEGAL_ITEMS],
     [LIST_COLUMNS],
@@ -250,7 +253,6 @@ const render = (rows, decorator = decorate) => {
 // argTypes drive the Controls panel — the Storybook analogue of the Universal
 // Editor properties rail.
 const argTypes = {
-  copyright: { control: 'text', description: 'Copyright Text (plain text).', table: { category: 'General' } },
   banner_background: { control: 'text', description: 'Banner Image (reference) — asset URL for the full-width background image.', table: { category: 'Banner' } },
   banner_tagline: { control: 'text', description: 'Banner Tagline (text) — centered over the banner image.', table: { category: 'Banner' } },
   linkColumns: { control: 'text', description: 'XE Footer Link Column items (Column Heading + Parent Page) — one item per heading: <p>heading</p> followed by the page link (<p><a href="path">path</a></p>); the column lists the page\'s child pages.', table: { category: 'Child items' } },
@@ -362,9 +364,10 @@ export const Default = {
     const firstColumn = canvasElement.querySelector('xe-footer > xe-footer-column');
     await waitFor(() => expect(firstColumn.querySelectorAll(':scope > li > xe-hyperlink[variant="variant"]')).toHaveLength(2));
     await expectStaticLogo(canvasElement);
+    // The copyright is static, with the current year.
     await expect(canvasElement.querySelector('xe-footer > span[slot="copyright"]'))
-      .toHaveTextContent('© 2026 Xcel Energy. All rights reserved.');
-    await expect(canvas.getByText('© 2026 Xcel Energy. All rights reserved.')).toBeInTheDocument();
+      .toHaveTextContent(COPYRIGHT);
+    await expect(canvas.getByText(COPYRIGHT)).toBeInTheDocument();
     // Social: one <xe-icon-button slot="social" size="xl"> per network, opening
     // in a new window. Legal: <xe-hyperlink slot="legal" trailing-icon>s.
     await expect(await socialLinks(canvasElement)).toEqual(EXPECTED_SOCIAL);
@@ -405,46 +408,70 @@ export const ItemsReversed = {
   },
 };
 
-// Blank fields don't shift the rest: with no copyright (an empty first row)
-// and no tagline, the banner image still lands as the banner.
+// With no tagline, the banner image (the first row) still lands as the
+// banner — not as an older footer's authored logo.
 export const BlankFields = {
-  args: { copyright: '', banner_tagline: '' },
+  args: { banner_tagline: '' },
   play: async ({ canvasElement }) => {
     await upgraded(canvasElement);
-    await expect(canvasElement.querySelector('[slot="copyright"]')).toBeNull();
+    await expect(canvasElement.querySelector('[slot="copyright"]')).toHaveTextContent(COPYRIGHT);
     await expectStaticLogo(canvasElement);
     await expect(canvasElement.querySelector('img[slot="banner-image"]')).toBeInTheDocument();
     await expect(canvasElement.querySelector('[slot="tagline"]')).toBeNull();
   },
 };
 
-// An older footer's rich-text copyright (here with a link) renders as its
-// plain text — and isn't read as a legal links item.
+// An older footer's authored rich-text copyright (here with a link) is
+// ignored — the static copyright renders — and isn't read as a legal links item.
 export const RichTextCopyright = {
   render: (args) => render(keyValueRows({
-    ...args, copyright: '<p>© 2026 Xcel Energy Inc. <a href="#">Legal notices</a></p>',
+    ...args, copyright: '<p>© 2024 Xcel Energy Inc. <a href="#">Legal notices</a></p>',
   })),
   play: async ({ canvasElement }) => {
     await upgraded(canvasElement);
     const copyright = canvasElement.querySelector('span[slot="copyright"]');
-    await expect(copyright).toHaveTextContent('© 2026 Xcel Energy Inc. Legal notices');
+    await expect(copyright).toHaveTextContent(COPYRIGHT);
     await expect(copyright.querySelector('a')).toBeNull();
     await expect(legalLinks(canvasElement)).toEqual(AUTHORED_LEGAL);
   },
 };
 
+// A banner with a tagline but no image: the tagline still renders.
+export const TaglineOnly = {
+  args: { banner_background: '' },
+  play: async ({ canvasElement }) => {
+    await upgraded(canvasElement);
+    await expect(canvasElement.querySelector('img[slot="banner-image"]')).toBeNull();
+    await expect(canvasElement.querySelector('[slot="tagline"]')).toHaveTextContent('Our Energy, Your Power');
+  },
+};
+
+// Published before the copyright became static: the old copyright row comes
+// first. It's skipped — not read as a tagline, even when the banner has none —
+// and the static copyright, with the current year, renders.
+export const LegacyCopyrightRow = {
+  args: { banner_tagline: '' },
+  render: (args) => render([[`<p>${LEGACY_COPYRIGHT}</p>`], ...fieldsToRows(args)]),
+  play: async ({ canvasElement }) => {
+    await upgraded(canvasElement);
+    await expect(canvasElement.querySelector('[slot="copyright"]')).toHaveTextContent(COPYRIGHT);
+    await expect(canvasElement.querySelector('[slot="tagline"]')).toBeNull();
+    await expect(canvasElement.querySelector('img[slot="banner-image"]')).toBeInTheDocument();
+    await expect(legalLinks(canvasElement)).toEqual(AUTHORED_LEGAL);
+  },
+};
+
 // A published item that's only half filled in (network chosen, no URL yet)
-// renders no link: it's skipped rather than read as another field, even with
-// the copyright blank.
+// renders no link: it's skipped rather than read as another field.
 export const IncompleteItem = {
   render: (args) => {
-    const rows = fieldsToRows({ ...args, copyright: '' });
+    const rows = fieldsToRows(args);
     rows.push(['<p>facebook</p>']);
     return render(rows);
   },
   play: async ({ canvasElement }) => {
     await upgraded(canvasElement);
-    await expect(canvasElement.querySelector('[slot="copyright"]')).toBeNull();
+    await expect(canvasElement.querySelector('[slot="tagline"]')).toHaveTextContent('Our Energy, Your Power');
     await expect(await socialLinks(canvasElement)).toEqual(EXPECTED_SOCIAL);
   },
 };
@@ -461,7 +488,7 @@ export const ColumnHeadingOnly = {
     const footer = await upgraded(canvasElement);
     await expect(footer).toHaveAttribute('columns', '3');
     await expect(columnHeadings(canvasElement)).toEqual(['Company', 'Energy & Environment', 'Partner Resources']);
-    await expect(canvasElement.querySelector('[slot="copyright"]')).toHaveTextContent('© 2026 Xcel Energy');
+    await expect(canvasElement.querySelector('[slot="copyright"]')).toHaveTextContent(COPYRIGHT);
   },
 };
 

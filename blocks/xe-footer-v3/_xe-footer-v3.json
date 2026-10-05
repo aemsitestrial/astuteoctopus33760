@@ -23,19 +23,6 @@
       "fields": [
         {
           "component": "tab",
-          "label": "General",
-          "name": "general"
-        },
-        {
-          "component": "text",
-          "valueType": "string",
-          "name": "copyright",
-          "label": "Copyright Text",
-          "description": "Plain text, e.g. © 2026 Xcel Energy Inc. All rights reserved.",
-          "value": ""
-        },
-        {
-          "component": "tab",
           "label": "Social Media",
           "name": "social"
         },

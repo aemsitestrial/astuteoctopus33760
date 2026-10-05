@@ -1325,14 +1325,6 @@
     "id": "xe-footer-v2",
     "fields": [
       {
-        "component": "text",
-        "valueType": "string",
-        "name": "copyright",
-        "label": "Copyright Text",
-        "description": "Plain text, e.g. © 2026 Xcel Energy Inc. All rights reserved.",
-        "value": ""
-      },
-      {
         "component": "reference",
         "valueType": "string",
         "name": "banner_background",
@@ -1353,19 +1345,6 @@
   {
     "id": "xe-footer-v3",
     "fields": [
-      {
-        "component": "tab",
-        "label": "General",
-        "name": "general"
-      },
-      {
-        "component": "text",
-        "valueType": "string",
-        "name": "copyright",
-        "label": "Copyright Text",
-        "description": "Plain text, e.g. © 2026 Xcel Energy Inc. All rights reserved.",
-        "value": ""
-      },
       {
         "component": "tab",
         "label": "Social Media",
@@ -1683,19 +1662,6 @@
   {
     "id": "xe-footer-v4",
     "fields": [
-      {
-        "component": "tab",
-        "label": "General",
-        "name": "general"
-      },
-      {
-        "component": "text",
-        "valueType": "string",
-        "name": "copyright",
-        "label": "Copyright Text",
-        "description": "Plain text, e.g. © 2026 Xcel Energy Inc. All rights reserved.",
-        "value": ""
-      },
       {
         "component": "tab",
         "label": "Social Media",
@@ -2143,14 +2109,6 @@
   {
     "id": "xe-footer",
     "fields": [
-      {
-        "component": "text",
-        "name": "copyright",
-        "value": "",
-        "label": "Copyright Text",
-        "description": "Plain text, e.g. © 2026 Xcel Energy Inc. All rights reserved.",
-        "valueType": "string"
-      },
       {
         "component": "richtext",
         "name": "social",

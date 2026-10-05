@@ -38,13 +38,16 @@ Ignite design tokens (`scripts/ignite/bundle/themes/tokens.css`), loaded by
 The block is a **container** (its `xe-footer-v2` filter): its own fields
 render as rows first, then one row per child item. The controls below map
 one-to-one to the model (`blocks/xe-footer-v2/_xe-footer-v2.json`).
+The logo and the copyright aren't authorable: Ignite's static Xcel Energy
+logo, linking to the homepage, and
+`© YYYY Xcel Energy Inc. All rights reserved.`, with `YYYY` the current year,
+set when the page loads.
 
 <table>
   <thead>
     <tr><th>Field</th><th>Model type</th><th>Purpose</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>copyright</code></td><td>text</td><td>Copyright line (plain text)</td></tr>
     <tr><td><code>banner_background</code> + <code>banner_tagline</code></td><td>reference + text</td><td>Full-bleed banner image and its centered tagline</td></tr>
   </tbody>
 </table>
@@ -145,7 +148,7 @@ No items authored — the defaults render.
 
 ### Blank fields
 
-No copyright and no tagline; the banner image still lands as the banner.
+No tagline; the banner image still lands as the banner.
 
 <Canvas of={XeFooterStories.BlankFields} />
 

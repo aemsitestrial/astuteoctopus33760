@@ -80,15 +80,36 @@ export function buildLogo() {
 }
 
 /**
- * The copyright (a plain-text field) as a slotted <span>. The field's
- * instrumentation may sit on the cell or on the <p> inside it; both move.
+ * A footer's rows by field, for a model whose fields render one row each in
+ * order, empty or not: `names[i]` → row i's cell. Footers published before a
+ * leading field was removed (the logo, then the copyright) still carry its
+ * row first, so the rows are lined up from the end and the extras skipped.
+ * @param {Element} block the footer block
+ * @param {string[]} names the row field names, in model order
+ * @returns {object} name → cell element
  */
-export function buildCopyright(value) {
+export function readFieldRows(block, names) {
+  const rows = [...block.children];
+  const fields = {};
+  rows.slice(Math.max(0, rows.length - names.length)).forEach((row, index) => {
+    fields[names[index]] = row.children.length === 1 ? row.firstElementChild : row;
+  });
+  return fields;
+}
+
+/** The footer's copyright line, for the current year. */
+export function copyrightText(year = new Date().getFullYear()) {
+  return `© ${year} Xcel Energy Inc. All rights reserved.`;
+}
+
+/**
+ * The copyright as a slotted <span>. It isn't authorable: the text is fixed
+ * and the year is the current one, so it never goes out of date.
+ */
+export function buildCopyright() {
   const span = document.createElement('span');
   span.setAttribute('slot', 'copyright');
-  moveInstrumentation(value, span);
-  if (value.children.length === 1) moveInstrumentation(value.firstElementChild, span);
-  span.textContent = value.textContent.trim();
+  span.textContent = copyrightText();
   return span;
 }
 

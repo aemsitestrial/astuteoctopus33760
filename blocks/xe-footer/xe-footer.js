@@ -1,5 +1,5 @@
 import {
-  buildBannerImage, buildCopyright, buildLogo, buildTagline, finishFooter, firstOf,
+  buildBannerImage, buildCopyright, buildLogo, buildTagline, finishFooter, firstOf, readFieldRows,
 } from '../../scripts/components/xe-footer-utils.js';
 import decorateColumnLinks from '../xe-footer-column-links/xe-footer-column-links.js';
 import decorateSocialLinks, {
@@ -31,7 +31,6 @@ import decorateLegalLinks, {
  * The model (_xe-footer.json) renders one row per field or element group, in
  * model order, empty or not:
  *
- *   copyright                            → plain text
  *   social                               → rich-text social links (icons or text)
  *   legal                                → rich-text legal links
  *   footerlinks                          → rich-text heading + link list pairs
@@ -40,28 +39,20 @@ import decorateLegalLinks, {
  * The rich-text links are decorated by the same functions as XE Footer V2's
  * child items (xe-footer-social-links / -legal-links / -column-links), which
  * turn a container of links into footer elements. With no social or legal
- * links at all, the live Xcel Energy footer's render. The logo is static.
+ * links at all, the live Xcel Energy footer's render. The logo and the
+ * copyright ("© <current year> Xcel Energy Inc. All rights reserved.") are
+ * static, not authorable.
  */
 
 // The rows the model renders, in order (see the comment above).
-const ROWS = ['copyright', 'social', 'legal', 'columns', 'banner'];
-
-/** The element holding a row's authored content (its single cell). */
-function cellOf(row) {
-  return row.children.length === 1 ? row.firstElementChild : row;
-}
+const ROWS = ['social', 'legal', 'columns', 'banner'];
 
 export default async function decorate(block) {
-  const fields = {};
-  [...block.children].forEach((row, index) => {
-    if (ROWS[index]) fields[ROWS[index]] = cellOf(row);
-  });
+  const fields = readFieldRows(block, ROWS);
 
   const footer = document.createElement('xe-footer');
   footer.append(buildLogo());
-  if (fields.copyright && fields.copyright.textContent.trim()) {
-    footer.append(buildCopyright(fields.copyright));
-  }
+  footer.append(buildCopyright()); // static, with the current year
 
   // --- Link columns (default slot): one per heading + list pair ---
   const columns = fields.columns ? decorateColumnLinks(fields.columns) : [];
