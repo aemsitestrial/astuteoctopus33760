@@ -23,6 +23,11 @@ import fetchQueryIndex from '../../scripts/components/query-index.js';
  * editor-only placeholder while the item is empty).
  */
 
+// The footer shows at most this many link column items. Universal Editor
+// events fire after a change is saved and can't be cancelled, so the limit is
+// applied when rendering (see decorateItems) rather than by blocking the add.
+export const MAX_COLUMN_LINKS = 5;
+
 /** An <xe-footer-column> with `heading` and the links found in `container`. */
 export function buildColumn(heading, container) {
   const column = document.createElement('xe-footer-column');
@@ -174,16 +179,22 @@ export function isPathLinks(cell) {
 }
 
 /**
- * Builds the link columns for XE Footer V2's link column items: page path
- * items list the page's child pages from the query index (fetched only when
- * an item has a path); rich-text link list items render as authored.
- * @param {Element[]} items the authored item rows
- * @returns {Promise<Element[]>} the columns to slot into <xe-footer>
+ * Builds the link columns for XE Footer V2's link column items, rendering only
+ * the first MAX_COLUMN_LINKS: page path items list the page's child pages from
+ * the query index (fetched only when one has a path); rich-text link list
+ * items render as authored. In the Universal Editor each extra item shows an
+ * editor-only notice (keeping it selectable so the author can remove it); on
+ * published pages extra items are left out.
+ * @param {Element[]} items the authored item rows, in order
+ * @returns {Promise<Element[]>} the elements to slot into <xe-footer>
  */
 export async function decorateItems(items) {
-  const hasPaths = items.some((item) => isPathItem(item) && item.querySelector('a'));
+  const shown = items.slice(0, MAX_COLUMN_LINKS);
+  const hasPaths = shown.some((item) => isPathItem(item) && item.querySelector('a'));
   const index = hasPaths ? await fetchQueryIndex() : [];
-  return items.flatMap((item) => (
-    isPathItem(item) ? decoratePathColumns(item, index) : decorate(item)
-  ));
+  const notice = `Only ${MAX_COLUMN_LINKS} link columns are shown — remove this one`;
+  return items.flatMap((item, position) => {
+    if (position >= MAX_COLUMN_LINKS) return keepInstrumentation(item, [], null, notice);
+    return isPathItem(item) ? decoratePathColumns(item, index) : decorate(item);
+  });
 }

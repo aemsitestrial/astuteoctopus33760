@@ -533,10 +533,11 @@ export const EditorItems = {
     await expect(canvasElement.querySelector('img[slot="banner-image"]')).toBeInTheDocument();
     await expect(await socialLinks(canvasElement)).toEqual(EXPECTED_SOCIAL);
     await expect(legalLinks(canvasElement)).toEqual(AUTHORED_LEGAL);
-    // Five social links is the most the footer shows, so the block switches to
-    // the filter without the social link item: (+) no longer offers it.
+    // Five social links and one legal links item are the most the footer
+    // shows, so the block switches to the filter without those items: (+)
+    // only offers link columns.
     await expect(canvasElement.querySelector('.xe-footer-v2.block'))
-      .toHaveAttribute('data-aue-filter', 'xe-footer-v2-social-full');
+      .toHaveAttribute('data-aue-filter', 'xe-footer-v2-social-legal-full');
   },
 };
 
@@ -565,7 +566,22 @@ export const EditorEmptyItems = {
     await expect(legal).toHaveTextContent('Add legal links');
     await expect(canvasElement.querySelectorAll('xe-icon-button')).toHaveLength(0);
     await expect(legalLinks(canvasElement)).toEqual([]);
-    // One social link item: below the limit, the block keeps its own filter.
+    // One link column and one social link item are below their limits; the
+    // legal links item, even empty, is the one the footer shows.
+    await expect(canvasElement.querySelector('.xe-footer-v2.block'))
+      .toHaveAttribute('data-aue-filter', 'xe-footer-v2-legal-full');
+  },
+};
+
+// Below every limit, the block keeps its own filter.
+export const EditorBelowLimits = {
+  args: { legalLinks: '' },
+  render: (args) => render(
+    fieldsToRows({ ...args, socialLinks: linkList([['facebook', 'https://www.facebook.com/XcelEnergy']]) }),
+    inEditor(itemModels(columnRows(args.linkColumns).length, 1, 0)),
+  ),
+  play: async ({ canvasElement }) => {
+    await upgraded(canvasElement);
     await expect(canvasElement.querySelector('.xe-footer-v2.block'))
       .toHaveAttribute('data-aue-filter', 'xe-footer-v2');
   },
@@ -604,7 +620,7 @@ export const TooManySocialLinks = {
 // In the editor, the 6th and 7th social link items show a notice (still
 // selectable, so the author can remove them) instead of rendering.
 export const EditorTooManySocialLinks = {
-  args: { socialLinks: SEVEN_SOCIAL_ITEMS },
+  args: { socialLinks: SEVEN_SOCIAL_ITEMS, legalLinks: '' },
   render: (args) => render(
     fieldsToRows(args),
     inEditor(itemModels(
@@ -625,6 +641,95 @@ export const EditorTooManySocialLinks = {
     });
     await expect(canvasElement.querySelector('.xe-footer-v2.block'))
       .toHaveAttribute('data-aue-filter', 'xe-footer-v2-social-full');
+  },
+};
+
+// Seven link column items: two more than the footer shows.
+const SEVEN_COLUMNS = PATH_COLUMNS + [
+  pathColumn('Outages &amp; Safety', '/outages-safety'),
+  pathColumn('Customer Support', '/customer-support'),
+  pathColumn('Investors', '/investors'),
+  pathColumn('Newsroom', '/newsroom'),
+].join('');
+const FIRST_FIVE_HEADINGS = [
+  'Company', 'Energy & Environment', 'Partner Resources', 'Outages & Safety', 'Customer Support',
+];
+
+// Published: only the first five link column items render.
+export const TooManyColumns = {
+  args: { linkColumns: SEVEN_COLUMNS },
+  play: async ({ canvasElement }) => {
+    const footer = await upgraded(canvasElement);
+    await expect(footer).toHaveAttribute('columns', '5');
+    await expect(columnHeadings(canvasElement)).toEqual(FIRST_FIVE_HEADINGS);
+    await expect(canvasElement.querySelector('.xe-footer-v2-placeholder')).toBeNull();
+  },
+};
+
+// In the editor, the 6th and 7th link column items show a notice (still
+// selectable, so the author can remove them) instead of rendering.
+export const EditorTooManyColumns = {
+  args: { linkColumns: SEVEN_COLUMNS, socialLinks: '', legalLinks: '' },
+  render: (args) => render(fieldsToRows(args), inEditor(itemModels(7, 0, 0))),
+  play: async ({ canvasElement }) => {
+    const footer = await upgraded(canvasElement);
+    await expect(footer).toHaveAttribute('columns', '5');
+    await expect(columnHeadings(canvasElement)).toEqual(FIRST_FIVE_HEADINGS);
+    [5, 6].forEach((index) => {
+      const notice = itemElement(canvasElement, index);
+      expect(notice.matches('xe-footer > span.xe-footer-v2-placeholder:not([slot])')).toBe(true);
+      expect(notice).toHaveTextContent('Only 5 link columns are shown — remove this one');
+      expect(notice).toHaveAttribute('data-aue-model', 'xe-footer-column-links');
+    });
+    await expect(canvasElement.querySelector('.xe-footer-v2.block'))
+      .toHaveAttribute('data-aue-filter', 'xe-footer-v2-columns-full');
+  },
+};
+
+// A second legal links item: one more than the footer shows.
+const EXTRA_LEGAL_ITEM = linkList([['Cookie Notice', '#cookies']]);
+
+// Published: only the first legal links item renders.
+export const TooManyLegalLinks = {
+  render: (args) => render([...fieldsToRows(args), [EXTRA_LEGAL_ITEM]]),
+  play: async ({ canvasElement }) => {
+    await upgraded(canvasElement);
+    await expect(legalLinks(canvasElement)).toEqual(AUTHORED_LEGAL);
+    await expect(canvasElement.querySelector('.xe-footer-v2-placeholder')).toBeNull();
+  },
+};
+
+// In the editor, the second legal links item shows a notice (still
+// selectable, so the author can remove it) instead of rendering.
+export const EditorTooManyLegalLinks = {
+  args: { linkColumns: '', socialLinks: '' },
+  render: (args) => render(
+    [...fieldsToRows(args), [EXTRA_LEGAL_ITEM]],
+    inEditor(itemModels(0, 0, 2)),
+  ),
+  play: async ({ canvasElement }) => {
+    await upgraded(canvasElement);
+    await expect(legalLinks(canvasElement)).toEqual(AUTHORED_LEGAL);
+    const notice = itemElement(canvasElement, 1);
+    await expect(notice.matches('xe-footer > span.xe-footer-v2-placeholder[slot="legal"]')).toBe(true);
+    await expect(notice).toHaveTextContent('Only one legal links item is shown');
+    await expect(notice).toHaveAttribute('data-aue-model', 'xe-footer-legal-links');
+    await expect(canvasElement.querySelector('.xe-footer-v2.block'))
+      .toHaveAttribute('data-aue-filter', 'xe-footer-v2-legal-full');
+  },
+};
+
+// Every kind of item at its limit: (+) offers nothing more.
+export const EditorAllFull = {
+  args: { linkColumns: SEVEN_COLUMNS },
+  render: (args) => render(
+    fieldsToRows(args),
+    inEditor(itemModels(7, itemCount(args.socialLinks), legalRows(args.legalLinks).length)),
+  ),
+  play: async ({ canvasElement }) => {
+    await upgraded(canvasElement);
+    await expect(canvasElement.querySelector('.xe-footer-v2.block'))
+      .toHaveAttribute('data-aue-filter', 'xe-footer-v2-columns-social-legal-full');
   },
 };
 

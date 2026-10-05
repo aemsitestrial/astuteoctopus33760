@@ -80,26 +80,33 @@ labelled from its URL. A page with no published child pages shows a single
 link to itself. Link column items authored while the field was a rich-text
 list keep rendering their links as authored.
 
-Each item is decorated by its own block — `blocks/xe-footer-column-links`
-exports `decorateItems(items)` and `blocks/xe-footer-social-links` and
-`blocks/xe-footer-legal-links` export `decorate(item)`, returning the
-elements the footer slots in. The social and
+Each item is decorated by its own block — `blocks/xe-footer-column-links`,
+`blocks/xe-footer-social-links` and `blocks/xe-footer-legal-links` each
+export `decorateItems(items)` (applying the limits below) and `decorate(item)`,
+returning the elements the footer slots in. The social and
 legal blocks also export `decorateDefaults()`, the live Xcel Energy footer's
 links used when no item is authored.
 
-The footer shows **at most 5 social links** (`MAX_SOCIAL_LINKS` in
-`blocks/xe-footer-social-links`). Universal Editor events fire after a change
-is saved and can't be cancelled, so the limit is enforced two other ways:
+The footer shows **at most 5 link columns** (`MAX_COLUMN_LINKS` in
+`blocks/xe-footer-column-links`), **5 social links** (`MAX_SOCIAL_LINKS` in
+`blocks/xe-footer-social-links`) and **1 legal links item**
+(`MAX_LEGAL_LINKS` in `blocks/xe-footer-legal-links`; it holds all the legal
+links). Universal Editor events fire after a change is saved and can't be
+cancelled, so the limits are enforced two other ways:
 
-- **The (+) menu:** once five social links exist, the decorator switches the
-  block's `data-aue-filter` from `xe-footer-v2` to `xe-footer-v2-social-full`
-  (link columns and legal links only), so the editor stops offering the social
-  link item. After any add or remove the block is re-rendered with its
-  original filter and the count is checked again.
+- **The (+) menu:** once a kind of item is at its limit, the decorator
+  switches the block's `data-aue-filter` from `xe-footer-v2` to the filter
+  without it, so the editor stops offering that item. There's one filter per
+  combination, named after the full kinds in order:
+  `xe-footer-v2-columns-full`, `xe-footer-v2-social-full`,
+  `xe-footer-v2-legal-full`, `xe-footer-v2-columns-social-full` … up to
+  `xe-footer-v2-columns-social-legal-full` (nothing more to add). After any
+  add or remove the block is re-rendered with its original filter and the
+  counts are checked again.
 - **Rendering, as a safety net** (for example a duplicated item): each extra
-  item shows an "Only 5 social links are shown — remove this one" notice in
-  the editor (still selectable, so it can be deleted); published pages leave
-  it out.
+  item shows an "Only 5 link columns are shown" / "Only 5 social links are
+  shown" / "Only one legal links item is shown" notice in the editor (still
+  selectable, so it can be deleted); published pages leave it out.
 
 In the Universal Editor each item row carries its model (`data-aue-model`), so
 it lands in the right place regardless of its link, and its instrumentation
