@@ -84,9 +84,12 @@ layout gap.
 The decorator classifies the authored rows positionally — the image row (has an
 `img`), CTA rows (have links), and the remaining text rows in document order
 (title, then subtitle) — and rebuilds them into the web-component markup above.
-The two custom elements (`xe-hero`, `xe-button`) are small shadow-DOM components
-defined by the block on first run: the media renders full-bleed behind a scrim,
-and the title, subtitle, and actions are distributed through named slots. Six
+`xe-hero` is a small shadow-DOM component defined by the block on first run:
+the media renders full-bleed behind a scrim, and the title, subtitle, and
+actions are distributed through named slots. The CTAs are the **XE Button**
+primitive (`blocks/xe-button`, the `@ignite/web` button): the first primary
+filled, the second `static-light` outlined, made for dark backgrounds such as
+the scrim. Six
 locked variants set height and text alignment; the base variant uses the
 responsive default. Stories run that real `decorate()` against the shipped CSS,
 so what you see here matches production.

@@ -1,0 +1,305 @@
+{
+  "definitions": [
+    {
+      "title": "XE Button",
+      "id": "xe-button",
+      "plugins": {
+        "xwalk": {
+          "page": {
+            "resourceType": "core/franklin/components/block/v1/block",
+            "template": {
+              "name": "XE Button",
+              "model": "xe-button",
+              "cta_linkText": "Learn More"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "models": [
+    {
+      "id": "xe-button",
+      "fields": [
+        {
+          "component": "aem-content",
+          "valueType": "string",
+          "name": "cta_link",
+          "label": "Link URL",
+          "description": "The page or URL the button opens."
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "cta_linkText",
+          "label": "Label",
+          "description": "The text shown on the button."
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "ariaLabel",
+          "label": "Accessible Label",
+          "description": "Optional. Read by screen readers instead of the label, e.g. \"Learn more about rebates\"."
+        },
+        {
+          "component": "select",
+          "valueType": "string",
+          "name": "classes_variant",
+          "label": "Variant",
+          "value": "",
+          "options": [
+            {
+              "name": "Default (Primary)",
+              "value": ""
+            },
+            {
+              "name": "Primary",
+              "value": "variant-primary"
+            },
+            {
+              "name": "Secondary",
+              "value": "variant-secondary"
+            },
+            {
+              "name": "Tertiary (on dark backgrounds)",
+              "value": "variant-tertiary"
+            },
+            {
+              "name": "Accent",
+              "value": "variant-accent"
+            },
+            {
+              "name": "Neutral",
+              "value": "variant-neutral"
+            },
+            {
+              "name": "Static Dark",
+              "value": "variant-static-dark"
+            },
+            {
+              "name": "Static Light (on dark backgrounds)",
+              "value": "variant-static-light"
+            }
+          ]
+        },
+        {
+          "component": "select",
+          "valueType": "string",
+          "name": "classes_treatment",
+          "label": "Treatment",
+          "value": "",
+          "options": [
+            {
+              "name": "Default (Filled)",
+              "value": ""
+            },
+            {
+              "name": "Filled",
+              "value": "treatment-filled"
+            },
+            {
+              "name": "Outlined",
+              "value": "treatment-outlined"
+            },
+            {
+              "name": "Text",
+              "value": "treatment-text"
+            }
+          ]
+        },
+        {
+          "component": "select",
+          "valueType": "string",
+          "name": "classes_size",
+          "label": "Size",
+          "value": "",
+          "options": [
+            {
+              "name": "Default (Medium)",
+              "value": ""
+            },
+            {
+              "name": "Extra Extra Small",
+              "value": "size-xxs"
+            },
+            {
+              "name": "Extra Small",
+              "value": "size-xs"
+            },
+            {
+              "name": "Small",
+              "value": "size-sm"
+            },
+            {
+              "name": "Medium",
+              "value": "size-md"
+            },
+            {
+              "name": "Large",
+              "value": "size-lg"
+            }
+          ]
+        },
+        {
+          "component": "select",
+          "valueType": "string",
+          "name": "classes_sizeMobile",
+          "label": "Mobile Size",
+          "description": "Size below 768px wide.",
+          "value": "",
+          "options": [
+            {
+              "name": "Same as Size",
+              "value": ""
+            },
+            {
+              "name": "Extra Extra Small",
+              "value": "size-mobile-xxs"
+            },
+            {
+              "name": "Extra Small",
+              "value": "size-mobile-xs"
+            },
+            {
+              "name": "Small",
+              "value": "size-mobile-sm"
+            },
+            {
+              "name": "Medium",
+              "value": "size-mobile-md"
+            },
+            {
+              "name": "Large",
+              "value": "size-mobile-lg"
+            }
+          ]
+        },
+        {
+          "component": "select",
+          "valueType": "string",
+          "name": "classes_leadingIcon",
+          "label": "Leading Icon",
+          "value": "",
+          "options": [
+            {
+              "name": "None",
+              "value": ""
+            },
+            {
+              "name": "Arrow Right",
+              "value": "leading-icon-arrow-right"
+            },
+            {
+              "name": "External Link",
+              "value": "leading-icon-arrow-up-right-from-square"
+            },
+            {
+              "name": "Chevron Right",
+              "value": "leading-icon-chevron-right"
+            },
+            {
+              "name": "Bolt",
+              "value": "leading-icon-bolt"
+            },
+            {
+              "name": "House",
+              "value": "leading-icon-house"
+            },
+            {
+              "name": "Leaf",
+              "value": "leading-icon-leaf"
+            },
+            {
+              "name": "Lightbulb",
+              "value": "leading-icon-lightbulb"
+            },
+            {
+              "name": "Piggy Bank",
+              "value": "leading-icon-piggy-bank"
+            }
+          ]
+        },
+        {
+          "component": "select",
+          "valueType": "string",
+          "name": "classes_trailingIcon",
+          "label": "Trailing Icon",
+          "value": "",
+          "options": [
+            {
+              "name": "None",
+              "value": ""
+            },
+            {
+              "name": "Arrow Right",
+              "value": "trailing-icon-arrow-right"
+            },
+            {
+              "name": "External Link",
+              "value": "trailing-icon-arrow-up-right-from-square"
+            },
+            {
+              "name": "Chevron Right",
+              "value": "trailing-icon-chevron-right"
+            },
+            {
+              "name": "Bolt",
+              "value": "trailing-icon-bolt"
+            },
+            {
+              "name": "House",
+              "value": "trailing-icon-house"
+            },
+            {
+              "name": "Leaf",
+              "value": "trailing-icon-leaf"
+            },
+            {
+              "name": "Lightbulb",
+              "value": "trailing-icon-lightbulb"
+            },
+            {
+              "name": "Piggy Bank",
+              "value": "trailing-icon-piggy-bank"
+            }
+          ]
+        },
+        {
+          "component": "select",
+          "valueType": "string",
+          "name": "classes_target",
+          "label": "Open In",
+          "value": "",
+          "options": [
+            {
+              "name": "Same Window",
+              "value": ""
+            },
+            {
+              "name": "New Window",
+              "value": "target-new-window"
+            }
+          ]
+        },
+        {
+          "component": "multiselect",
+          "valueType": "string",
+          "name": "classes",
+          "label": "Options",
+          "options": [
+            {
+              "name": "Full Width",
+              "value": "expand"
+            },
+            {
+              "name": "Disabled",
+              "value": "disabled"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "filters": []
+}

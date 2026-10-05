@@ -1,0 +1,128 @@
+import { Meta, Canvas, Controls } from '@storybook/addon-docs/blocks';
+import * as XeButtonStories from './xe-button.stories.js';
+
+<Meta of={XeButtonStories} />
+
+# XE Button
+
+A **primitive block** for the `@ignite/web` button
+(`scripts/ignite/bundle/primitives/action/button`). Authors can add it to a
+section on its own, and other blocks build their calls to action with it, so
+every button on the site is the same Ignite component:
+
+```html
+<xe-button variant="primary" treatment="filled" size="md" href="/programs"
+           trailing-icon="faArrowRight">Explore Programs</xe-button>
+```
+
+The button renders a link when it has a URL (and isn't disabled), otherwise a
+`<button>`. Styling comes from the Ignite design tokens, loaded by
+`scripts/components/ignite.js`.
+
+## Props
+
+`BUTTON_PROPS` (in `blocks/xe-button/xe-button.js`) lists every prop of the
+Ignite button. Without a prop, the button's default applies.
+
+<table>
+  <thead>
+    <tr><th>Prop</th><th>Attribute</th><th>Values</th><th>Authorable</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>variant</code></td><td><code>variant</code></td><td>primary (default), secondary, tertiary, accent, neutral, static-dark, static-light</td><td>Variant</td></tr>
+    <tr><td><code>treatment</code></td><td><code>treatment</code></td><td>filled (default), outlined (<code>outline</code> accepted), text</td><td>Treatment</td></tr>
+    <tr><td><code>size</code></td><td><code>size</code></td><td>xxs, xs, sm, md (default), lg</td><td>Size</td></tr>
+    <tr><td><code>sizeMobile</code></td><td><code>size-mobile</code></td><td>the sizes above, below 768px</td><td>Mobile Size</td></tr>
+    <tr><td><code>href</code></td><td><code>href</code></td><td>a URL</td><td>Link URL</td></tr>
+    <tr><td><code>target</code></td><td><code>target</code></td><td>_blank, _self, _parent, _top</td><td>Open In (new window)</td></tr>
+    <tr><td><code>leadingIcon</code></td><td><code>leading-icon</code></td><td>an icon name (<code>scripts/components/icons.js</code>)</td><td>Leading Icon</td></tr>
+    <tr><td><code>trailingIcon</code></td><td><code>trailing-icon</code></td><td>an icon name</td><td>Trailing Icon</td></tr>
+    <tr><td><code>expand</code></td><td><code>expand</code></td><td>boolean: full width</td><td>Options › Full Width</td></tr>
+    <tr><td><code>disabled</code></td><td><code>disabled</code></td><td>boolean</td><td>Options › Disabled</td></tr>
+    <tr><td><code>ariaLabel</code></td><td><code>aria-label</code></td><td>text</td><td>Accessible Label</td></tr>
+    <tr><td><code>type</code></td><td><code>type</code></td><td>button (default), submit, reset — without an href</td><td>Code only</td></tr>
+    <tr><td><code>ariaHaspopup</code></td><td><code>aria-haspopup</code></td><td>true, false, menu, listbox, tree, grid, dialog</td><td>Code only</td></tr>
+    <tr><td><code>ariaExpanded</code></td><td><code>aria-expanded</code></td><td>true, false</td><td>Code only</td></tr>
+  </tbody>
+</table>
+
+`type`, `ariaHaspopup` and `ariaExpanded` only matter for buttons other code
+controls (forms, menus, disclosures), so they're available to blocks but not
+offered to authors.
+
+**Accessibility:** use `tertiary` (gold) and `static-light` only on dark
+backgrounds; on light ones their text fails WCAG AA contrast. Filled
+`tertiary` (white text on gold, 1.98:1) fails on any background.
+
+## Using it in other blocks
+
+```js
+import { buildButton, loadButton } from '../xe-button/xe-button.js';
+
+const button = buildButton({
+  label: 'Explore Programs',
+  href: '/programs',
+  variant: 'primary',
+  treatment: 'outlined',
+  size: 'sm',
+  trailingIcon: 'faArrowRight',
+});
+button.setAttribute('slot', 'action');
+loadButton(); // loads and registers the Ignite button, once per page
+```
+
+`buildButton()` validates its props: an unknown prop or value is ignored, so
+the default applies. XE Banner, XE Hero and XE Ignite Feature Cards build their
+CTAs this way.
+
+## Authoring model
+
+The model (`blocks/xe-button/_xe-button.json`) renders two rows — the link
+(**Link URL** + **Label** collapse into one `<a>`) and the **Accessible
+Label** — and the style options as block classes (`classes_*`):
+`variant-…`, `treatment-…`, `size-…`, `size-mobile-…`, `leading-icon-…`,
+`trailing-icon-…`, `target-new-window`, `expand`, `disabled`. Without a label
+nothing renders; in the Universal Editor an empty block shows a placeholder.
+
+## Shared helpers for primitive blocks
+
+`scripts/components/primitives.js` holds the helpers any primitive block can
+reuse:
+
+- `applyProps(element, props, schema)` / `createPrimitive(tag, props, schema)`
+  — set props as attributes, validated against a props schema.
+- `propsFromClasses(block, schema)` — read a block's authored options from
+  its classes.
+- `readRows(block, names)` — a model's rows by field name.
+- `isEditing(block)` — whether the block is in the Universal Editor.
+
+XE Banner uses the same helpers for its `<xe-banner>` / `<xe-banner-column>`
+options.
+
+## Live example
+
+<Canvas of={XeButtonStories.Default} />
+
+<Controls of={XeButtonStories.Default} />
+
+## Variants
+
+### Every variant, treatment and size
+
+<Canvas of={XeButtonStories.Gallery} />
+
+### Icons
+
+<Canvas of={XeButtonStories.WithIcons} />
+
+### New window, with an accessible label
+
+<Canvas of={XeButtonStories.NewWindow} />
+
+### Full width
+
+<Canvas of={XeButtonStories.FullWidth} />
+
+### Disabled
+
+<Canvas of={XeButtonStories.Disabled} />
