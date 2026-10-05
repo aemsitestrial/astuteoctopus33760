@@ -1,12 +1,15 @@
 /*
  * XE Banner
  *
- * The block renders web components (<xe-banner>/<xe-banner-column>) whose
- * layout lives in their own shadow DOM (see xe-banner.js). This stylesheet
- * handles the light-DOM section layout — the banner runs full-bleed so a
- * background color spans the page, and <xe-banner> re-applies the content
- * width inside its shadow root — plus the typography of the slotted heading
- * and message, which page-level heading and paragraph rules would otherwise override.
+ * Layout and slotted-element typography for the @ignite/web <xe-banner> /
+ * <xe-banner-column> composition. The components own their shadow-DOM padding,
+ * color, and column flex layout via design tokens; this sheet handles:
+ *
+ *   1. Full-bleed wrapper — the EDS section limits max-width, but the banner
+ *      background must span the full page width.
+ *   2. Heading and message typography — page-level heading/paragraph rules
+ *      outrank ::slotted() inside shadow DOM, so we target the light-DOM
+ *      slot elements here instead.
  */
 
 main > .section > div.xe-banner-wrapper {

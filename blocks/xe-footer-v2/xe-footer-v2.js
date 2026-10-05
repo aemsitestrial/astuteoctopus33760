@@ -1,208 +1,234 @@
+import { moveInstrumentation } from '../../scripts/scripts.js';
+import {
+  buildBannerImage, buildCopyright, buildLogo, buildTagline, finishFooter, firstOf,
+} from '../../scripts/components/xe-footer-utils.js';
+import decorateSocialLinks, {
+  decorateDefaults as defaultSocialLinks,
+  decorateItems as decorateSocialItems,
+  isSocialLinks,
+  MAX_SOCIAL_LINKS,
+} from '../xe-footer-social-links/xe-footer-social-links.js';
+import decorateLegalLinks, {
+  decorateDefaults as defaultLegalLinks,
+} from '../xe-footer-legal-links/xe-footer-legal-links.js';
+import decorateColumnLinks, { buildColumn } from '../xe-footer-column-links/xe-footer-column-links.js';
+
 /*
- * XE Footer block
+ * XE Footer V2
  *
- * Recreates the Xcel footer: a dark maroon content zone (brand column with
- * logo, copyright, social + legal links, alongside the link columns) above a
- * full-bleed solar-panel banner with a centered tagline.
+ * The Xcel footer rendered with the @ignite/web footer composition
+ * (scripts/ignite/bundle/compositions/footer), following its reference markup:
  *
- * EDS does not auto-apply block/item model names as CSS classes, so this
- * decorator classifies each authored row and tags it with a stable hook the
- * stylesheet targets. Container-level fields (logo, copyright, social, legal)
- * render first as single-cell rows in model order, followed by the banner and
- * columns items.
+ *   <xe-footer columns="5">
+ *     <xe-logo slot="logo" variant="inverse" size="md" href="/" label="Xcel Energy Home"></xe-logo>
+ *     <span slot="copyright">© 2026 Xcel Energy Inc. All rights reserved.</span>
+ *     <xe-footer-column heading="Company">                    (xe-footer-column-links)
+ *       <xe-hyperlink href="…" variant="variant">Careers</xe-hyperlink>…
+ *     </xe-footer-column>…
+ *     <xe-icon-button slot="social" …>…</xe-icon-button>…       (xe-footer-social-links)
+ *     <xe-hyperlink slot="legal" … trailing-icon>…</xe-hyperlink>… (xe-footer-legal-links)
+ *     <img slot="banner-image" src="…" alt="">
+ *     <span slot="tagline">Our Energy, Your Power</span>
+ *   </xe-footer>
+ *
+ * The block is a container (filter `xe-footer-v2`): its own fields
+ * (copyright, banner background + tagline) render as rows first, then one
+ * row per child item — a link column, a social profile or a legal link. Those
+ * items are decorated by their own blocks (xe-footer-column-links /
+ * xe-footer-social-links / xe-footer-legal-links); the live Xcel Energy
+ * footer's social and legal links render when none are authored.
+ *
+ * Rows are recognized by what they hold rather than by position, so blank
+ * fields can't shift the others and older footers still render: key-value
+ * rows (`name | value`, footers created while the block was key-value) by
+ * name, a row instrumented with an item model (Universal Editor) as that item,
+ * a row of only links as an item, headings + link lists as link columns, and
+ * images / text as the banner and copyright. The logo is static (not
+ * authorable): Ignite's Xcel Energy logo, linking to the homepage.
+ *
+ * <xe-footer-column> wraps each link in an <li> inside its list; below 1024px
+ * it switches to an accordion. Styling comes from the Ignite tokens (loaded by
+ * scripts/components/ignite.js); xe-footer-v2.css only covers authored
+ * light-DOM content that page-level rules would otherwise restyle.
  */
 
-const CONTAINER_FIELDS = ['logo', 'copyright', 'social', 'legal', 'links'];
+// Link-column slots of key-value footers (column1Heading/column1Links … column5…).
+const COLUMN_SLOTS = 5;
 
-export default function decorate(block) {
-  const rows = [...block.children];
+// Universal Editor filters (_xe-footer-v2.json): the block's own, and one
+// without the social link item for when the footer already has the most it
+// shows, so the editor's (+) menu stops offering it.
+const FILTER = 'xe-footer-v2';
+const SOCIAL_FULL_FILTER = 'xe-footer-v2-social-full';
 
-  // Container-level fields (logo, copyright, social, legal) render first, in
-  // model order, followed by the item rows (banner, one or more columns).
-  // Classify structurally rather than by content so empty authored blocks are
-  // still recognized (and not silently dropped):
-  //   - a columns row is built from the columns component: its cell holds
-  //     multiple direct child <div> columns (or a .columns block / several
-  //     headings). Every container-field row, by contrast, has a single cell.
-  //   - the banner is the LAST remaining image-bearing row (the logo, row 0,
-  //     is a leading field, so it is excluded here).
-  //   - the leading rows that are left are the container fields, tagged by
-  //     their model order.
+// Child item models (the xe-footer-v2 filter) → the footer area they fill.
+const ITEM_MODELS = {
+  'xe-footer-column-links': 'columns',
+  'xe-footer-social-links': 'social',
+  'xe-footer-legal-links': 'legal',
+};
 
-  const logoGroup = document.createElement('div');
-  logoGroup.className = 'xe-footer-v2-logo-wrapper';
+/** The element holding a row's authored content (its single cell). */
+function cellOf(row) {
+  return row.children.length === 1 ? row.firstElementChild : row;
+}
 
-  const socialGroup = document.createElement('div');
-  socialGroup.className = 'xe-footer-v2-social-wrapper';
+/** Normalizes a field name the way EDS's toClassName() does (readBlockConfig keys). */
+function toKey(name) {
+  return name.trim().toLowerCase()
+    .replace(/[^0-9a-z]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
 
-  const bannerRow = [...rows]
-    .reverse()
-    .find((row) => row.querySelector('picture, img'));
+/** True when a value holds something worth rendering. */
+function hasContent(element) {
+  return element.textContent.trim() || element.querySelector('img, picture, svg');
+}
 
-  const links = document.createElement('div');
-  links.className = 'xe-footer-v2-links-wrapper';
+/** True when all of `part`'s text is link text (whitespace aside). */
+function isLinksOnly(part) {
+  const squash = (text) => text.replace(/\s+/g, '');
+  const linkText = [...part.querySelectorAll('a')].map((a) => a.textContent).join('');
+  return squash(part.textContent) === squash(linkText);
+}
 
-  // Container-field rows, in model order. Keep the FULL positional list (do not
-  // filter empties out first) so the model-order → field-name mapping stays
-  // stable: dropping an empty row before indexing would shift every later field
-  // onto the wrong name.
-  const fieldRows = rows.filter((row) => row !== bannerRow);
-  const hasContent = (row) => row.textContent.trim() || row.querySelector('img, picture, svg');
+/**
+ * True when `cell` is nothing but links: a list, or paragraphs, of links whose
+ * text is all the text there is (so a copyright line with a link isn't one).
+ */
+function isLinkList(cell) {
+  const nodes = [...cell.children];
+  if (!nodes.length || !nodes.every((node) => node.querySelector('a'))) return false;
+  return nodes.every((node) => {
+    const items = node.matches('ul, ol') ? [...node.children] : [node];
+    return items.every(isLinksOnly);
+  });
+}
 
-  for (let index = 0; index < fieldRows.length; index += 1) {
-    const row = fieldRows[index];
-    const name = CONTAINER_FIELDS[index];
+/** True when `cell` is headings followed by link lists (link columns). */
+function isLinkColumns(cell) {
+  const nodes = [...cell.children];
+  return nodes.some((node) => !node.querySelector('a') && node.textContent.trim())
+    && nodes.some((node) => node.querySelector('a'));
+}
 
-    if (name === 'links') {
-      links.append(row);
+/**
+ * Reads the authored rows into `{ normalizedName: valueElement }` plus
+ * `items: { columns: [row…], social: [row…], legal: [row…] }` (item rows are
+ * kept whole, since the row carries the item's Universal Editor
+ * instrumentation).
+ */
+function readFields(block) {
+  const fields = { items: { columns: [], social: [], legal: [] } };
+  const addItem = (kind, row) => fields.items[kind].push(row);
+
+  [...block.children].forEach((row, index) => {
+    const model = ITEM_MODELS[row.getAttribute('data-aue-model')];
+    if (model) {
+      addItem(model, row);
+      return;
     }
 
-    if (name) {
-      row.classList.add(`xe-footer-v2-${name}`);
+    // Key-value row: read by name.
+    if (row.children.length === 2) {
+      const key = toKey(row.firstElementChild.textContent);
+      const value = row.children[1];
+      if (key && hasContent(value)) fields[key] = value;
+      return;
+    }
+
+    // Plain row: recognize by content. Social icon links hold images too, so
+    // link lists are checked before the banner.
+    const cell = cellOf(row);
+    if (!hasContent(cell)) return;
+    const image = cell.querySelector('picture, img');
+    const linkList = isLinkList(cell);
+    if (linkList && (!image || isSocialLinks(cell))) {
+      addItem(isSocialLinks(cell) ? 'social' : 'legal', row);
+    } else if (image) {
+      // The banner (image + tagline). The logo isn't authorable any more; in
+      // older footers it was the first row, so an image there is skipped (the
+      // current model's first row is the copyright, rendered even when empty).
+      if (index === 0) return;
+      fields['banner-background'] = cell;
+      const tagline = [...cell.childNodes].find((node) => node.textContent.trim());
+      if (tagline) fields['banner-tagline'] = tagline;
+    } else if (isLinkColumns(cell)) {
+      // A link column item (or an older footer's rich-text footer links).
+      addItem('columns', row);
+    } else if (fields['banner-background']) {
+      // Past the banner only child items follow (model order); one without a
+      // link yet (e.g. a network chosen but no URL) renders nothing.
+    } else if (!fields.copyright) {
+      fields.copyright = cell;
+    }
+  });
+  return fields;
+}
+
+/** Columns from a key-value footer's column slots, skipping slots without links. */
+function buildSlotColumns(fields) {
+  const columns = [];
+  for (let slot = 1; slot <= COLUMN_SLOTS; slot += 1) {
+    const links = fields[`column${slot}links`];
+    if (links && links.querySelector('a')) {
+      const heading = fields[`column${slot}heading`];
+      const column = buildColumn(heading ? heading.textContent.trim() : '', links);
+      moveInstrumentation(links, column);
+      columns.push(column);
     }
   }
+  return columns;
+}
 
-  // Brand column = logo + copyright + social + legal, grouped so it sits beside
-  // the link columns. Only append rows that actually have content, so an unused
-  // field does not leave a blank gap — but the naming above already used the
-  // stable positional index.
-  const brand = document.createElement('div');
-  brand.className = 'xe-footer-v2-brand';
+export default async function decorate(block) {
+  const fields = readFields(block);
+  const footer = document.createElement('xe-footer');
 
-  const brandRows = fieldRows.filter((row) => !row.classList.contains('xe-footer-v2-links') && hasContent(row));
-  const brandGroupMap = new Map([
-    ['xe-footer-v2-logo', logoGroup],
-    ['xe-footer-v2-copyright', logoGroup],
-    ['xe-footer-v2-social', socialGroup],
-    ['xe-footer-v2-legal', socialGroup],
-  ]);
-
-  const appendBrandRow = (row) => {
-    const target = [...brandGroupMap.keys()].find((className) => row.classList.contains(className));
-    const container = target ? brandGroupMap.get(target) : brand;
-    container.append(row);
-  };
-
-  brandRows.forEach(appendBrandRow);
-
-  if (logoGroup.children.length) brand.append(logoGroup);
-  if (socialGroup.children.length) brand.append(socialGroup);
-
-  // The footer-links field is authored as one cell holding a flat sequence of
-  // heading (<p>) + link list (<ul>) pairs. Group each heading with the list
-  // that follows it into a column so the stylesheet can lay them out as a grid
-  // (one column per heading), matching the design's row of link columns.
-  //
-  // On mobile the columns collapse into an accordion: the heading becomes a
-  // <button> toggle that expands/collapses its link list (each list lives in a
-  // dedicated `.xe-footer-v2-links-content` panel wired to the button via
-  // aria-controls/aria-expanded). Desktop CSS forces every panel open and
-  // neutralises the toggle, so the same markup serves both layouts.
-  //
-  // Drill through the row/cell wrapper divs to the element that actually holds
-  // the heading/list sequence (the deepest single-child <div> whose children
-  // are the <p>/<ul> content).
-  let linksCell = links;
-  while (linksCell.children.length === 1 && linksCell.firstElementChild.matches('div')) {
-    linksCell = linksCell.firstElementChild;
-  }
-  const nodes = [...linksCell.children];
-  if (nodes.length) {
-    const grid = document.createElement('div');
-    grid.className = 'xe-footer-v2-links';
-    let panel = null;
-    let colIndex = 0;
-    nodes.forEach((node) => {
-      const isHeading = node.matches('p, h2, h3, h4') && !node.querySelector('ul, ol');
-      if (isHeading) {
-        colIndex += 1;
-        const column = document.createElement('div');
-        column.className = 'xe-footer-v2-links-col';
-
-        const titleId = `xe-footer-v2-links-title-${colIndex}`;
-        const panelId = `xe-footer-v2-links-panel-${colIndex}`;
-
-        // Accessible accordion toggle. Collapsed by default so the mobile
-        // footer opens compact; desktop CSS overrides this to always-open.
-        const toggle = document.createElement('button');
-        toggle.type = 'button';
-        toggle.className = 'xe-footer-v2-links-title';
-        toggle.id = titleId;
-        toggle.textContent = node.textContent.trim();
-        toggle.setAttribute('aria-expanded', 'false');
-        toggle.setAttribute('aria-controls', panelId);
-
-        panel = document.createElement('div');
-        panel.className = 'xe-footer-v2-links-content';
-        panel.id = panelId;
-        panel.setAttribute('role', 'region');
-        panel.setAttribute('aria-labelledby', titleId);
-
-        toggle.addEventListener('click', () => {
-          const expanded = toggle.getAttribute('aria-expanded') === 'true';
-          toggle.setAttribute('aria-expanded', String(!expanded));
-        });
-
-        column.append(toggle, panel);
-        grid.append(column);
-      } else if (panel) {
-        panel.append(node);
-      } else {
-        // Content before any heading: start an untitled column so it is kept.
-        const column = document.createElement('div');
-        column.className = 'xe-footer-v2-links-col';
-        column.append(node);
-        grid.append(column);
-        panel = null;
-      }
-    });
-    linksCell.replaceWith(grid);
+  // Universal Editor: with MAX_SOCIAL_LINKS social links already added, switch
+  // to the filter without the social link item so (+) no longer offers it.
+  // The block is re-rendered with its original filter after every add or
+  // remove (scripts/editor-support.js), so this re-evaluates each time.
+  // Published pages carry no data-aue-filter; nothing changes there.
+  if (block.dataset.aueFilter === FILTER && fields.items.social.length >= MAX_SOCIAL_LINKS) {
+    block.dataset.aueFilter = SOCIAL_FULL_FILTER;
   }
 
-  // Content zone wraps the brand column and the link columns side by side.
-  const content = document.createElement('div');
-  content.className = 'xe-footer-v2-content';
-  content.append(brand);
+  // --- Logo: the static Xcel Energy logo, linking to the homepage ---
+  footer.append(buildLogo());
 
-  // Links column wraps the link rows side by side.
-  content.append(links);
+  if (fields.copyright) footer.append(buildCopyright(fields.copyright));
 
-  // Banner zone: full-bleed image with centered tagline overlay. The banner's
-  // background and tagline are grouped fields sharing one cell, but the exact
-  // markup varies: the tagline may sit beside the <picture> in the same
-  // element, or in a sibling <p>. Tag the image, then find the first
-  // text-bearing node in the cell that is not the picture's wrapper and turn
-  // its text into the overlay tagline.
-  let banner = null;
-  if (bannerRow) {
-    bannerRow.classList.add('xe-footer-v2-banner');
-    const picture = bannerRow.querySelector('picture');
-    if (picture) picture.classList.add('xe-footer-v2-banner-image');
+  // --- Link columns (default slot): the column items, else a key-value
+  // footer's column slots ---
+  const columns = firstOf(
+    () => fields.items.columns.flatMap(decorateColumnLinks),
+    () => buildSlotColumns(fields),
+  );
+  const columnCount = columns.filter((column) => column.matches('xe-footer-column')).length;
+  if (columnCount) footer.setAttribute('columns', String(columnCount));
+  footer.append(...columns);
 
-    const cell = bannerRow.querySelector(':scope > div') || bannerRow;
-    const holdsPicture = (node) => picture && node.contains && node.contains(picture);
-    const taglineText = [...cell.childNodes]
-      .filter((node) => !holdsPicture(node))
-      .map((node) => node.textContent.trim())
-      .find((text) => text);
+  // --- Social and legal links: the child items, decorated by their blocks
+  // (at most MAX_SOCIAL_LINKS social links) ---
+  footer.append(
+    ...firstOf(
+      () => decorateSocialItems(fields.items.social),
+      () => (fields.social ? decorateSocialLinks(fields.social) : []),
+      defaultSocialLinks,
+    ),
+    ...firstOf(
+      () => fields.items.legal.flatMap(decorateLegalLinks),
+      () => (fields.legal ? decorateLegalLinks(fields.legal) : []),
+      defaultLegalLinks,
+    ),
+  );
 
-    if (taglineText) {
-      // Remove the original tagline node so only the image + overlay remain.
-      [...cell.childNodes].forEach((node) => {
-        if (!holdsPicture(node) && node.textContent.trim()) node.remove();
-      });
-      // Append to the banner row itself so the overlay (position:absolute;
-      // inset:0) covers the whole full-bleed banner, not just the image cell.
-      const tagline = document.createElement('span');
-      tagline.className = 'xe-footer-v2-banner-tagline';
-      tagline.textContent = taglineText;
-      bannerRow.appendChild(tagline);
-    }
-    banner = bannerRow;
-  }
+  // --- Banner: background image + centered tagline ---
+  const bannerImage = fields['banner-background'] && buildBannerImage(fields['banner-background']);
+  const tagline = buildTagline(fields['banner-tagline']);
+  footer.append(...[bannerImage, tagline].filter(Boolean));
 
-  // Reassemble: content zone first, banner last.
-  block.textContent = '';
-  block.append(content);
-  if (banner) block.append(banner);
+  await finishFooter(block, footer);
 }

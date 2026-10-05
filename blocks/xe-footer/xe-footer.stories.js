@@ -1,191 +1,249 @@
 /*
- * Storybook stories for the XE Footer block.
+ * Storybook stories for the XE Footer block (@ignite/web footer composition).
  *
  * The controls mirror the block's authoring model (blocks/xe-footer/
- * _xe-footer.json) one-to-one, so editing a control here is the same as editing
- * that field in the Universal Editor. Each model field maps to a Storybook
- * control type:
+ * _xe-footer.json) one-to-one:
  *
- *   logo              reference (image) -> text control (asset URL)
- *   logoAlt           text              -> text control
- *   copyright         richtext          -> text control (HTML)
- *   social            richtext          -> text control (HTML)
- *   legal             richtext          -> text control (HTML)
- *   footerlinks       richtext          -> text control (HTML)
- *   banner_background reference (image) -> text control (asset URL)
- *   banner_tagline    text              -> text control
+ *   copyright          text              -> "copyright" (plain text)
+ *   social             richtext          -> "social" (HTML: linked social icons)
+ *   legal              richtext          -> "legal" (HTML: a list of links)
+ *   footerlinks        richtext          -> "footerlinks" (HTML: heading + list pairs)
+ *   banner_background  reference         -> "banner_background" (asset URL)
+ *   banner_tagline     text              -> "banner_tagline" (grouped with the background)
  *
- * `fieldsToRows` assembles the args into the row/cell structure the block's
- * decorator expects (logo, copyright, social, legal, footerlinks, then the
- * banner as the last image-bearing row) — the same DOM AEM produces from these
- * fields at publish time. renderBlock() then wraps it in the real EDS chain,
- * loads the shipped CSS, and runs decorate().
+ * `fieldsToRows` renders the markup AEM produces: one row per field or element
+ * group, in model order, empty or not — copyright, social, legal, footerlinks,
+ * banner. The logo isn't authorable: the decorator adds Ignite's static
+ * <xe-logo>, linking to the homepage.
  */
-import { expect, within } from 'storybook/test';
+import { expect, within, waitFor } from 'storybook/test';
 import decorate from './xe-footer.js';
 import { renderBlock, picture } from '../../.storybook/eds.js';
 
+const list = (labels) => `<ul>${labels.map((label) => `<li><a href="#">${label}</a></li>`).join('')}</ul>`;
+
+const NETWORKS = [
+  ['Facebook', 'https://www.facebook.com/XcelEnergy', 'facebook'],
+  ['X', 'https://twitter.com/XcelEnergy', 'x'],
+  ['Instagram', 'https://www.instagram.com/xcelenergy', 'instagram'],
+  ['LinkedIn', 'https://www.linkedin.com/company/xcel-energy', 'linkedin'],
+  ['YouTube', 'https://www.youtube.com/XcelEnergyVideo', 'youtube'],
+];
+
+// Social links as icon images, each labelled with its network.
+const SOCIAL_PICTURES = `<p>${NETWORKS.map(([label, href, icon]) => `<a href="${href}" aria-label="${label}">${picture(`/icons/${icon}.svg`, label)}</a>`).join('')}</p>`;
+
+// The same links authored with EDS icons (:facebook: …), which render as
+// <span class="icon icon-facebook"> with no text, label or alt.
+const SOCIAL_EDS_ICONS = `<p>${NETWORKS.map(([, href, icon]) => `<a href="${href}"><span class="icon icon-${icon}"></span></a>`).join('')}</p>`;
+
+const FOOTER_LINKS = [
+  ['Company', ['About us', 'Careers', 'Newsroom', 'Sustainability']],
+  ['Services', ['Residential', 'Business', 'Renewable plans', 'Usage insights']],
+  ['Support', ['Contact us', 'Help center', 'Report an outage', 'Billing &amp; payments']],
+].map(([heading, links]) => `<p>${heading}</p>${list(links)}`).join('');
+
 // --- Default field values (a realistic, fully-authored footer) --------------
 const defaults = {
-  logo: '/icons/xcel-logo-white.svg',
-  logoAlt: 'Xcel',
-  copyright: '<p>© 2026 Xcel Energy. All rights reserved.</p>',
-  social: [
-    '<p>',
-    '<a href="#" aria-label="Facebook">', picture('/icons/facebook.svg', 'Facebook'), '</a>',
-    '<a href="#" aria-label="X">', picture('/icons/x.svg', 'X'), '</a>',
-    '<a href="#" aria-label="Instagram">', picture('/icons/instagram.svg', 'Instagram'), '</a>',
-    '<a href="#" aria-label="LinkedIn">', picture('/icons/linkedin.svg', 'LinkedIn'), '</a>',
-    '<a href="#" aria-label="YouTube">', picture('/icons/youtube.svg', 'YouTube'), '</a>',
-    '</p>',
-  ].join('\n'),
-  legal: [
-    '<ul>',
-    '<li><a href="#">Privacy Policy</a></li>',
-    '<li><a href="#">Terms of Use</a></li>',
-    '<li><a href="#">Cookie Preferences</a></li>',
-    '</ul>',
-  ].join('\n'),
-  footerlinks: [
-    '<p>Company</p>',
-    '<ul><li><a href="#">About us</a></li><li><a href="#">Careers</a></li>'
-      + '<li><a href="#">Newsroom</a></li><li><a href="#">Sustainability</a></li></ul>',
-    '<p>Services</p>',
-    '<ul><li><a href="#">Residential</a></li><li><a href="#">Business</a></li>'
-      + '<li><a href="#">Renewable plans</a></li><li><a href="#">Usage insights</a></li></ul>',
-    '<p>Support</p>',
-    '<ul><li><a href="#">Contact us</a></li><li><a href="#">Help center</a></li>'
-      + '<li><a href="#">Report an outage</a></li><li><a href="#">Billing &amp; payments</a></li></ul>',
-  ].join('\n'),
+  copyright: '© 2026 Xcel Energy Inc. All rights reserved.',
+  social: SOCIAL_PICTURES,
+  legal: list(['Privacy Policy', 'Terms of Use', 'Cookie Preferences']),
+  footerlinks: FOOTER_LINKS,
   banner_background: 'https://picsum.photos/1600/400?grayscale',
   banner_tagline: 'Our Energy, Your Power',
 };
 
-/**
- * Build the authored row/cell structure from the model-field args, matching
- * what AEM renders for this block. Empty fields are omitted so the decorator
- * sees the same shape it would for an author who left a field blank.
- */
+/** The five rows AEM renders for the model, in order (blank fields are empty cells). */
 function fieldsToRows(args) {
-  const rows = [];
-  if (args.logo) rows.push([picture(args.logo, args.logoAlt)]);
-  if (args.copyright) rows.push([args.copyright]);
-  if (args.social) rows.push([args.social]);
-  if (args.legal) rows.push([args.legal]);
-  if (args.footerlinks) rows.push([args.footerlinks]);
-  if (args.banner_background) {
-    rows.push([`${picture(args.banner_background, 'Banner')}<p>${args.banner_tagline || ''}</p>`]);
-  }
-  return rows;
+  const banner = [
+    args.banner_background ? picture(args.banner_background, '') : '',
+    args.banner_tagline ? `<p>${args.banner_tagline}</p>` : '',
+  ].join('');
+  return [
+    [args.copyright ? `<p>${args.copyright}</p>` : ''],
+    [args.social || ''],
+    [args.legal || ''],
+    [args.footerlinks || ''],
+    [banner],
+  ];
 }
 
 // argTypes drive the Controls panel — the Storybook analogue of the Universal
-// Editor properties rail. Grouped by the two authoring zones of the block.
+// Editor properties rail.
 const argTypes = {
-  logo: {
-    control: 'text',
-    description: 'Logo (reference) — asset URL for the footer logo.',
-    table: { category: 'Brand' },
-  },
-  logoAlt: {
-    control: 'text',
-    description: 'Logo alt text.',
-    table: { category: 'Brand' },
-  },
-  copyright: {
-    control: 'text',
-    description: 'Copyright (rich text) — HTML.',
-    table: { category: 'Brand' },
-  },
-  social: {
-    control: 'text',
-    description: 'Social links (rich text) — HTML with linked social icons.',
-    table: { category: 'Brand' },
-  },
-  legal: {
-    control: 'text',
-    description: 'Legal links (rich text) — HTML list of legal links.',
-    table: { category: 'Brand' },
-  },
-  footerlinks: {
-    control: 'text',
-    description: 'Footer links (rich text) — heading + link-list pairs; each heading becomes a column.',
-    table: { category: 'Links' },
-  },
-  banner_background: {
-    control: 'text',
-    description: 'Background (reference) — asset URL for the full-bleed banner image.',
-    table: { category: 'Banner' },
-  },
-  banner_tagline: {
-    control: 'text',
-    description: 'Tagline — centered banner overlay text.',
-    table: { category: 'Banner' },
-  },
+  copyright: { control: 'text', description: 'Copyright (plain text).', table: { category: 'Brand' } },
+  social: { control: 'text', description: 'Social links (rich text) — HTML with linked social icons.', table: { category: 'Brand' } },
+  legal: { control: 'text', description: 'Legal links (rich text) — HTML list of legal links.', table: { category: 'Brand' } },
+  footerlinks: { control: 'text', description: 'Footer links (rich text) — heading + link-list pairs; each heading becomes a column.', table: { category: 'Links' } },
+  banner_background: { control: 'text', description: 'Background (reference) — asset URL for the banner image.', table: { category: 'Banner' } },
+  banner_tagline: { control: 'text', description: 'Tagline — centered banner overlay text.', table: { category: 'Banner' } },
 };
+
+const render = (rows, decorator = decorate) => renderBlock({ name: 'xe-footer', rows, decorate: decorator });
 
 export default {
   title: 'Blocks/XE Footer',
   // A custom docs page lives in xe-footer.mdx; don't also auto-generate one.
   argTypes,
   args: defaults,
-  render: (args) => renderBlock({ name: 'xe-footer', rows: fieldsToRows(args), decorate }),
+  render: (args) => render(fieldsToRows(args)),
   parameters: {
     layout: 'fullscreen',
     docs: {
       description: {
         component:
-          'Recreates the Xcel footer: a dark maroon content zone (brand column '
-          + '+ link columns) above a full-bleed banner with a centered tagline. '
-          + 'Controls map one-to-one to the block\'s authoring model, so this '
-          + 'page mirrors Universal Editor authoring.',
+          'The Xcel footer rendered with the @ignite/web footer composition: the '
+          + 'static logo, copyright, social icon buttons, legal links, link '
+          + 'columns (an accordion below 1024px) and a full-bleed banner with a '
+          + 'centered tagline. Controls map one-to-one to the authoring model.',
       },
     },
   },
 };
 
+// --- Helpers for the play functions -----------------------------------------
+
+/** Waits for the Ignite footer to register and render its shadow DOM. */
+async function upgraded(canvasElement) {
+  const footer = canvasElement.querySelector('xe-footer');
+  await waitFor(() => expect(footer.shadowRoot?.querySelector('footer')).toBeTruthy(), { timeout: 8000 });
+  return footer;
+}
+
+/** The static Ignite logo: inverse, medium, labelled, linking to the homepage. */
+async function expectStaticLogo(canvasElement) {
+  const logo = canvasElement.querySelector('xe-footer > xe-logo[slot="logo"]');
+  await expect(logo).toHaveAttribute('variant', 'inverse');
+  await expect(logo).toHaveAttribute('size', 'md');
+  await expect(logo).toHaveAttribute('href', '/');
+  await expect(logo).toHaveAttribute('label', 'Xcel Energy Home');
+  await waitFor(() => expect(logo.shadowRoot?.querySelector('a')).toHaveAttribute('href', '/'), { timeout: 8000 });
+}
+
+const columnHeadings = (canvasElement) => [...canvasElement.querySelectorAll('xe-footer > xe-footer-column')]
+  .map((column) => column.getAttribute('heading'));
+
+/** The social icon buttons as [aria-label, href, icon], once rendered. */
+async function socialLinks(canvasElement) {
+  const buttons = [...canvasElement.querySelectorAll('xe-footer > xe-icon-button[slot="social"]')];
+  await waitFor(() => expect(buttons.every((b) => b.shadowRoot?.querySelector('a'))).toBe(true));
+  return buttons.map((button) => [
+    button.shadowRoot.querySelector('a').getAttribute('aria-label'),
+    button.getAttribute('href'),
+    button.querySelector('xe-icon').getAttribute('icon'),
+  ]);
+}
+
+/** The legal links as [text, href]. */
+const legalLinks = (canvasElement) => [...canvasElement.querySelectorAll('xe-footer > xe-hyperlink[slot="legal"]')]
+  .map((link) => [link.textContent, link.getAttribute('href')]);
+
+const EXPECTED_SOCIAL = [
+  ['Facebook (opens in a new window)', 'https://www.facebook.com/XcelEnergy', 'faSquareFacebook'],
+  ['X (opens in a new window)', 'https://twitter.com/XcelEnergy', 'faSquareXTwitter'],
+  ['Instagram (opens in a new window)', 'https://www.instagram.com/xcelenergy', 'faInstagram'],
+  ['LinkedIn (opens in a new window)', 'https://www.linkedin.com/company/xcel-energy', 'faSquareLinkedin'],
+  ['YouTube (opens in a new window)', 'https://www.youtube.com/XcelEnergyVideo', 'faYoutube'],
+];
+const AUTHORED_LEGAL = [['Privacy Policy', '#'], ['Terms of Use', '#'], ['Cookie Preferences', '#']];
+
+// --- Stories -----------------------------------------------------------------
+
 // The complete footer as authored on the site.
 export const Default = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    // Brand, link columns, and banner all render.
-    await expect(canvasElement.querySelector('.xe-footer')).toBeInTheDocument();
-    await expect(canvas.getByText('Company')).toBeInTheDocument();
-    await expect(canvasElement.querySelectorAll('.xe-footer-links-col')).toHaveLength(3);
-    await expect(canvas.getByText('Our Energy, Your Power')).toBeInTheDocument();
+    const footer = await upgraded(canvasElement);
+    await expectStaticLogo(canvasElement);
+    await expect(canvasElement.querySelector('xe-footer > span[slot="copyright"]'))
+      .toHaveTextContent('© 2026 Xcel Energy Inc. All rights reserved.');
+    await expect(canvas.getByText('© 2026 Xcel Energy Inc. All rights reserved.')).toBeInTheDocument();
+    // One <xe-footer-column heading="…"> per heading + list pair; the column
+    // wraps its <xe-hyperlink variant="variant"> links in <li>s.
+    await expect(footer).toHaveAttribute('columns', '3');
+    await expect(columnHeadings(canvasElement)).toEqual(['Company', 'Services', 'Support']);
+    const firstColumn = canvasElement.querySelector('xe-footer > xe-footer-column');
+    await waitFor(() => expect(firstColumn.querySelectorAll(':scope > li > xe-hyperlink[variant="variant"]')).toHaveLength(4));
+    // Icon-only social links are recognized by their labels.
+    await expect(await socialLinks(canvasElement)).toEqual(EXPECTED_SOCIAL);
+    await expect(legalLinks(canvasElement)).toEqual(AUTHORED_LEGAL);
+    await expect([...canvasElement.querySelectorAll('xe-hyperlink[slot="legal"]')].every((l) => l.hasAttribute('trailing-icon'))).toBe(true);
+    await expect(canvasElement.querySelector('xe-footer > img[slot="banner-image"]')).toBeInTheDocument();
+    await expect(canvasElement.querySelector('[slot="tagline"]')).toHaveTextContent('Our Energy, Your Power');
   },
 };
 
-// A single link column, exercising the desktop grid with one track.
-export const SingleLinkColumn = {
+// Nothing authored: the static logo and the default social / legal links, no
+// columns, copyright or banner.
+export const EmptyFooter = {
   args: {
-    footerlinks: [
-      '<p>Company</p>',
-      '<ul><li><a href="#">About us</a></li><li><a href="#">Careers</a></li>'
-        + '<li><a href="#">Newsroom</a></li></ul>',
-    ].join('\n'),
+    copyright: '', social: '', legal: '', footerlinks: '', banner_background: '', banner_tagline: '',
   },
   play: async ({ canvasElement }) => {
-    await expect(canvasElement.querySelectorAll('.xe-footer-links-col')).toHaveLength(1);
+    const footer = await upgraded(canvasElement);
+    await expectStaticLogo(canvasElement);
+    await expect(canvasElement.querySelector('[slot="copyright"]')).toBeNull();
+    await expect(footer).not.toHaveAttribute('columns');
+    await expect(await socialLinks(canvasElement)).toEqual(EXPECTED_SOCIAL);
+    await expect(legalLinks(canvasElement)).toEqual([
+      ['Online Terms of Use', 'https://www.xcelenergy.com/staticfiles/xe-responsive/Admin/My%20Account_Terms_and_Conditions.pdf'],
+      ['Privacy', 'https://my.xcelenergy.com/s/privacy'],
+      ['Accessibility', 'https://corporate.my.xcelenergy.com/s/about/accessibility'],
+    ]);
+    await expect(canvasElement.querySelector('[slot="banner-image"]')).toBeNull();
   },
 };
 
-// Two link columns with a shorter tagline — a common real-world configuration.
-export const TwoLinkColumns = {
-  args: {
-    footerlinks: [
-      '<p>Company</p>',
-      '<ul><li><a href="#">About us</a></li><li><a href="#">Careers</a></li>'
-        + '<li><a href="#">Newsroom</a></li></ul>',
-      '<p>Support</p>',
-      '<ul><li><a href="#">Contact us</a></li><li><a href="#">Help center</a></li>'
-        + '<li><a href="#">Report an outage</a></li></ul>',
-    ].join('\n'),
-    banner_tagline: 'Powering Tomorrow',
-  },
+// Blank fields don't shift the rest: with no copyright or social links, the
+// legal links, columns and banner still land in place.
+export const BlankFields = {
+  args: { copyright: '', social: '', banner_tagline: 'Powering Tomorrow' },
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await expect(canvasElement.querySelectorAll('.xe-footer-links-col')).toHaveLength(2);
-    await expect(canvas.getByText('Powering Tomorrow')).toBeInTheDocument();
+    await upgraded(canvasElement);
+    await expect(canvasElement.querySelector('[slot="copyright"]')).toBeNull();
+    await expect(legalLinks(canvasElement)).toEqual(AUTHORED_LEGAL);
+    await expect(columnHeadings(canvasElement)).toEqual(['Company', 'Services', 'Support']);
+    await expect(canvasElement.querySelector('[slot="tagline"]')).toHaveTextContent('Powering Tomorrow');
+  },
+};
+
+// Social links authored with EDS icons (:facebook: …) are recognized by the
+// icon name.
+export const EdsIconSocialLinks = {
+  args: { social: SOCIAL_EDS_ICONS },
+  play: async ({ canvasElement }) => {
+    await upgraded(canvasElement);
+    await expect(await socialLinks(canvasElement)).toEqual(EXPECTED_SOCIAL);
+  },
+};
+
+// A heading without links yet renders no column; the others are unaffected.
+export const HeadingWithoutLinks = {
+  args: { footerlinks: `${FOOTER_LINKS}<p>Investors</p>` },
+  play: async ({ canvasElement }) => {
+    const footer = await upgraded(canvasElement);
+    await expect(footer).toHaveAttribute('columns', '3');
+    await expect(columnHeadings(canvasElement)).toEqual(['Company', 'Services', 'Support']);
+  },
+};
+
+// Universal Editor: field instrumentation moves onto the elements rendered
+// from it, so each field stays selectable.
+export const EditorInstrumentation = {
+  render: (args) => render(fieldsToRows(args), (block) => {
+    const cells = [...block.children].map((row) => row.firstElementChild);
+    const [copyrightRow, socialRow, legalRow, linksRow] = cells;
+    copyrightRow.setAttribute('data-aue-prop', 'copyright');
+    socialRow.setAttribute('data-aue-prop', 'social');
+    legalRow.setAttribute('data-aue-prop', 'legal');
+    linksRow.setAttribute('data-aue-prop', 'footerlinks');
+    return decorate(block);
+  }),
+  play: async ({ canvasElement }) => {
+    await upgraded(canvasElement);
+    await expect(canvasElement.querySelector('[data-aue-prop="copyright"]').matches('span[slot="copyright"]')).toBe(true);
+    await expect(canvasElement.querySelector('[data-aue-prop="social"]').matches('xe-icon-button[slot="social"]')).toBe(true);
+    await expect(canvasElement.querySelector('[data-aue-prop="legal"]').matches('xe-hyperlink[slot="legal"]')).toBe(true);
+    await expect(canvasElement.querySelector('[data-aue-prop="footerlinks"]').matches('xe-footer-column')).toBe(true);
   },
 };

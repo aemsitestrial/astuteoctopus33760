@@ -1,0 +1,350 @@
+{
+  "definitions": [
+    {
+      "title": "XE Footer V4",
+      "id": "xe-footer-v4",
+      "plugins": {
+        "xwalk": {
+          "page": {
+            "resourceType": "core/franklin/components/block/v1/block",
+            "template": {
+              "name": "XE Footer V4",
+              "model": "xe-footer-v4",
+              "filter": "xe-footer-v4"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "models": [
+    {
+      "id": "xe-footer-v4",
+      "fields": [
+        {
+          "component": "tab",
+          "label": "General",
+          "name": "general"
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "copyright",
+          "label": "Copyright",
+          "value": ""
+        },
+        {
+          "component": "tab",
+          "label": "Social",
+          "name": "social"
+        },
+        {
+          "component": "select",
+          "valueType": "string",
+          "name": "social_cta1Text",
+          "label": "Social1 Network",
+          "value": "",
+          "options": [
+            {
+              "name": "Facebook",
+              "value": "facebook"
+            },
+            {
+              "name": "X (Twitter)",
+              "value": "x"
+            },
+            {
+              "name": "Instagram",
+              "value": "instagram"
+            },
+            {
+              "name": "LinkedIn",
+              "value": "linkedin"
+            },
+            {
+              "name": "YouTube",
+              "value": "youtube"
+            }
+          ]
+        },
+        {
+          "component": "aem-content",
+          "valueType": "string",
+          "name": "social_cta1",
+          "label": "Social1 Link URL"
+        },
+        {
+          "component": "select",
+          "valueType": "string",
+          "name": "social_cta2Text",
+          "label": "Social2 Network",
+          "value": "",
+          "options": [
+            {
+              "name": "Facebook",
+              "value": "facebook"
+            },
+            {
+              "name": "X (Twitter)",
+              "value": "x"
+            },
+            {
+              "name": "Instagram",
+              "value": "instagram"
+            },
+            {
+              "name": "LinkedIn",
+              "value": "linkedin"
+            },
+            {
+              "name": "YouTube",
+              "value": "youtube"
+            }
+          ]
+        },
+        {
+          "component": "aem-content",
+          "valueType": "string",
+          "name": "social_cta2",
+          "label": "Social2 Link URL"
+        },
+        {
+          "component": "select",
+          "valueType": "string",
+          "name": "social_cta3Text",
+          "label": "Social3 Network",
+          "value": "",
+          "options": [
+            {
+              "name": "Facebook",
+              "value": "facebook"
+            },
+            {
+              "name": "X (Twitter)",
+              "value": "x"
+            },
+            {
+              "name": "Instagram",
+              "value": "instagram"
+            },
+            {
+              "name": "LinkedIn",
+              "value": "linkedin"
+            },
+            {
+              "name": "YouTube",
+              "value": "youtube"
+            }
+          ]
+        },
+        {
+          "component": "aem-content",
+          "valueType": "string",
+          "name": "social_cta3",
+          "label": "Social3 Link URL"
+        },
+        {
+          "component": "select",
+          "valueType": "string",
+          "name": "social_cta4Text",
+          "label": "Social4 Network",
+          "value": "",
+          "options": [
+            {
+              "name": "Facebook",
+              "value": "facebook"
+            },
+            {
+              "name": "X (Twitter)",
+              "value": "x"
+            },
+            {
+              "name": "Instagram",
+              "value": "instagram"
+            },
+            {
+              "name": "LinkedIn",
+              "value": "linkedin"
+            },
+            {
+              "name": "YouTube",
+              "value": "youtube"
+            }
+          ]
+        },
+        {
+          "component": "aem-content",
+          "valueType": "string",
+          "name": "social_cta4",
+          "label": "Social4 Link URL"
+        },
+        {
+          "component": "select",
+          "valueType": "string",
+          "name": "social_cta5Text",
+          "label": "Social5 Network",
+          "value": "",
+          "options": [
+            {
+              "name": "Facebook",
+              "value": "facebook"
+            },
+            {
+              "name": "X (Twitter)",
+              "value": "x"
+            },
+            {
+              "name": "Instagram",
+              "value": "instagram"
+            },
+            {
+              "name": "LinkedIn",
+              "value": "linkedin"
+            },
+            {
+              "name": "YouTube",
+              "value": "youtube"
+            }
+          ]
+        },
+        {
+          "component": "aem-content",
+          "valueType": "string",
+          "name": "social_cta5",
+          "label": "Social5 Link URL"
+        },
+        {
+          "component": "tab",
+          "label": "Legal",
+          "name": "legal"
+        },
+        {
+          "component": "aem-content",
+          "valueType": "string",
+          "name": "legal_cta1",
+          "label": "Legal1 Link URL"
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "legal_cta1Text",
+          "label": "Legal1 Link Text"
+        },
+        {
+          "component": "aem-content",
+          "valueType": "string",
+          "name": "legal_cta2",
+          "label": "Legal2 Link URL"
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "legal_cta2Text",
+          "label": "Legal2 Link Text"
+        },
+        {
+          "component": "aem-content",
+          "valueType": "string",
+          "name": "legal_cta3",
+          "label": "Legal3 Link URL"
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "legal_cta3Text",
+          "label": "Legal3 Link Text"
+        },
+        {
+          "component": "tab",
+          "label": "Column Links",
+          "name": "column"
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "column_heading1",
+          "label": "Column1 Heading"
+        },
+        {
+          "component": "aem-content",
+          "valueType": "string",
+          "name": "column_links1",
+          "label": "Column1 Links"
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "column_heading2",
+          "label": "Column2 Heading"
+        },
+        {
+          "component": "aem-content",
+          "valueType": "string",
+          "name": "column_links2",
+          "label": "Column2 Links"
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "column_heading3",
+          "label": "Column3 Heading"
+        },
+        {
+          "component": "aem-content",
+          "valueType": "string",
+          "name": "column_links3",
+          "label": "Column3 Links"
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "column_heading4",
+          "label": "Column4 Heading"
+        },
+        {
+          "component": "aem-content",
+          "valueType": "string",
+          "name": "column_links4",
+          "label": "Column4 Links"
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "column_heading5",
+          "label": "Column5 Heading"
+        },
+        {
+          "component": "aem-content",
+          "valueType": "string",
+          "name": "column_links5",
+          "label": "Column5 Links"
+        },
+        {
+          "component": "tab",
+          "label": "Banner",
+          "name": "banner"
+        },
+        {
+          "component": "reference",
+          "valueType": "string",
+          "name": "banner_background",
+          "label": "Background",
+          "multi": false
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "banner_tagline",
+          "label": "Tagline",
+          "value": "Our Energy, Your Power"
+        }
+      ]
+    }
+  ],
+  "filters": [
+    {
+      "id": "xe-footer-v4",
+      "components": []
+    }
+  ]
+}

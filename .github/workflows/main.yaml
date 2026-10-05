@@ -6,9 +6,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Use Node.js 20
+    - name: Use Node.js 24
       uses: actions/setup-node@v4
       with:
-        node-version: 20
+        node-version: 24
+    # @ignite/web (Xcel JFrog) and Font Awesome Pro install from private
+    # registries. Tokens come from repository secrets and are written to the
+    # runner's user npmrc only — nothing is committed to the repo.
+    - name: Authenticate private npm registries
+      env:
+        JFROG_NPM_TOKEN: ${{ secrets.JFROG_NPM_TOKEN }}
+        FONTAWESOME_NPM_TOKEN: ${{ secrets.FONTAWESOME_NPM_TOKEN }}
+      run: |
+        for name in JFROG_NPM_TOKEN FONTAWESOME_NPM_TOKEN; do
+          if [ -z "${!name}" ]; then
+            echo "::error::Missing repository secret $name (Settings → Secrets and variables → Actions)"
+            exit 1
+          fi
+        done
+        npm config set "//xcel.jfrog.io/artifactory/api/npm/npm/:_authToken" "$JFROG_NPM_TOKEN"
+        npm config set "//npm.fontawesome.com/:_authToken" "$FONTAWESOME_NPM_TOKEN"
     - run: npm ci
     - run: npm run lint

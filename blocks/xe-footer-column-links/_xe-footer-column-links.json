@@ -1,0 +1,40 @@
+{
+  "definitions": [
+    {
+      "title": "XE Footer Link Column",
+      "id": "xe-footer-column-links",
+      "plugins": {
+        "xwalk": {
+          "page": {
+            "resourceType": "core/franklin/components/block/v1/block/item",
+            "template": {
+              "name": "XE Footer Link Column",
+              "model": "xe-footer-column-links"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "models": [
+    {
+      "id": "xe-footer-column-links",
+      "fields": [
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "column_heading",
+          "label": "Heading"
+        },
+        {
+          "component": "richtext",
+          "valueType": "string",
+          "name": "column_links",
+          "label": "Links",
+          "description": "A bulleted list of links, one per line"
+        }
+      ]
+    }
+  ],
+  "filters": []
+}

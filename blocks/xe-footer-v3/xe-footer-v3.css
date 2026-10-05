@@ -1,0 +1,27 @@
+/*
+ * XE Footer V3
+ *
+ * Layout, colors and typography come from the @ignite/web <xe-footer>
+ * composition (shadow DOM, driven by the --xe-* tokens). This stylesheet only
+ * covers the section wrapper and authored light-DOM content slotted into it
+ * that page-level rules would otherwise restyle (they outrank ::slotted()).
+ */
+
+/* Full bleed: override the section's 1200px content cap. */
+main > .section > .xe-footer-v3-wrapper {
+  max-width: none;
+  padding: 0;
+}
+
+.xe-footer-v3 xe-footer {
+  display: block;
+}
+
+/* Banner: the slot is positioned to fill the band; cover it with the image. */
+.xe-footer-v3 img[slot="banner-image"] {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+}

@@ -1,4 +1,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
+<!-- The @ignite/web bundles (scripts/ignite/bundle) keep bare Font Awesome Pro
+     imports; resolve them to the local free-icon stand-in. Must precede every
+     module script. -->
+<script type="importmap">
+  {
+    "imports": {
+      "@fortawesome/pro-solid-svg-icons": "/scripts/components/fontawesome-shim.js",
+      "@fortawesome/pro-regular-svg-icons": "/scripts/components/fontawesome-shim.js"
+    }
+  }
+</script>
 <!-- Adobe Target flicker pre-hide (FOOC). Runs synchronously during head parse,
      only on target pages (gated on the target meta, which EDS injects above this
      file). Masks the text and CTA buttons of top-level Intent Sections

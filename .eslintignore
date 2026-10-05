@@ -6,3 +6,5 @@ docs/*
 storybook-static/*
 blocks/xe-cards/vendor/igniteui-webcomponents.js
 blocks/xe-ignite-feature-cards-npm/vendor/igniteui-webcomponents.js
+blocks/xe-banner/vendor/*
+scripts/ignite

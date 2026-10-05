@@ -1,0 +1,86 @@
+import { Meta, Canvas, Controls } from '@storybook/addon-docs/blocks';
+import * as XeFooterV3Stories from './xe-footer-v3.stories.js';
+
+<Meta of={XeFooterV3Stories} />
+
+# XE Footer V3
+
+The **XE Footer V3** is the Xcel footer rendered with the `@ignite/web` footer
+composition — the same markup as XE Footer V2 — but authored entirely on the
+block in fixed slots instead of child items:
+
+```html
+<xe-footer columns="3">
+  <xe-logo slot="logo" variant="inverse" size="md" href="/" label="Xcel Energy Home"></xe-logo>
+  <span slot="copyright">© 2026 Xcel Energy Inc. All rights reserved.</span>
+  <xe-footer-column heading="Company">
+    <xe-hyperlink href="…" variant="variant">Careers</xe-hyperlink>
+    …
+  </xe-footer-column>
+  …
+  <xe-icon-button slot="social" size="xl" href="…" aria-label="Facebook (opens in a new window)">
+    <xe-icon icon="faSquareFacebook"></xe-icon>
+  </xe-icon-button>
+  …
+  <xe-hyperlink slot="legal" href="…" variant="variant" trailing-icon>Privacy</xe-hyperlink>
+  …
+  <img slot="banner-image" src="…" alt="">
+  <span slot="tagline">Our Energy, Your Power</span>
+</xe-footer>
+```
+
+## Authoring model
+
+The fields (`blocks/xe-footer-v3/_xe-footer-v3.json`) are grouped into editor
+tabs. Element grouping renders each group as one row, in model order:
+
+<table>
+  <thead>
+    <tr><th>Tab</th><th>Fields</th><th>Renders as</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>General</td><td><code>copyright</code> (text)</td><td>The copyright; the logo is static (Ignite's Xcel Energy logo, linking to the homepage)</td></tr>
+    <tr><td>Social</td><td>5 slots: <code>social_ctaN</code> URL + <code>social_ctaNText</code> network select</td><td>Social icon buttons, opening in a new window</td></tr>
+    <tr><td>Legal</td><td>3 slots: <code>legal_ctaN</code> URL + <code>legal_ctaNText</code> text</td><td>Legal links with a trailing icon</td></tr>
+    <tr><td>Column Links</td><td>5 slots: <code>column_headingN</code> text + <code>column_linksN</code> rich text (a bulleted list of links)</td><td>One <code>&lt;xe-footer-column&gt;</code> per filled slot</td></tr>
+    <tr><td>Banner</td><td><code>banner_background</code> + <code>banner_tagline</code></td><td>The full-bleed banner image and its centered tagline</td></tr>
+  </tbody>
+</table>
+
+Slots left empty, or a network chosen without a URL, render nothing; with no
+social or legal links at all, the live Xcel Energy footer's links render.
+
+The column links field is named `column_linksN`, not `column_headingNText`:
+`Text` is a field-collapsing suffix, so a `…Text` field next to `column_headingN`
+would be treated as an attribute of the heading instead of rendering.
+
+The social, legal and column groups are decorated by the same functions as XE
+Footer V2's child items (`blocks/xe-footer-social-links`,
+`blocks/xe-footer-legal-links`, `blocks/xe-footer-column-links`); the shared
+logo, copyright, banner and loading helpers live in
+`scripts/components/xe-footer-utils.js`.
+
+## Live example
+
+<Canvas of={XeFooterV3Stories.Default} />
+
+<Controls of={XeFooterV3Stories.Default} />
+
+## Variants
+
+### Empty footer
+
+Nothing authored — the static logo and the default social and legal links.
+
+<Canvas of={XeFooterV3Stories.EmptyFooter} />
+
+### Partly filled slots
+
+<Canvas of={XeFooterV3Stories.PartialSlots} />
+
+## Testing
+
+- **Interaction tests** — each story's `play` function asserts the rendered
+  Ignite structure. Run headless with `npm run test:storybook`.
+- **Accessibility** — the a11y panel runs axe checks on every story, enforcing
+  WCAG 2.2 AA conformance.

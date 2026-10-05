@@ -14,6 +14,15 @@
     "build:json:filters": "merge-json-cli -i \"models/_component-filters.json\" -o \"component-filters.json\"",
     "build:xe-cards-vendor": "node blocks/xe-cards/vendor/build.mjs",
     "build:xe-ignite-feature-cards-npm-vendor": "node blocks/xe-ignite-feature-cards-npm/vendor/build.mjs",
+    "copy:ignite:composition": "mkdir -p \"scripts/ignite/dist/compositions\" && cp -r node_modules/@ignite/web/dist/compositions/* scripts/ignite/dist/compositions",
+    "copy:ignite:primitive": "mkdir -p \"scripts/ignite/dist/primitives\" && cp -r node_modules/@ignite/web/dist/primitives/* scripts/ignite/dist/primitives",
+    "copy:ignite:themes": "mkdir -p \"scripts/ignite/dist/themes\" && cp node_modules/@ignite/web/dist/themes/cms.css scripts/ignite/dist/themes/cms.css",
+    "copy:ignite:tokens": "mkdir -p \"scripts/ignite/dist/tokens\" && cp -r node_modules/@ignite/web/dist/tokens/* scripts/ignite/dist/tokens",
+    "copy:ignite:utils": "mkdir -p \"scripts/ignite/dist/utils\" && cp node_modules/@ignite/web/dist/utils/* scripts/ignite/dist/utils",
+    "bundle:ignite:js": "esbuild 'scripts/ignite/dist/**/*.js' --bundle --format=esm --external:@fortawesome --outbase=scripts/ignite/dist --outdir=scripts/ignite/bundle",
+    "bundle:ignite:css": "esbuild scripts/ignite/dist/themes/cms.css --bundle --outfile=scripts/ignite/bundle/themes/cms.css",
+    "bundle:ignite:tokens": "node tools/ignite/extract-tokens.mjs",
+    "copy:ignite:package": "rm -rf scripts/ignite && npm run copy:ignite:composition && npm run copy:ignite:primitive && npm run copy:ignite:themes && npm run copy:ignite:tokens && npm run copy:ignite:utils && npm run bundle:ignite:js && npm run bundle:ignite:css && npm run bundle:ignite:tokens && rm -rf scripts/ignite/dist",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test:storybook": "vitest --project=storybook",
@@ -55,6 +64,10 @@
     "vitest": "^4.1.11"
   },
   "dependencies": {
-    "igniteui-webcomponents": "^7.3.2"
+    "igniteui-webcomponents": "^7.3.2",
+    "@fortawesome/free-brands-svg-icons": "^7.3.1",
+    "@fortawesome/pro-regular-svg-icons": "^7.3.1",
+    "@ignite/web": "^0.34.0",
+    "lit": "^3.3.3"
   }
 }

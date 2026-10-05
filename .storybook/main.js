@@ -26,6 +26,11 @@ import { fileURLToPath } from 'node:url';
 // whole page runtime inside a story. See .storybook/mocks/scripts.js.
 const scriptsMock = fileURLToPath(new URL('./mocks/scripts.js', import.meta.url));
 
+// The Ignite bundles keep bare Font Awesome Pro imports (built with
+// --external:@fortawesome). On the site the import map in head.html resolves
+// them to the local free-icon stand-in; mirror that here.
+const fontAwesomeShim = fileURLToPath(new URL('../scripts/components/fontawesome-shim.js', import.meta.url));
+
 /** @type { import('@storybook/html-vite').StorybookConfig } */
 const config = {
   stories: [
@@ -51,7 +56,9 @@ const config = {
       ...viteConfig.resolve,
       alias: [
         ...(viteConfig.resolve?.alias || []),
-        { find: /^.*\/scripts\/scripts\.js$/, replacement: scriptsMock },
+        // Also `../scripts.js`, as imported by the shared modules in scripts/components.
+        { find: /^(.*\/scripts\/|\.\.\/)scripts\.js$/, replacement: scriptsMock },
+        { find: /^@fortawesome\/pro-(solid|regular)-svg-icons$/, replacement: fontAwesomeShim },
       ],
     },
   }),
