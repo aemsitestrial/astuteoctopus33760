@@ -1,7 +1,8 @@
 import {
   buildBannerImage, buildCopyright, buildLogo, buildTagline, finishFooter, firstOf,
 } from '../../scripts/components/xe-footer-utils.js';
-import decorateColumnLinks from '../xe-footer-column-links/xe-footer-column-links.js';
+import fetchQueryIndex from '../../scripts/components/query-index.js';
+import { decoratePathColumns } from '../xe-footer-column-links/xe-footer-column-links.js';
 import decorateSocialLinks, {
   decorateDefaults as defaultSocialLinks,
 } from '../xe-footer-social-links/xe-footer-social-links.js';
@@ -27,19 +28,24 @@ import decorateLegalLinks, {
  *     <span slot="tagline">Our Energy, Your Power</span>
  *   </xe-footer>
  *
- * Unlike V2 (a container of child items), every field lives on the block
- * itself, in fixed slots (_xe-footer-v3.json). Element grouping renders each
- * group as one row, in model order, empty or not:
+ * Every field lives on the block itself, in fixed slots (_xe-footer-v4.json).
+ * Element grouping renders each group as one row, in model order, empty or
+ * not:
  *
  *   copyright                             → plain text
  *   social_cta1…5 (+ …Text network)       → up to 5 links, <a href="URL">network</a>
  *   legal_cta1…3 (+ …Text)                → up to 3 links
- *   column_heading1…5 + column_links1…5   → heading + rich-text link list pairs
+ *   column_heading1…5 + column_links1…5   → heading + page path pairs
  *   banner_background + banner_tagline    → <picture> + tagline
  *
- * The social, legal and column groups are decorated by the same functions as
- * V2's child items (xe-footer-social-links / -legal-links / -column-links),
- * since each just turns a container of links into footer elements. Slots left
+ * Each link column lists the child pages of its configured path, from the
+ * query index (/query-index.json): one link per published page directly under
+ * the path, labelled with the page's title (when the index has a `title`
+ * property) or a label from its URL. A path with no child pages in the index
+ * shows a single link to the path itself.
+ *
+ * The social, legal and column groups are decorated by the functions of V2's
+ * child items (xe-footer-social-links / -legal-links / -column-links). Slots left
  * empty (or with a network chosen but no URL) render nothing; with no social
  * or legal links at all, the live Xcel Energy footer's render.
  */
@@ -64,8 +70,10 @@ export default async function decorate(block) {
     footer.append(buildCopyright(fields.copyright));
   }
 
-  // --- Link columns (default slot): one per authored heading + list pair ---
-  const columns = fields.columns ? decorateColumnLinks(fields.columns) : [];
+  // --- Link columns (default slot): one per heading + path, listing the
+  // path's child pages from the query index ---
+  const hasPaths = fields.columns && fields.columns.querySelector('a');
+  const columns = hasPaths ? decoratePathColumns(fields.columns, await fetchQueryIndex()) : [];
   if (columns.length) footer.setAttribute('columns', String(columns.length));
   footer.append(...columns);
 
