@@ -27,11 +27,11 @@
           "label": "Heading"
         },
         {
-          "component": "richtext",
+          "component": "aem-content",
           "valueType": "string",
           "name": "column_links",
-          "label": "Links",
-          "description": "A bulleted list of links, one per line"
+          "label": "Page",
+          "description": "The column lists the published pages directly under this page"
         }
       ]
     }

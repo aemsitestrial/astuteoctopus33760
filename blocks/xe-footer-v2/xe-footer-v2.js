@@ -11,7 +11,11 @@ import decorateSocialLinks, {
 import decorateLegalLinks, {
   decorateDefaults as defaultLegalLinks,
 } from '../xe-footer-legal-links/xe-footer-legal-links.js';
-import decorateColumnLinks, { buildColumn } from '../xe-footer-column-links/xe-footer-column-links.js';
+import {
+  buildColumn,
+  decorateItems as decorateColumnItems,
+  isPathLinks,
+} from '../xe-footer-column-links/xe-footer-column-links.js';
 
 /*
  * XE Footer V2
@@ -36,7 +40,11 @@ import decorateColumnLinks, { buildColumn } from '../xe-footer-column-links/xe-f
  * row per child item — a link column, a social profile or a legal link. Those
  * items are decorated by their own blocks (xe-footer-column-links /
  * xe-footer-social-links / xe-footer-legal-links); the live Xcel Energy
- * footer's social and legal links render when none are authored.
+ * footer's social and legal links render when none are authored. A link
+ * column item is a heading + page: the column lists the page's published
+ * child pages from the query index (/query-index.json), or a single link to
+ * the page when it has none; items authored as a rich-text link list render
+ * as authored.
  *
  * Rows are recognized by what they hold rather than by position, so blank
  * fields can't shift the others and older footers still render: key-value
@@ -144,7 +152,10 @@ function readFields(block) {
     if (!hasContent(cell)) return;
     const image = cell.querySelector('picture, img');
     const linkList = isLinkList(cell);
-    if (linkList && (!image || isSocialLinks(cell))) {
+    if (linkList && isPathLinks(cell)) {
+      // A link column item without a heading: just its page path.
+      addItem('columns', row);
+    } else if (linkList && (!image || isSocialLinks(cell))) {
       addItem(isSocialLinks(cell) ? 'social' : 'legal', row);
     } else if (image) {
       // The banner (image + tagline). The logo isn't authorable any more; in
@@ -200,12 +211,11 @@ export default async function decorate(block) {
 
   if (fields.copyright) footer.append(buildCopyright(fields.copyright));
 
-  // --- Link columns (default slot): the column items, else a key-value
-  // footer's column slots ---
-  const columns = firstOf(
-    () => fields.items.columns.flatMap(decorateColumnLinks),
-    () => buildSlotColumns(fields),
-  );
+  // --- Link columns (default slot): the column items (each listing its
+  // page's child pages from the query index), else a key-value footer's
+  // column slots ---
+  const itemColumns = await decorateColumnItems(fields.items.columns);
+  const columns = firstOf(() => itemColumns, () => buildSlotColumns(fields));
   const columnCount = columns.filter((column) => column.matches('xe-footer-column')).length;
   if (columnCount) footer.setAttribute('columns', String(columnCount));
   footer.append(...columns);

@@ -11,8 +11,8 @@
  *
  * Child items (the block's filter), each in its own row:
  *
- *   xe-footer-column-links  heading + links (rich-text list), grouped into one cell
- *                             -> "linkColumns" (heading + list pairs, one item each)
+ *   xe-footer-column-links  heading + page (aem-content), grouped into one cell
+ *                             -> "linkColumns" (heading + page path pairs, one item each)
  *   xe-footer-social-links  network select + profile URL -> "socialLinks" (links, one item each)
  *   xe-footer-legal-links   links (rich-text list)       -> "legalLinks" (one item, the whole list)
  *
@@ -20,7 +20,11 @@
  * row per field (copyright, banner), empty or not, followed by one row per
  * child item. The logo isn't authorable: it's the static Ignite logo.
  * Other stories cover footers created while the block was key-value
- * (`name | value` rows, with link columns) and the original positional layout.
+ * (`name | value` rows, with link columns), link column items authored as a
+ * rich-text link list, and the original positional layout.
+ *
+ * Each link column lists its page's child pages from the query index, which
+ * is mocked: requests for /query-index.json return INDEX below.
  */
 import { expect, within, waitFor } from 'storybook/test';
 import decorate from './xe-footer-v2.js';
@@ -33,10 +37,69 @@ const list = (labels) => linkList(labels.map((label) => [label, '#']));
 // The authored logo of footers created before the logo became static.
 const LEGACY_LOGO = '/icons/xcel-logo-white.svg';
 
+// Link columns as rich-text lists: key-value footers' column slots, the
+// original layout's footer links, and items authored before Page.
 const COLUMNS = [
   ['Company', ['About us', 'Careers', 'Newsroom', 'Sustainability']],
   ['Services', ['Residential', 'Business', 'Renewable plans', 'Usage insights']],
   ['Support', ['Contact us', 'Help center', 'Report an outage', 'Billing &amp; payments']],
+];
+const LIST_COLUMNS = COLUMNS.map(([heading, links]) => `<p>${heading}</p>${list(links)}`).join('');
+
+// The mocked query index: published pages, some with a title, some without.
+const INDEX = [
+  { path: '/', title: 'Home', robots: '' },
+  { path: '/company', title: 'Company', robots: '' },
+  { path: '/company/community', title: 'Community', robots: '' },
+  { path: '/company/careers', title: 'Careers', robots: '' },
+  { path: '/company/careers/open-roles', title: 'Open Roles', robots: '' }, // grandchild: not listed
+  { path: '/company/newsroom', title: 'Newsroom', robots: 'noindex' }, // noindex: not listed
+  { path: '/energy-environment', title: 'Energy & Environment', robots: '' },
+  { path: '/energy-environment/sustainability', title: 'Sustainability', robots: '' },
+  { path: '/energy-environment/net-zero-plan', robots: '' }, // no title: labelled from its URL
+  { path: '/partner-resources', title: 'Partner Resources', robots: '' }, // no child pages
+];
+
+/** Serves /query-index.json from INDEX (with offset / limit paging). */
+function mockQueryIndex() {
+  if (window.fetch.queryIndexMock) return;
+  const realFetch = window.fetch.bind(window);
+  const mock = (input, init) => {
+    const url = new URL(typeof input === 'string' ? input : input.url, window.location.href);
+    if (url.pathname !== '/query-index.json') return realFetch(input, init);
+    const offset = Number(url.searchParams.get('offset') || 0);
+    const limit = Number(url.searchParams.get('limit') || 1000);
+    const body = {
+      total: INDEX.length, offset, limit, data: INDEX.slice(offset, offset + limit), ':type': 'sheet',
+    };
+    return Promise.resolve(new Response(JSON.stringify(body), { headers: { 'Content-Type': 'application/json' } }));
+  };
+  mock.queryIndexMock = true;
+  window.fetch = mock;
+}
+
+/** A link column item as AEM renders it: heading + the page link (its text is the content path). */
+const pathColumn = (heading, path) => `${heading ? `<p>${heading}</p>` : ''}<p><a href="${path}">${path}</a></p>`;
+
+const PATH_COLUMNS = [
+  pathColumn('Company', '/company'),
+  // In the Universal Editor, links use AEM content paths.
+  pathColumn('Energy &amp; Environment', '/content/2026/38/astuteoctopus33760/energy-environment.html'),
+  pathColumn('Partner Resources', '/partner-resources'),
+].join('');
+
+// The columns PATH_COLUMNS renders: each page's published child pages.
+const EXPECTED_PATH_COLUMNS = [
+  // Direct children only (not /company/careers/open-roles), and not noindex pages.
+  { heading: 'Company', links: [['Careers', '/company/careers'], ['Community', '/company/community']] },
+  // An AEM content path resolves to the site path; a page without a title is
+  // labelled from its URL.
+  {
+    heading: 'Energy & Environment',
+    links: [['Net Zero Plan', '/energy-environment/net-zero-plan'], ['Sustainability', '/energy-environment/sustainability']],
+  },
+  // No child pages: a single link to the page itself, with its title.
+  { heading: 'Partner Resources', links: [['Partner Resources', '/partner-resources']] },
 ];
 
 // xe-footer-social-links: the link text is the "Network" select value.
@@ -65,7 +128,7 @@ const defaults = {
   copyright: '© 2026 Xcel Energy. All rights reserved.',
   banner_background: 'https://picsum.photos/1600/400?grayscale',
   banner_tagline: 'Our Energy, Your Power',
-  linkColumns: COLUMNS.map(([heading, links]) => `<p>${heading}</p>${list(links)}`).join(''),
+  linkColumns: PATH_COLUMNS,
   socialLinks: SOCIAL_ITEMS,
   legalLinks: LEGAL_ITEMS,
 };
@@ -88,15 +151,17 @@ const legalRows = (html) => (html ? [[html]] : []);
 
 /**
  * One link column item row per heading in `html` (the linkColumns control):
- * the item's heading + links are grouped into one cell, <p>heading</p><ul>…</ul>.
+ * the item's heading + page are grouped into one cell,
+ * <p>heading</p><p><a>…</a></p> (or <p>heading</p><ul>…</ul> for a rich-text list).
  */
 function columnRows(html) {
   if (!html) return [];
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const rows = [];
   [...doc.body.children].forEach((node) => {
-    if (node.matches('p')) rows.push([node.outerHTML]);
-    else if (rows.length) rows[rows.length - 1][0] += node.outerHTML;
+    const isHeading = node.matches('p') && !node.querySelector('a');
+    if (isHeading || !rows.length) rows.push([node.outerHTML]);
+    else rows[rows.length - 1][0] += node.outerHTML;
   });
   return rows;
 }
@@ -133,13 +198,12 @@ function keyValueRows(args, columns = COLUMNS) {
 
 /** The original positional layout: logo, copyright, social, legal, footer links, banner. */
 function legacyRows(args) {
-  const footerlinks = COLUMNS.map(([heading, links]) => `<p>${heading}</p>${list(links)}`).join('');
   return [
     [picture(LEGACY_LOGO, 'Xcel')],
     [`<p>${args.copyright}</p>`],
     [SOCIAL_RICH_TEXT],
     [LEGAL_ITEMS],
-    [footerlinks],
+    [LIST_COLUMNS],
     [`${picture(args.banner_background, 'Banner')}<p>${args.banner_tagline}</p>`],
   ];
 }
@@ -178,7 +242,10 @@ const inEditor = (models) => (block) => {
   return decorate(block);
 };
 
-const render = (rows, decorator = decorate) => renderBlock({ name: 'xe-footer-v2', rows, decorate: decorator });
+const render = (rows, decorator = decorate) => {
+  mockQueryIndex();
+  return renderBlock({ name: 'xe-footer-v2', rows, decorate: decorator });
+};
 
 // argTypes drive the Controls panel — the Storybook analogue of the Universal
 // Editor properties rail.
@@ -186,7 +253,7 @@ const argTypes = {
   copyright: { control: 'text', description: 'Copyright (plain text).', table: { category: 'Brand' } },
   banner_background: { control: 'text', description: 'Background (reference) — asset URL for the full-bleed banner image.', table: { category: 'Banner' } },
   banner_tagline: { control: 'text', description: 'Tagline — centered banner overlay text.', table: { category: 'Banner' } },
-  linkColumns: { control: 'text', description: 'XE Footer Link Column items — one item per heading: <p>heading</p> followed by a <ul> of links.', table: { category: 'Child items' } },
+  linkColumns: { control: 'text', description: 'XE Footer Link Column items — one item per heading: <p>heading</p> followed by the page link (<p><a href="path">path</a></p>); the column lists the page\'s child pages.', table: { category: 'Child items' } },
   socialLinks: { control: 'text', description: 'XE Footer Social Link items — one item per link; the link text is the network (facebook, x, instagram, linkedin, youtube).', table: { category: 'Child items' } },
   legalLinks: { control: 'text', description: 'XE Footer Legal Links item — one rich-text bulleted list of links.', table: { category: 'Child items' } },
 };
@@ -215,12 +282,21 @@ export default {
 
 // --- Helpers for the play functions -----------------------------------------
 
-/** Waits for the Ignite footer to register and render its shadow DOM. */
+/**
+ * Waits for the Ignite footer to render its shadow DOM (it's added once the
+ * link columns are built, after the query index loads).
+ */
 async function upgraded(canvasElement) {
-  const footer = canvasElement.querySelector('xe-footer');
-  await waitFor(() => expect(footer.shadowRoot?.querySelector('footer')).toBeTruthy(), { timeout: 8000 });
-  return footer;
+  await waitFor(() => expect(canvasElement.querySelector('xe-footer')?.shadowRoot?.querySelector('footer')).toBeTruthy(), { timeout: 8000 });
+  return canvasElement.querySelector('xe-footer');
 }
+
+/** Each column as { heading, links: [[text, href]] }. */
+const columnsOf = (canvasElement) => [...canvasElement.querySelectorAll('xe-footer > xe-footer-column')]
+  .map((col) => ({
+    heading: col.getAttribute('heading'),
+    links: [...col.querySelectorAll('xe-hyperlink')].map((link) => [link.textContent, link.getAttribute('href')]),
+  }));
 
 /**
  * The static Ignite logo: inverse, medium, labelled, linking to the homepage
@@ -278,12 +354,13 @@ export const Default = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const footer = await upgraded(canvasElement);
-    // One <xe-footer-column heading="…"> per link column item, with direct
-    // <xe-hyperlink variant="variant"> children the column wraps in <li>s.
+    // One <xe-footer-column heading="…"> per link column item, listing its
+    // page's child pages as direct <xe-hyperlink variant="variant"> children
+    // the column wraps in <li>s.
     await expect(footer).toHaveAttribute('columns', '3');
-    await expect(columnHeadings(canvasElement)).toEqual(['Company', 'Services', 'Support']);
+    await expect(columnsOf(canvasElement)).toEqual(EXPECTED_PATH_COLUMNS);
     const firstColumn = canvasElement.querySelector('xe-footer > xe-footer-column');
-    await waitFor(() => expect(firstColumn.querySelectorAll(':scope > li > xe-hyperlink[variant="variant"]')).toHaveLength(4));
+    await waitFor(() => expect(firstColumn.querySelectorAll(':scope > li > xe-hyperlink[variant="variant"]')).toHaveLength(2));
     await expectStaticLogo(canvasElement);
     await expect(canvasElement.querySelector('xe-footer > span[slot="copyright"]'))
       .toHaveTextContent('© 2026 Xcel Energy. All rights reserved.');
@@ -383,8 +460,35 @@ export const ColumnHeadingOnly = {
   play: async ({ canvasElement }) => {
     const footer = await upgraded(canvasElement);
     await expect(footer).toHaveAttribute('columns', '3');
-    await expect(columnHeadings(canvasElement)).toEqual(['Company', 'Services', 'Support']);
+    await expect(columnHeadings(canvasElement)).toEqual(['Company', 'Energy & Environment', 'Partner Resources']);
     await expect(canvasElement.querySelector('[slot="copyright"]')).toHaveTextContent('© 2026 Xcel Energy');
+  },
+};
+
+// A published link column item with a page but no heading yet renders an
+// untitled column of the page's child pages — not a legal link.
+export const ColumnPageOnly = {
+  args: { linkColumns: pathColumn('', '/company') },
+  play: async ({ canvasElement }) => {
+    const footer = await upgraded(canvasElement);
+    await expect(footer).toHaveAttribute('columns', '1');
+    await expect(columnsOf(canvasElement)).toEqual([
+      { heading: null, links: [['Careers', '/company/careers'], ['Community', '/company/community']] },
+    ]);
+    await expect(legalLinks(canvasElement)).toEqual(AUTHORED_LEGAL);
+  },
+};
+
+// Link column items authored while Links was a rich-text list render their
+// links as authored.
+export const ListColumnItems = {
+  args: { linkColumns: LIST_COLUMNS },
+  play: async ({ canvasElement }) => {
+    const footer = await upgraded(canvasElement);
+    await expect(footer).toHaveAttribute('columns', '3');
+    await expect(columnHeadings(canvasElement)).toEqual(['Company', 'Services', 'Support']);
+    const firstColumn = canvasElement.querySelector('xe-footer > xe-footer-column');
+    await waitFor(() => expect(firstColumn.querySelectorAll(':scope > li > xe-hyperlink[variant="variant"]')).toHaveLength(4));
   },
 };
 
