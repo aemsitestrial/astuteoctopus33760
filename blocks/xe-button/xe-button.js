@@ -1,7 +1,6 @@
-import { moveInstrumentation } from '../../scripts/scripts.js';
 import loadIgnite from '../../scripts/components/ignite.js';
 import {
-  createPrimitive, isEditing, propsFromClasses, readRows,
+  createPrimitive, ICON_OPTIONS, propsFromClasses, readLinkContent, renderPrimitive,
 } from '../../scripts/components/primitives.js';
 
 /*
@@ -37,18 +36,6 @@ const VARIANTS = ['primary', 'secondary', 'tertiary', 'accent', 'neutral', 'stat
 const TREATMENTS = ['filled', 'outlined', 'text'];
 const SIZES = ['xxs', 'xs', 'sm', 'md', 'lg'];
 
-// Icon option class suffixes → icon names (scripts/components/icons.js).
-const ICONS = {
-  'arrow-right': 'faArrowRight',
-  'arrow-up-right-from-square': 'faArrowUpRightFromSquare',
-  'chevron-right': 'faChevronRight',
-  bolt: 'faBolt',
-  house: 'faHouse',
-  leaf: 'faLeaf',
-  lightbulb: 'faLightbulb',
-  'piggy-bank': 'faPiggyBank',
-};
-
 /** Every prop of the Ignite <xe-button> (see scripts/components/primitives.js). */
 export const BUTTON_PROPS = {
   variant: { values: VARIANTS, option: 'variant' },
@@ -62,8 +49,8 @@ export const BUTTON_PROPS = {
     optionValues: { 'new-window': '_blank' },
   },
   type: { values: ['button', 'submit', 'reset'] }, // without an href
-  leadingIcon: { option: 'leading-icon', optionValues: ICONS },
-  trailingIcon: { option: 'trailing-icon', optionValues: ICONS },
+  leadingIcon: { option: 'leading-icon', optionValues: ICON_OPTIONS },
+  trailingIcon: { option: 'trailing-icon', optionValues: ICON_OPTIONS },
   disabled: { type: 'boolean', option: 'disabled' },
   expand: { type: 'boolean', option: 'expand' }, // full width
   ariaLabel: {},
@@ -89,27 +76,14 @@ export function loadButton() {
 }
 
 export default async function decorate(block) {
-  const rows = readRows(block, ['link', 'ariaLabel']);
-  const anchor = rows.link && rows.link.querySelector('a');
-  const label = anchor ? anchor.textContent.trim() : '';
-
-  block.textContent = '';
-  if (label) {
-    const button = buildButton({
-      ...propsFromClasses(block, BUTTON_PROPS),
-      label,
-      href: anchor.getAttribute('href'),
-      ariaLabel: rows.ariaLabel && rows.ariaLabel.textContent,
-    });
-    moveInstrumentation(anchor, button);
-    block.append(button);
-  } else if (isEditing(block)) {
-    // Universal Editor: keep an empty block visible and selectable.
-    const placeholder = document.createElement('p');
-    placeholder.className = 'xe-button-placeholder';
-    placeholder.textContent = 'Add a button label and link';
-    block.append(placeholder);
-  }
-
+  const {
+    anchor, label, href, ariaLabel,
+  } = readLinkContent(block);
+  const button = label && buildButton({
+    ...propsFromClasses(block, BUTTON_PROPS), label, href, ariaLabel,
+  });
+  renderPrimitive(block, button || null, {
+    source: anchor, placeholder: 'Add a button label and link',
+  });
   await loadButton();
 }

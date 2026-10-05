@@ -1,0 +1,14 @@
+/*
+ * XE Hyperlink
+ *
+ * The @ignite/web <xe-hyperlink> styles itself in its shadow DOM from the
+ * Ignite design tokens; this sheet only covers the editor placeholder.
+ */
+
+.xe-hyperlink .xe-hyperlink-placeholder {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px dashed currentcolor;
+  border-radius: 0.25rem;
+  opacity: 0.6;
+}

@@ -31,6 +31,19 @@
  * propsFromClasses() reads them back from a block's classes.
  */
 
+import { moveInstrumentation } from '../scripts.js';
+import ICONS from './icons.js';
+
+/**
+ * Icon option class suffixes → icon names, for every icon in
+ * scripts/components/icons.js: faArrowRight → 'arrow-right',
+ * faSquareFacebook → 'square-facebook'. Use as a prop's `optionValues`.
+ */
+export const ICON_OPTIONS = Object.fromEntries(Object.keys(ICONS).map((name) => [
+  name.replace(/^fa/, '').replace(/[A-Z]/g, (letter, index) => `${index ? '-' : ''}${letter.toLowerCase()}`),
+  name,
+]));
+
 /** A prop name as an attribute name: sizeMobile → size-mobile. */
 export function toAttributeName(prop) {
   return prop.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
@@ -115,4 +128,43 @@ export function readRows(block, names) {
 /** True when the block is being edited in the Universal Editor. */
 export function isEditing(block) {
   return block.hasAttribute('data-aue-resource');
+}
+
+/**
+ * The content of a link primitive's model — a link row (Link URL + Label,
+ * collapsed into one <a>) then an Accessible Label row:
+ * `{ anchor, label, href, ariaLabel }` (missing values are empty strings).
+ * @param {Element} block the block
+ */
+export function readLinkContent(block) {
+  const rows = readRows(block, ['link', 'ariaLabel']);
+  const anchor = (rows.link && rows.link.querySelector('a')) || null;
+  return {
+    anchor,
+    label: anchor ? anchor.textContent.trim() : '',
+    href: anchor ? anchor.getAttribute('href') || '' : '',
+    ariaLabel: rows.ariaLabel ? rows.ariaLabel.textContent.trim() : '',
+  };
+}
+
+/**
+ * Replaces the block's content with `element` (moving `source`'s Universal
+ * Editor instrumentation onto it), or — with no element — leaves the block
+ * empty, except in the Universal Editor, where an editor-only placeholder
+ * (`<p class="<block>-placeholder">text</p>`) keeps it visible and selectable.
+ * @param {Element} block the block
+ * @param {Element|null} element the rendered primitive, if any
+ * @param {object} options `{ source, placeholder }`
+ */
+export function renderPrimitive(block, element, { source, placeholder } = {}) {
+  block.textContent = '';
+  if (element) {
+    if (source) moveInstrumentation(source, element);
+    block.append(element);
+  } else if (isEditing(block) && placeholder) {
+    const note = document.createElement('p');
+    note.className = `${block.classList[0]}-placeholder`;
+    note.textContent = placeholder;
+    block.append(note);
+  }
 }

@@ -1,0 +1,117 @@
+{
+  "definitions": [
+    {
+      "title": "XE Hyperlink",
+      "id": "xe-hyperlink",
+      "plugins": {
+        "xwalk": {
+          "page": {
+            "resourceType": "core/franklin/components/block/v1/block",
+            "template": {
+              "name": "XE Hyperlink",
+              "model": "xe-hyperlink",
+              "cta_linkText": "Learn More"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "models": [
+    {
+      "id": "xe-hyperlink",
+      "fields": [
+        {
+          "component": "aem-content",
+          "valueType": "string",
+          "name": "cta_link",
+          "label": "Link URL",
+          "description": "The page or URL the link opens."
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "cta_linkText",
+          "label": "Label",
+          "description": "The link text."
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "ariaLabel",
+          "label": "Accessible Label",
+          "description": "Optional. Read by screen readers instead of the label, e.g. \"Privacy Policy (PDF)\"."
+        },
+        {
+          "component": "select",
+          "valueType": "string",
+          "name": "classes_variant",
+          "label": "Variant",
+          "value": "",
+          "options": [
+            {
+              "name": "Default",
+              "value": ""
+            },
+            {
+              "name": "Light (on dark backgrounds)",
+              "value": "variant-variant"
+            }
+          ]
+        },
+        {
+          "component": "select",
+          "valueType": "string",
+          "name": "classes_linkType",
+          "label": "Link Type",
+          "description": "With a trailing icon: a chevron for internal links, an outbound arrow for external ones.",
+          "value": "",
+          "options": [
+            {
+              "name": "Default (External)",
+              "value": ""
+            },
+            {
+              "name": "Internal",
+              "value": "link-type-internal"
+            },
+            {
+              "name": "External",
+              "value": "link-type-external"
+            }
+          ]
+        },
+        {
+          "component": "select",
+          "valueType": "string",
+          "name": "classes_target",
+          "label": "Open In",
+          "value": "",
+          "options": [
+            {
+              "name": "Same Window",
+              "value": ""
+            },
+            {
+              "name": "New Window",
+              "value": "target-new-window"
+            }
+          ]
+        },
+        {
+          "component": "multiselect",
+          "valueType": "string",
+          "name": "classes",
+          "label": "Options",
+          "options": [
+            {
+              "name": "Trailing Icon",
+              "value": "trailing-icon"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "filters": []
+}

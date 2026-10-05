@@ -33,7 +33,9 @@
       "xe-ignite-feature-cards-npm",
       "xe-cards",
       "xe-banner",
-      "xe-button"
+      "xe-button",
+      "xe-hyperlink",
+      "xe-icon-button"
     ]
   },
   {
