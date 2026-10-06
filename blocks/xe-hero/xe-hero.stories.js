@@ -142,8 +142,18 @@ export const Default = {
     await expect(canvasElement.querySelector('h1[slot="title"]')).toBeInTheDocument();
     await expect(canvasElement.querySelector('p[slot="subtitle"]')).toBeInTheDocument();
     await expect(canvasElement.querySelector('img[slot="media"]')).toBeInTheDocument();
-    // Two CTAs render as <xe-button> elements.
-    await expect(canvasElement.querySelectorAll('xe-button')).toHaveLength(2);
+    // Two CTAs render as XE Button primitives: primary filled, then
+    // static-light outlined (for the dark scrim).
+    const buttons = canvasElement.querySelectorAll('xe-button');
+    await expect(buttons).toHaveLength(2);
+    await expect(buttons[0]).toHaveAttribute('variant', 'primary');
+    await expect(buttons[0]).toHaveAttribute('treatment', 'filled');
+    await expect(buttons[1]).toHaveAttribute('variant', 'static-light');
+    await expect(buttons[1]).toHaveAttribute('treatment', 'outlined');
+    await waitFor(
+      () => expect(buttons[1].shadowRoot?.querySelector('a.static-light.outlined')).toBeTruthy(),
+      { timeout: 8000 },
+    );
     // The block defines and upgrades its custom elements.
     await waitFor(
       () => expect(customElements.get('xe-hero')).toBeTruthy(),

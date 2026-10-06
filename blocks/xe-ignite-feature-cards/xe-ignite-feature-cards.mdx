@@ -64,10 +64,11 @@ When a card's Link and Link text are left blank, no CTA renders.
 
 The decorator reads the authored rows (heading, subheading, then one
 `[title, body, link]` row per card) and rebuilds them into the web-component
-markup above. The four custom elements (`xe-featured-cards`, `xe-card-grid`,
-`xe-card`, `xe-button`) are small shadow-DOM components defined by the block on
-first run: the heading/subheading render from attributes, and each card's title,
-body, and CTA are distributed through named slots. Stories run that real
+markup above. The three layout elements (`xe-featured-cards`, `xe-card-grid`,
+`xe-card`) are small shadow-DOM components defined by the block on first run:
+the heading/subheading render from attributes, and each card's title, body,
+and CTA are distributed through named slots. Each CTA is the **XE Button**
+primitive (`blocks/xe-button`, the `@ignite/web` button), primary outlined. Stories run that real
 `decorate()` against the shipped CSS, so what you see here matches production.
 
 ## Testing

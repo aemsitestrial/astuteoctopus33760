@@ -8,8 +8,10 @@ import * as XeBannerStories from './xe-banner.stories.js';
 A full-width message banner: an optional icon, a heading, a rich-text message,
 and a single outlined call to action with a trailing arrow. The block rebuilds
 the authored content into web-component markup — `<xe-banner>` wrapping an
-`<xe-banner-column>` with slotted icon/heading/message/action, an `<xe-button>`
-CTA and `<xe-icon>` glyphs.
+`<xe-banner-column>` with slotted icon/heading/message/action and `<xe-icon>`
+glyphs. The action is the **XE Button** primitive (`blocks/xe-button`, the
+`@ignite/web` button) in the banner's fixed style: primary, outlined, small,
+with a trailing arrow.
 
 ## Authoring model
 

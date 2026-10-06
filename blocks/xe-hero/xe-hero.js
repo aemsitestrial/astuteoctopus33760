@@ -1,5 +1,5 @@
 import { moveInstrumentation } from '../../scripts/scripts.js';
-import '../../scripts/components/xe-button.js';
+import { buildButton, loadButton } from '../xe-button/xe-button.js';
 
 /*
  * XE Hero
@@ -13,16 +13,23 @@ import '../../scripts/components/xe-button.js';
  *     <p slot="subtitle">…</p>
  *     <div slot="actions">
  *       <xe-button variant="primary" treatment="filled" href="…">…</xe-button>
- *       <xe-button variant="secondary" treatment="outline" href="…">…</xe-button>
+ *       <xe-button variant="static-light" treatment="outlined" href="…">…</xe-button>
  *     </div>
  *   </xe-hero>
  *
  * The `slot` attributes and the align/height presets only mean something inside
  * real custom elements, so <xe-hero> is defined below as a small shadow-DOM
- * component; <xe-button> is shared with the other xe-* blocks
- * (scripts/components). The media renders full-bleed behind a scrim; title,
- * subtitle, and actions render on top through named slots.
+ * component. The CTAs are the XE Button primitive (blocks/xe-button, the
+ * @ignite/web button); the second uses the static-light variant made for dark
+ * backgrounds such as the scrim. The media renders full-bleed behind a scrim;
+ * title, subtitle, and actions render on top through named slots.
  */
+
+// The CTA styles, in order: the primary action, then the secondary one.
+const ACTIONS = [
+  { variant: 'primary', treatment: 'filled' },
+  { variant: 'static-light', treatment: 'outlined' },
+];
 
 const SCRIM = 'linear-gradient(180deg, rgb(0 0 0 / 55%) 0%, rgb(0 0 0 / 65%) 100%)';
 
@@ -129,7 +136,6 @@ class XeHero extends HTMLElement {
 }
 
 // Register once — the block can be decorated multiple times per page.
-// <xe-button> is shared with the other xe-* blocks (scripts/components).
 if (!customElements.get('xe-hero')) customElements.define('xe-hero', XeHero);
 
 /**
@@ -203,24 +209,17 @@ export default function decorate(block) {
   }
 
   // --- Actions (up to two CTAs) ---
-  const links = anchorEls.slice(0, 2);
+  const links = anchorEls.slice(0, ACTIONS.length);
   if (links.length) {
     const actions = document.createElement('div');
     actions.setAttribute('slot', 'actions');
 
     links.forEach((link, index) => {
-      const button = document.createElement('xe-button');
-      if (index === 0) {
-        button.setAttribute('variant', 'primary');
-        button.setAttribute('treatment', 'filled');
-      } else {
-        button.setAttribute('variant', 'secondary');
-        button.setAttribute('treatment', 'outline');
-      }
-      const href = link.getAttribute('href');
-      if (href) button.setAttribute('href', href);
-      button.textContent = link.textContent.trim();
-      actions.append(button);
+      actions.append(buildButton({
+        ...ACTIONS[index],
+        label: link.textContent.trim(),
+        href: link.getAttribute('href'),
+      }));
     });
 
     hero.append(actions);
@@ -228,4 +227,8 @@ export default function decorate(block) {
 
   block.textContent = '';
   block.append(hero);
+
+  // Not awaited: the hero is usually the LCP block, and its CTA labels show
+  // as text until the button upgrades.
+  if (links.length) loadButton();
 }

@@ -139,14 +139,18 @@ export const Default = {
       { timeout: 8000 },
     );
     await expect(canvas.getByText(/Explore rebates, tips, and programs/)).toBeInTheDocument();
+    // The CTA is the XE Button primitive in the banner's fixed style.
     const button = canvasElement.querySelector('xe-button[slot="action"]');
+    await expect(button).toHaveAttribute('variant', 'primary');
     await expect(button).toHaveAttribute('treatment', 'outlined');
-    await expect(button.querySelector('xe-icon[slot="trailing-icon"]')).toHaveAttribute('icon', 'faArrowRight');
-    // The CTA upgrades into a shadow-DOM anchor that navigates.
+    await expect(button).toHaveAttribute('size', 'sm');
+    await expect(button).toHaveAttribute('trailing-icon', 'faArrowRight');
+    // It upgrades into a shadow-DOM anchor that navigates, with the arrow.
     await waitFor(
-      () => expect(button.shadowRoot.querySelector('a')).toHaveAttribute('href', '#'),
+      () => expect(button.shadowRoot?.querySelector('a')).toHaveAttribute('href', '#'),
       { timeout: 8000 },
     );
+    await expect(button.shadowRoot.querySelector('.trailing-icon xe-icon')).toHaveAttribute('icon', 'faArrowRight');
   },
 };
 

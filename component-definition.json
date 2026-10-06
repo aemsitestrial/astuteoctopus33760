@@ -662,6 +662,22 @@
           }
         },
         {
+          "title": "XE Button",
+          "id": "xe-button",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/block/v1/block",
+                "template": {
+                  "name": "XE Button",
+                  "model": "xe-button",
+                  "cta_linkText": "Learn More"
+                }
+              }
+            }
+          }
+        },
+        {
           "title": "XE Cards",
           "id": "xe-cards",
           "plugins": {
@@ -858,6 +874,39 @@
                 "template": {
                   "name": "XE Hero",
                   "model": "xe-hero"
+                }
+              }
+            }
+          }
+        },
+        {
+          "title": "XE Hyperlink",
+          "id": "xe-hyperlink",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/block/v1/block",
+                "template": {
+                  "name": "XE Hyperlink",
+                  "model": "xe-hyperlink",
+                  "cta_linkText": "Learn More"
+                }
+              }
+            }
+          }
+        },
+        {
+          "title": "XE Icon Button",
+          "id": "xe-icon-button",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/block/v1/block",
+                "template": {
+                  "name": "XE Icon Button",
+                  "model": "xe-icon-button",
+                  "ariaLabel": "Home",
+                  "classes_icon": "icon-house"
                 }
               }
             }

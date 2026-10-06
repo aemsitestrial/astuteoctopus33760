@@ -1,6 +1,7 @@
 import { moveInstrumentation } from '../../scripts/scripts.js';
-import '../../scripts/components/xe-button.js';
-import '../../scripts/components/xe-icon.js';
+import loadIgnite from '../../scripts/components/ignite.js';
+import { createPrimitive, propsFromClasses } from '../../scripts/components/primitives.js';
+import { buildButton, loadButton } from '../xe-button/xe-button.js';
 
 /*
  * XE Banner
@@ -9,17 +10,17 @@ import '../../scripts/components/xe-icon.js';
  * using <xe-banner> and <xe-banner-column> from @ignite/web (centralized bundle
  * at scripts/ignite/bundle). The heading slot receives a <span> because
  * <xe-banner-column> renders the actual heading element internally based on
- * the `heading-level` attribute. <xe-button> and <xe-icon> are the shared
- * local components (scripts/components) to avoid conflicts with xe-hero.
+ * the `heading-level` attribute. The action is the XE Button primitive
+ * (blocks/xe-button) in the banner's fixed CTA style; <xe-icon> is the shared
+ * local icon (scripts/components, registered by scripts/components/ignite.js).
  *
  *   <xe-banner size="generous" background="default">
  *     <xe-banner-column expand align="center" heading-level="2">
  *       <xe-icon slot="icon" icon="faLeaf" size="lg"></xe-icon>
  *       <span slot="heading">Save Energy, Save Money</span>
  *       <div slot="message"><p>Explore rebates, tips, and programs…</p></div>
- *       <xe-button slot="action" variant="primary" treatment="outlined" size="sm" href="…">
- *         Explore Programs<xe-icon slot="trailing-icon" size="sm" icon="faArrowRight"></xe-icon>
- *       </xe-button>
+ *       <xe-button slot="action" variant="primary" treatment="outlined" size="sm"
+ *                  trailing-icon="faArrowRight" href="…">Explore Programs</xe-button>
  *     </xe-banner-column>
  *   </xe-banner>
  */
@@ -34,27 +35,22 @@ const ICON_OPTIONS = {
   'piggy-bank': 'faPiggyBank',
 };
 
-// Block option classes (the classes_* fields) -> <xe-banner>/<xe-banner-column> attributes.
-const SIZES = ['compact', 'generous'];
-const BACKGROUNDS = ['subtle'];
-const ALIGNMENTS = ['left'];
+// <xe-banner> / <xe-banner-column> props (see scripts/components/primitives.js),
+// set by the block option classes (the classes_* fields): size-…, background-…, align-….
+const BANNER_PROPS = {
+  size: { values: ['default', 'compact', 'generous'], option: 'size' },
+  background: { values: ['default', 'subtle'], option: 'background' },
+};
+const COLUMN_PROPS = {
+  align: { values: ['center', 'left'], option: 'align' },
+  headingLevel: { values: ['1', '2', '3', '4', '5', '6'] },
+  expand: { type: 'boolean' },
+};
 
-// Load and register the @ignite/web banner components once, shared across all instances.
-let ignitePromise;
-function loadIgnite() {
-  if (!ignitePromise) {
-    ignitePromise = import('../../scripts/ignite/bundle/compositions/banner/xe-banner.js').catch(() => {
-      // Load failure: the decorated fallback content still renders, so swallow
-      // the error rather than break the page.
-    });
-  }
-  return ignitePromise;
-}
-
-/** Returns the value of the first `<prefix>-<value>` block class in `values`. */
-function optionFromClass(block, prefix, values) {
-  return values.find((value) => block.classList.contains(`${prefix}-${value}`));
-}
+// The banner's call to action: an XE Button in a fixed style.
+const ACTION = {
+  variant: 'primary', treatment: 'outlined', size: 'sm', trailingIcon: 'faArrowRight',
+};
 
 export default function decorate(block) {
   const rows = [...block.children];
@@ -87,19 +83,16 @@ export default function decorate(block) {
     if (!messageCell && text) messageCell = cell;
   });
 
-  const size = optionFromClass(block, 'size', SIZES) || 'default';
-  const background = optionFromClass(block, 'background', BACKGROUNDS) || 'default';
-  const align = optionFromClass(block, 'align', ALIGNMENTS) || 'center';
-  const level = headingEl ? headingEl.tagName.slice(1) : '2';
+  const banner = createPrimitive('xe-banner', {
+    size: 'default', background: 'default', ...propsFromClasses(block, BANNER_PROPS),
+  }, BANNER_PROPS);
 
-  const banner = document.createElement('xe-banner');
-  banner.setAttribute('size', size);
-  banner.setAttribute('background', background);
-
-  const column = document.createElement('xe-banner-column');
-  column.setAttribute('expand', '');
-  column.setAttribute('align', align);
-  column.setAttribute('heading-level', level);
+  const column = createPrimitive('xe-banner-column', {
+    align: 'center',
+    ...propsFromClasses(block, COLUMN_PROPS),
+    headingLevel: headingEl ? headingEl.tagName.slice(1) : '2',
+    expand: true,
+  }, COLUMN_PROPS);
   banner.append(column);
 
   // --- Icon ---
@@ -131,29 +124,20 @@ export default function decorate(block) {
     column.append(message);
   }
 
-  // --- Action ---
+  // --- Action: the XE Button primitive, in the banner's fixed CTA style ---
   const label = linkEl ? linkEl.textContent.trim() : '';
   if (label) {
-    const button = document.createElement('xe-button');
+    const button = buildButton({ ...ACTION, label, href: linkEl.getAttribute('href') });
     button.setAttribute('slot', 'action');
-    button.setAttribute('variant', 'primary');
-    button.setAttribute('treatment', 'outlined');
-    button.setAttribute('size', 'sm');
-    const href = linkEl.getAttribute('href');
-    if (href) button.setAttribute('href', href);
     moveInstrumentation(linkEl, button);
-
-    const arrow = document.createElement('xe-icon');
-    arrow.setAttribute('slot', 'trailing-icon');
-    arrow.setAttribute('size', 'sm');
-    arrow.setAttribute('icon', 'faArrowRight');
-
-    button.append(label, arrow);
     column.append(button);
   }
 
   block.textContent = '';
   block.append(banner);
 
-  loadIgnite();
+  loadIgnite(() => Promise.all([
+    import('../../scripts/ignite/bundle/compositions/banner/xe-banner.js'),
+    loadButton(),
+  ]));
 }

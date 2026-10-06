@@ -1,0 +1,26 @@
+/*
+ * XE Button
+ *
+ * The @ignite/web <xe-button> styles itself in its shadow DOM from the Ignite
+ * design tokens; this sheet only lays out the block and its editor
+ * placeholder.
+ */
+
+.xe-button {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+/* Expand: the button fills the block's width. */
+.xe-button.expand xe-button {
+  flex: 1 1 100%;
+}
+
+.xe-button .xe-button-placeholder {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 1px dashed currentcolor;
+  border-radius: 0.25rem;
+  opacity: 0.6;
+}
