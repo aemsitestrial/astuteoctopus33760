@@ -2392,5 +2392,40 @@
         "label": "Link text"
       }
     ]
+  },
+  {
+    "id": "xe-multi",
+    "fields": [
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "heading",
+        "label": "Heading",
+        "description": "Optional. Shown above the links."
+      },
+      {
+        "component": "container",
+        "name": "links",
+        "label": "Links",
+        "description": "Add a Text and URL for each link.",
+        "multi": true,
+        "fields": [
+          {
+            "component": "text",
+            "valueType": "string",
+            "name": "linkText",
+            "label": "Text",
+            "description": "The link text."
+          },
+          {
+            "component": "aem-content",
+            "valueType": "string",
+            "name": "link",
+            "label": "URL",
+            "description": "The page or URL the link opens."
+          }
+        ]
+      }
+    ]
   }
 ]
