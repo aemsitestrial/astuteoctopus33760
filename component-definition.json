@@ -889,7 +889,11 @@
                 "template": {
                   "name": "XE Hyperlink",
                   "model": "xe-hyperlink",
-                  "cta_linkText": "Learn More"
+                  "xlink_link": "Hyperlink",
+                  "xlink_linkUrl": "#",
+                  "xlink_trailingIcon": false,
+                  "xlink_type": "auto",
+                  "xlink_target": ""
                 }
               }
             }

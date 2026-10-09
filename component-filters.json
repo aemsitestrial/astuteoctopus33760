@@ -43,7 +43,8 @@
     "components": [
       "text",
       "hero-v3",
-      "xe-hero"
+      "xe-hero",
+      "xe-hyperlink"
     ]
   },
   {
