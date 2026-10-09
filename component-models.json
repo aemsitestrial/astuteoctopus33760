@@ -2949,5 +2949,65 @@
         "label": "Link text"
       }
     ]
+  },
+  {
+    "id": "xe-logo",
+    "fields": [
+      {
+        "component": "select",
+        "name": "logo_variant",
+        "value": "primary",
+        "label": "Variant",
+        "valueType": "string",
+        "options": [
+          {
+            "name": "Primary",
+            "value": "primary"
+          },
+          {
+            "name": "Inverse",
+            "value": "inverse"
+          }
+        ]
+      },
+      {
+        "component": "select",
+        "name": "logo_size",
+        "value": "md",
+        "label": "Size",
+        "valueType": "string",
+        "options": [
+          {
+            "name": "Small",
+            "value": "sm"
+          },
+          {
+            "name": "Medium",
+            "value": "md"
+          },
+          {
+            "name": "Large",
+            "value": "lg"
+          }
+        ]
+      },
+      {
+        "component": "select",
+        "name": "logo_type",
+        "value": "lockup",
+        "label": "Type",
+        "valueType": "string",
+        "options": [
+          {
+            "name": "Lockup",
+            "value": "lockup"
+          },
+          {
+            "name": "Mark",
+            "value": "mark"
+          }
+        ]
+      }
+    ]
   }
 ]
