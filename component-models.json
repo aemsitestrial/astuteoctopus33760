@@ -2586,14 +2586,14 @@
       },
       {
         "component": "boolean",
-        "name": "xlink_trailingIcon",
+        "name": "classes_trailingIcon",
         "label": "Trailing Icon",
         "valueType": "boolean",
         "value": false
       },
       {
         "component": "select",
-        "name": "xlink_type",
+        "name": "classes_type",
         "label": "Type",
         "valueType": "string",
         "value": "auto",
@@ -2618,7 +2618,7 @@
       },
       {
         "component": "select",
-        "name": "xlink_target",
+        "name": "classes_target",
         "label": "Target",
         "valueType": "string",
         "value": "",

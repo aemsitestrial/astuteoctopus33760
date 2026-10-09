@@ -891,9 +891,9 @@
                   "model": "xe-hyperlink",
                   "xlink_link": "#",
                   "xlink_linkText": "Hyperlink",
-                  "xlink_trailingIcon": false,
-                  "xlink_type": "auto",
-                  "xlink_target": ""
+                  "classes_trailingIcon": false,
+                  "classes_type": "auto",
+                  "classes_target": ""
                 }
               }
             }

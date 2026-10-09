@@ -12,9 +12,9 @@
               "model": "xe-hyperlink",
               "xlink_link": "#",
               "xlink_linkText": "Hyperlink",
-              "xlink_trailingIcon": false,
-              "xlink_type": "auto",
-              "xlink_target": ""
+              "classes_trailingIcon": false,
+              "classes_type": "auto",
+              "classes_target": ""
             }
           }
         }
@@ -39,14 +39,14 @@
         },
         {
           "component": "boolean",
-          "name": "xlink_trailingIcon",
+          "name": "classes_trailingIcon",
           "label": "Trailing Icon",
           "valueType": "boolean",
           "value": false
         },
         {
           "component": "select",
-          "name": "xlink_type",
+          "name": "classes_type",
           "label": "Type",
           "valueType": "string",
           "value": "auto",
@@ -71,7 +71,7 @@
         },
         {
           "component": "select",
-          "name": "xlink_target",
+          "name": "classes_target",
           "label": "Target",
           "valueType": "string",
           "value": "",
