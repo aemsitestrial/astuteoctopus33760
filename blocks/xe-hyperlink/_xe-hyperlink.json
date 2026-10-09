@@ -10,8 +10,8 @@
             "template": {
               "name": "XE Hyperlink",
               "model": "xe-hyperlink",
-              "xlink_link": "Hyperlink",
-              "xlink_linkUrl": "#",
+              "xlink_link": "#",
+              "xlink_linkText": "Hyperlink",
               "xlink_trailingIcon": false,
               "xlink_type": "auto",
               "xlink_target": ""
@@ -26,15 +26,15 @@
       "id": "xe-hyperlink",
       "fields": [
         {
-          "component": "text",
+          "component": "aem-content",
           "name": "xlink_link",
-          "label": "Text",
+          "label": "URL",
           "valueType": "string"
         },
         {
-          "component": "aem-content",
-          "name": "xlink_linkUrl",
-          "label": "URL",
+          "component": "text",
+          "name": "xlink_linkText",
+          "label": "Text",
           "valueType": "string"
         },
         {

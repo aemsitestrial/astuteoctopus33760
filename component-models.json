@@ -2573,15 +2573,15 @@
     "id": "xe-hyperlink",
     "fields": [
       {
-        "component": "text",
+        "component": "aem-content",
         "name": "xlink_link",
-        "label": "Text",
+        "label": "URL",
         "valueType": "string"
       },
       {
-        "component": "aem-content",
-        "name": "xlink_linkUrl",
-        "label": "URL",
+        "component": "text",
+        "name": "xlink_linkText",
+        "label": "Text",
         "valueType": "string"
       },
       {

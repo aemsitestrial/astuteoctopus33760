@@ -889,8 +889,8 @@
                 "template": {
                   "name": "XE Hyperlink",
                   "model": "xe-hyperlink",
-                  "xlink_link": "Hyperlink",
-                  "xlink_linkUrl": "#",
+                  "xlink_link": "#",
+                  "xlink_linkText": "Hyperlink",
                   "xlink_trailingIcon": false,
                   "xlink_type": "auto",
                   "xlink_target": ""
