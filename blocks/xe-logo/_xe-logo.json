@@ -1,0 +1,97 @@
+{
+  "definitions": [
+    {
+      "title": "XE Hyperlink",
+      "id": "xe-hyperlink",
+      "plugins": {
+        "xwalk": {
+          "page": {
+            "resourceType": "core/franklin/components/block/v1/block",
+            "template": {
+              "name": "XE Hyperlink",
+              "model": "xe-hyperlink",
+              "xlink_link": "#",
+              "xlink_linkText": "Hyperlink",
+              "xlink_trailingIcon": false,
+              "xlink_type": "auto",
+              "xlink_target": ""
+            }
+          }
+        }
+      }
+    }
+  ],
+  "models": [
+    {
+      "id": "xe-hyperlink",
+      "fields": [
+        {
+          "component": "aem-content",
+          "name": "xlink_link",
+          "label": "URL",
+          "valueType": "string"
+        },
+        {
+          "component": "text",
+          "name": "xlink_linkText",
+          "label": "Text",
+          "valueType": "string"
+        },
+        {
+          "component": "boolean",
+          "name": "xlink_trailingIcon",
+          "label": "Trailing Icon",
+          "valueType": "boolean",
+          "value": false
+        },
+        {
+          "component": "select",
+          "name": "xlink_type",
+          "label": "Type",
+          "valueType": "string",
+          "value": "auto",
+          "options": [
+            {
+              "name": "Auto",
+              "value": "auto"
+            },
+            {
+              "name": "External",
+              "value": "external"
+            },
+            {
+              "name": "Internal",
+              "value": "internal"
+            },
+            {
+              "name": "Download",
+              "value": "download"
+            }
+          ]
+        },
+        {
+          "component": "select",
+          "name": "xlink_target",
+          "label": "Target",
+          "valueType": "string",
+          "value": "",
+          "options": [
+            {
+              "name": "Default",
+              "value": ""
+            },
+            {
+              "name": "New Tab (_blank)",
+              "value": "_blank"
+            },
+            {
+              "name": "Same Tab (_self)",
+              "value": "_self"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "filters": []
+}

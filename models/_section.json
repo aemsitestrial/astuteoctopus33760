@@ -69,7 +69,8 @@
         "xe-banner",
         "xe-button",
         "xe-hyperlink",
-        "xe-icon-button"
+        "xe-icon-button",
+        "xe-logo"
       ]
     }
   ]
